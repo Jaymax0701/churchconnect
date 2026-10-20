@@ -1,32 +1,34 @@
-# React + TypeScript + Vite
+# ChurchConnect
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**Connecting people. Strengthening faith. Building community.**
 
-Currently, two official plugins are available:
+ChurchConnect is a digital platform designed to bring church communities closer through technology. It aims to simplify church coordination, improve communication, and strengthen engagement among church members, leaders, and ministry teams.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🌐 Live Production
 
-## React Compiler
+**Explore ChurchConnect:** [https://churchconnect-alpha.vercel.app/](https://churchconnect-alpha.vercel.app/)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🎯 Project Vision
 
-## Expanding the Oxlint configuration
+To build a connected digital church community where technology empowers churches to serve their members more effectively, coordinate ministry activities efficiently, and foster meaningful relationships through faith.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## ✨ Objectives
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+- **Community Engagement** — Encourage stronger connections among church members.
+- **Ministry Coordination** — Simplify the organization and coordination of church activities.
+- **Digital Transformation** — Leverage technology to improve church administration and communication.
+- **Faith & Fellowship** — Support a more connected and engaged church community.
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## 🛠️ Development
+
+ChurchConnect is an evolving project focused on exploring how modern technology can support church communities and ministry operations.
+
+More information about the technology stack, application features, and deployment will be added as development progresses.
+
+## 🚀 Vision for the Future
+
+ChurchConnect aims to grow into a practical digital solution that helps churches connect their people, coordinate their ministries, and build stronger communities.
+
+---
+
+*Built with a heart for the church and a vision for technology that makes a difference.*
