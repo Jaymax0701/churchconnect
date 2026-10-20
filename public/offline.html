@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChurchConnect — You're Offline</title>
+  <style>
+    /* Minimal inline styles — offline page cannot depend on cached CSS imports */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-deep-forest:  #142d25;
+      --color-forest-green: #245747;
+      --color-sage-green:   #729985;
+      --color-soft-sage:    #dce8dd;
+      --color-warm-ivory:   #faf9f4;
+      --color-white:        #ffffff;
+      --color-text-primary: #1c2822;
+      --color-text-secondary: #52635a;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background-color: var(--color-warm-ivory);
+      color: var(--color-text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+      gap: 1.5rem;
+    }
+
+    .icon-wrap {
+      width: 80px;
+      height: 80px;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-deep-forest);
+    }
+
+    p {
+      font-size: 1rem;
+      color: var(--color-text-secondary);
+      max-width: 380px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.75rem;
+      background: linear-gradient(180deg, #2a6653 0%, #1e4d3f 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 3px 8px rgba(36,87,71,0.22);
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 16px rgba(36,87,71,0.3);
+    }
+
+    .note {
+      font-size: 0.8125rem;
+      color: var(--color-sage-green);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Inline SVG icon so it works offline -->
+    <div class="icon-wrap" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="80" height="80">
+        <rect width="192" height="192" rx="38" fill="#142d25"/>
+        <circle cx="96" cy="88" r="56" fill="none" stroke="#729985" stroke-width="1.5" opacity="0.35"/>
+        <rect x="87" y="40" width="18" height="80" rx="9" fill="#ffffff"/>
+        <rect x="52" y="72" width="88" height="18" rx="9" fill="#ffffff"/>
+        <circle cx="72" cy="144" r="8" fill="#729985"/>
+        <circle cx="96" cy="148" r="8" fill="#dce8dd"/>
+        <circle cx="120" cy="144" r="8" fill="#729985"/>
+      </svg>
+    </div>
+
+    <h1>You're Offline</h1>
+
+    <p>
+      ChurchConnect needs an internet connection to load. Please check your
+      connection and try again.
+    </p>
+
+    <button class="btn" onclick="window.location.reload()">
+      &#8635; Try Again
+    </button>
+
+    <span class="note">
+      Once back online, all features will be available.
+    </span>
+  </div>
+</body>
+</html>

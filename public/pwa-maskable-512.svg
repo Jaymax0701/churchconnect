@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Full bleed background (maskable icons must fill the entire square) -->
+  <rect width="512" height="512" fill="#142d25"/>
+  <!-- Safe zone is 80% of the icon — content is centred in a 409x409 circle -->
+  <!-- Outer glow ring (within safe zone) -->
+  <circle cx="256" cy="240" r="120" fill="none" stroke="#729985" stroke-width="3" opacity="0.4"/>
+  <!-- Cross vertical arm — shifted up slightly within safe zone -->
+  <rect x="235" y="126" width="42" height="176" rx="21" fill="#ffffff"/>
+  <!-- Cross horizontal arm -->
+  <rect x="148" y="200" width="220" height="42" rx="21" fill="#ffffff"/>
+  <!-- Community dots — kept within safe zone -->
+  <circle cx="206" cy="346" r="18" fill="#729985"/>
+  <circle cx="256" cy="356" r="18" fill="#dce8dd"/>
+  <circle cx="306" cy="346" r="18" fill="#729985"/>
+</svg>

@@ -1,0 +1,461 @@
+/* ChurchConnect — Official Design System Tokens
+   Approved Palette: Forest Green + Sage + Warm Ivory
+*/
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-block;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+  vertical-align: middle;
+  user-select: none;
+}
+
+
+:root {
+  /* =========================================================================
+     1. Brand Primitive Tokens
+     ========================================================================= */
+  --color-deep-forest:   #142d25;  /* Navigation, strong headers on dark surfaces, footers */
+  --color-forest-green:  #245747;  /* Primary brand & primary interactive buttons */
+  --color-forest-hover:  #1b4336;  /* Primary hover state */
+  --color-sage-green:    #729985;  /* Supporting accent & icons (never default body text) */
+  --color-soft-sage:     #dce8dd;  /* Accent badges, soft pills, active tint */
+
+  /* Canvas & Card Surfaces */
+  --color-warm-ivory:    #faf9f4;  /* Canvas background (light & spacious) */
+  --color-white:         #ffffff;  /* Content cards, inputs, modal containers */
+  --color-ivory-subtle:  #f3f1e9;  /* Secondary surface, table header row, subtle hover */
+
+  /* Neutral Typography (WCAG AA Compliant) */
+  --color-text-primary:   #1c2822;  /* Primary body text & headings */
+  --color-text-secondary: #52635a;  /* Secondary metadata, subtitles, muted labels */
+  --color-text-muted:     #76887e;  /* Footnotes, placeholders */
+  --color-text-inverse:   #ffffff;  /* Text on dark forest backgrounds */
+
+  /* Borders & Dividers */
+  --color-border:        #e5e3da;  /* Card dividers, input borders, table rules */
+  --color-border-hover:  #729985;  /* Interactive hover outline */
+
+  /* Semantic Feedback & State Colors */
+  --color-success-bg:     #eef8f2;
+  --color-success-border: #b8e6ca;
+  --color-success-text:   #1b6e3e;
+
+  --color-warning-bg:     #fef8ec;
+  --color-warning-border: #fbdca6;
+  --color-warning-text:   #8a5806;
+
+  --color-danger-bg:      #fdf2f2;
+  --color-danger-border:  #f7baba;
+  --color-danger-text:    #9e2a2b;
+
+  --color-info-bg:        #f0f6fa;
+  --color-info-border:    #bcd7e8;
+  --color-info-text:      #1f577a;
+
+  /* =========================================================================
+     2. Semantic Variable Mapping
+     ========================================================================= */
+  --bg-page:           var(--color-warm-ivory);
+  --bg-surface:        var(--color-white);
+  --bg-surface-subtle: var(--color-ivory-subtle);
+  --bg-nav-dark:       var(--color-deep-forest);
+  --border-default:    var(--color-border);
+  --border-focus:      var(--color-forest-green);
+  --text-primary:      var(--color-text-primary);
+  --text-secondary:    var(--color-text-secondary);
+  --text-inverse:      var(--color-text-inverse);
+  --primary:           var(--color-forest-green);
+  --primary-hover:     var(--color-forest-hover);
+  --accent-sage:       var(--color-sage-green);
+  --badge-soft-sage:   var(--color-soft-sage);
+
+  /* =========================================================================
+     3. Typography Scale
+     ========================================================================= */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1.0rem;     /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  1.875rem;   /* 30px */
+  --text-4xl:  2.25rem;    /* 36px */
+
+  /* =========================================================================
+     4. Spacing Scale (4px/8px Grid)
+     ========================================================================= */
+  --space-1:  0.25rem; /* 4px */
+  --space-2:  0.5rem;  /* 8px */
+  --space-3:  0.75rem; /* 12px */
+  --space-4:  1.0rem;  /* 16px */
+  --space-5:  1.25rem; /* 20px */
+  --space-6:  1.5rem;  /* 24px */
+  --space-8:  2.0rem;  /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3.0rem;  /* 48px */
+  --space-16: 4.0rem;  /* 64px */
+
+  /* =========================================================================
+     5. Elevation & Radii
+     ========================================================================= */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  --shadow-xs:    0 1px 2px 0 rgba(20, 45, 37, 0.05);
+  --shadow-sm:    0 1px 3px 0 rgba(20, 45, 37, 0.06), 0 1px 2px -1px rgba(20, 45, 37, 0.06);
+  --shadow-md:    0 4px 8px -2px rgba(20, 45, 37, 0.08), 0 2px 4px -2px rgba(20, 45, 37, 0.05);
+  --shadow-lg:    0 12px 20px -4px rgba(20, 45, 37, 0.08), 0 4px 6px -2px rgba(20, 45, 37, 0.04);
+  --shadow-xl:    0 20px 28px -6px rgba(20, 45, 37, 0.12), 0 8px 10px -4px rgba(20, 45, 37, 0.06);
+  --shadow-modal: 0 25px 50px -12px rgba(20, 45, 37, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(20, 45, 37, 0.06);
+
+  --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================================================
+   Global Reset & Defaults
+   ========================================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+
+p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Container Utility */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================================
+   6. Modern Button Component Design System (.cc-btn)
+   ========================================================================= */
+.cc-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none !important;
+  border-radius: var(--radius-md);
+  box-sizing: border-box;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast),
+              box-shadow var(--transition-fast),
+              background var(--transition-fast),
+              border-color var(--transition-fast),
+              color var(--transition-fast),
+              opacity var(--transition-fast);
+}
+
+.cc-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(114, 153, 133, 0.45) !important;
+}
+
+.cc-btn:disabled,
+.cc-btn.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Sizes */
+.cc-btn-sm {
+  padding: 6px 14px;
+  font-size: var(--text-xs);
+  min-height: 34px;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+}
+
+.cc-btn-md {
+  padding: 10px 20px;
+  font-size: var(--text-sm);
+  min-height: 42px;
+  gap: 8px;
+  border-radius: var(--radius-md);
+}
+
+.cc-btn-lg {
+  padding: 13px 26px;
+  font-size: var(--text-base);
+  min-height: 48px;
+  gap: 10px;
+  border-radius: var(--radius-md);
+}
+
+/* Variants */
+.cc-btn-primary {
+  background: linear-gradient(180deg, #2a6653 0%, #1e4d3f 100%);
+  color: var(--color-white) !important;
+  border: 1px solid rgba(20, 45, 37, 0.3);
+  box-shadow: 0 1px 2px rgba(20, 45, 37, 0.12),
+              0 3px 8px rgba(36, 87, 71, 0.22),
+              inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.cc-btn-primary:hover:not(:disabled):not(.is-disabled) {
+  background: linear-gradient(180deg, #327560 0%, #245747 100%);
+  color: var(--color-white) !important;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px rgba(36, 87, 71, 0.3),
+              0 2px 4px rgba(20, 45, 37, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.cc-btn-primary:active:not(:disabled):not(.is-disabled) {
+  transform: translateY(0.5px) scale(0.985);
+  box-shadow: 0 1px 2px rgba(20, 45, 37, 0.2),
+              inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.cc-btn-secondary {
+  background-color: var(--color-white);
+  color: var(--color-deep-forest) !important;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 2px rgba(20, 45, 37, 0.04);
+}
+
+.cc-btn-secondary:hover:not(:disabled):not(.is-disabled) {
+  background-color: var(--color-warm-ivory);
+  border-color: var(--color-sage-green);
+  color: var(--color-forest-green) !important;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(20, 45, 37, 0.08);
+}
+
+.cc-btn-secondary:active:not(:disabled):not(.is-disabled) {
+  transform: translateY(0.5px) scale(0.985);
+  background-color: var(--color-ivory-subtle);
+}
+
+.cc-btn-danger {
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+  color: var(--color-white) !important;
+  border: 1px solid #991b1b;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.22);
+}
+
+.cc-btn-danger:hover:not(:disabled):not(.is-disabled) {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  color: var(--color-white) !important;
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.32);
+}
+
+.cc-btn-danger:active:not(:disabled):not(.is-disabled) {
+  transform: translateY(0.5px) scale(0.985);
+}
+
+.cc-btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary) !important;
+  border: 1px solid transparent;
+}
+
+.cc-btn-ghost:hover:not(:disabled):not(.is-disabled) {
+  background-color: rgba(36, 87, 71, 0.08);
+  color: var(--color-forest-green) !important;
+  transform: translateY(-1px);
+}
+
+.cc-btn-ghost:active:not(:disabled):not(.is-disabled) {
+  transform: translateY(0.5px);
+  background-color: rgba(36, 87, 71, 0.14);
+}
+
+/* =========================================================================
+   7. Card & Layout Polish
+   ========================================================================= */
+.card-interactive {
+  transition: transform var(--transition-normal),
+              box-shadow var(--transition-normal),
+              border-color var(--transition-normal);
+}
+
+.card-interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(114, 153, 133, 0.45);
+}
+
+/* Glass Header */
+.glass-header {
+  background-color: rgba(20, 45, 37, 0.88) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Ambient Hero Gradient */
+.hero-gradient {
+  background: radial-gradient(circle at 85% 20%, rgba(114, 153, 133, 0.22) 0%, transparent 50%),
+              radial-gradient(circle at 15% 80%, rgba(36, 87, 71, 0.35) 0%, transparent 60%),
+              linear-gradient(135deg, var(--color-deep-forest) 0%, #17382d 50%, #10241e 100%);
+}
+
+/* =========================================================================
+   8. Form Controls Polish (.cc-input)
+   ========================================================================= */
+.cc-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-white);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.cc-input:hover {
+  border-color: var(--color-sage-green);
+}
+
+.cc-input:focus {
+  outline: none;
+  border-color: var(--color-forest-green);
+  box-shadow: 0 0 0 3px rgba(36, 87, 71, 0.16);
+}
+
+.cc-input.has-error {
+  border-color: var(--color-danger-border);
+}
+
+.cc-input.has-error:focus {
+  border-color: var(--color-danger-text);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.16);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+

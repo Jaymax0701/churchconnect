@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Background -->
+  <rect width="192" height="192" rx="38" fill="#142d25"/>
+  <!-- Outer glow ring -->
+  <circle cx="96" cy="88" r="56" fill="none" stroke="#729985" stroke-width="1.5" opacity="0.35"/>
+  <!-- Cross vertical arm -->
+  <rect x="87" y="40" width="18" height="80" rx="9" fill="#ffffff"/>
+  <!-- Cross horizontal arm -->
+  <rect x="52" y="72" width="88" height="18" rx="9" fill="#ffffff"/>
+  <!-- Community dots -->
+  <circle cx="72" cy="144" r="8" fill="#729985"/>
+  <circle cx="96" cy="148" r="8" fill="#dce8dd"/>
+  <circle cx="120" cy="144" r="8" fill="#729985"/>
+</svg>

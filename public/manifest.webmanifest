@@ -1,0 +1,37 @@
+{
+  "id": "/",
+  "name": "ChurchConnect",
+  "short_name": "ChurchConnect",
+  "description": "Faith, Community & Ministry — your church in your pocket.",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "start_url": "/",
+  "scope": "/",
+  "theme_color": "#245747",
+  "background_color": "#FAF9F4",
+  "lang": "en",
+  "categories": [
+    "lifestyle",
+    "social"
+  ],
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
