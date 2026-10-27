@@ -78,14 +78,8 @@ ORDER BY source, row_data::text;
 
 -- 7) Profiles: inspect only column shape and aggregate approval states;
 -- do not output names, email addresses, or other personal data.
-SELECT to_jsonb(p) - ARRAY[
-  'id','email','full_name','first_name','last_name','phone','address',
-  'date_of_birth','avatar_url','photo_url','name'
-] AS non_identity_fields,
-       count(*) AS row_count
-FROM public.profiles p
-GROUP BY 1
-ORDER BY 2 DESC;
+SELECT count(*) AS profile_count
+FROM public.profiles;
 
 -- 8) Security-definer functions and event triggers relevant to authorization
 SELECT n.nspname AS schema_name, p.proname AS function_name,
