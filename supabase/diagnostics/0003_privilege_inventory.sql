@@ -8,16 +8,7 @@ SELECT n.nspname AS schema_name,
        c.relname AS object_name,
        CASE WHEN acl.grantee = 0 THEN 'PUBLIC'
             ELSE pg_get_userbyid(acl.grantee) END AS grantee_name,
-       CASE acl.privilege_type
-         WHEN 'r' THEN 'SELECT'
-         WHEN 'a' THEN 'INSERT'
-         WHEN 'w' THEN 'UPDATE'
-         WHEN 'd' THEN 'DELETE'
-         WHEN 'D' THEN 'TRUNCATE'
-         WHEN 'x' THEN 'REFERENCES'
-         WHEN 't' THEN 'TRIGGER'
-         ELSE acl.privilege_type
-       END AS privilege,
+       acl.privilege_type AS privilege,
        acl.is_grantable
 FROM pg_class c
 JOIN pg_namespace n ON n.oid = c.relnamespace
