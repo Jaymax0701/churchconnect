@@ -15,7 +15,9 @@ Known current schema from the database audit:
 - `roles`
 - `user_roles`
 
-The audit found RLS enabled on all seven tables, no policies, broad table-level grants for `anon` and `authenticated`, and an enabled `ensure_rls` event trigger that enables RLS on newly created public tables. Preserve that event trigger unless separately reviewed.
+The audit found RLS enabled on all seven tables, no policies, and an enabled `ensure_rls` event trigger that enables RLS on newly created public tables. Preserve that event trigger unless separately reviewed.
+
+The staging privilege audit found that `anon`, `authenticated`, and `service_role` have effective `REFERENCES`, `TRIGGER`, and `TRUNCATE` privileges on all seven tables, while none has effective `SELECT`, `INSERT`, `UPDATE`, or `DELETE` privileges in the audited result. This is not an acceptable final least-privilege posture. A draft privilege-hardening migration exists at `supabase/migrations/0001_revoke_unsafe_table_privileges.sql`; it only revokes those three unnecessary privileges and intentionally does not grant CRUD. It has **not** been applied. Before applying it, confirm no inherited or PUBLIC grants account for the effective privileges, verify the service-role access requirements, and decide the per-table CRUD grants together with the RLS policies. Do not apply the draft to production.
 
 ## Required schema reconciliation
 
