@@ -10,7 +10,7 @@ New profile rows must default to `is_approved = false`. A user must not be able 
 
 1. Confirm the Supabase dashboard/project reference is `aibstkdijaruvtvqaxke` (`churchconnect-staging`). Do not rely on a project display name alone.
 2. Create the intended first administrator through the trusted Supabase Auth/admin process. Verify the identity independently before using the account UUID.
-3. Review and apply the separate schema migration to staging only. Verify `profiles.is_approved` is `NOT NULL DEFAULT false`, the approval metadata columns exist, and the restricted bootstrap audit table has RLS enabled and no grants to `PUBLIC`, `anon`, `authenticated`, or `service_role`.
+3. Review and apply the separate schema migration to staging only. It adds `profiles.is_approved NOT NULL DEFAULT false`, approval metadata columns, a restricted bootstrap audit table, and an `auth.users` trigger that creates each new profile with `is_approved = false`. Verify the default, trigger, RLS state, and lack of grants to `PUBLIC`, `anon`, `authenticated`, or `service_role` on the audit table.
 4. A trusted database operator runs the separate manual bootstrap template with the verified existing `auth.users` UUID and a meaningful operator/ticket reference. Do not expose it as an RPC or frontend action.
 5. The operation must run transactionally and abort if the target auth user does not exist, the canonical `superadmin` role is missing, any superadmin assignment already exists, or the one-time audit event already exists. It approves the target, assigns the global `superadmin` role, and records one bootstrap event in the same transaction.
 6. Verify the role assignment, approved profile state, and audit row. Keep the execution record in the project’s controlled change log.
@@ -20,6 +20,7 @@ The audit `operator_reference` is an operator-entered annotation, not cryptograp
 ## Safeguards and limitations
 
 - The bootstrap script is not part of automated migrations and must not run automatically on deployment.
+- The profile-creation trigger reads only an optional display name from user metadata. Metadata is untrusted and cannot set approval, roles, or privileges.
 - The audit table uses a unique event key to prevent a second first-bootstrap record. The script also checks existing superadmin assignments and will not silently replace one.
 - `assigned_by` is `NULL` for this initial bootstrap because the SQL-editor operator is not necessarily an authenticated ChurchConnect user. The separate audit row records the operator reference and reason.
 - If any superadmin assignment exists but is unapproved or invalid, stop and reconcile manually; do not delete or overwrite assignments automatically.
