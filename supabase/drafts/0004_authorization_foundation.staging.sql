@@ -26,20 +26,26 @@ BEGIN
     RAISE EXCEPTION 'Required ChurchConnect staging objects are missing; aborting.';
   END IF;
 
+  -- Resolve the bootstrap identity from the restricted one-time audit row,
+  -- rather than baking a personal account UUID into the reusable draft.
   IF NOT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = '6bbc55e2-bda8-4609-b0c4-a4f4e5308a5b'::uuid
-      AND is_approved IS TRUE
+    SELECT 1
+    FROM public.security_bootstrap_audit a
+    JOIN public.profiles p ON p.id = a.target_user_id
+    WHERE a.event_type = 'first_superadmin_bootstrap'
+      AND p.is_approved IS TRUE
   ) THEN
-    RAISE EXCEPTION 'Verified staging bootstrap profile is missing or not approved; aborting.';
+    RAISE EXCEPTION 'Verified staging bootstrap audit/profile is missing or not approved; aborting.';
   END IF;
 
   IF NOT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = '6bbc55e2-bda8-4609-b0c4-a4f4e5308a5b'::uuid
-      AND role_id = 'superadmin'
-      AND scope_type = 'global'
-      AND ministry_id IS NULL
+    SELECT 1
+    FROM public.security_bootstrap_audit a
+    JOIN public.user_roles ur ON ur.user_id = a.target_user_id
+    WHERE a.event_type = 'first_superadmin_bootstrap'
+      AND ur.role_id = 'superadmin'
+      AND ur.scope_type = 'global'
+      AND ur.ministry_id IS NULL
   ) THEN
     RAISE EXCEPTION 'Verified global staging superadmin assignment is missing; aborting.';
   END IF;
