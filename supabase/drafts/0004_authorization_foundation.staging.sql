@@ -180,7 +180,6 @@ CREATE POLICY profiles_update_own_name
 CREATE FUNCTION public.guard_profile_approval_fields()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = ''
 AS $guard_profile$
 BEGIN
@@ -211,7 +210,6 @@ EXECUTE FUNCTION public.guard_profile_approval_fields();
 CREATE FUNCTION public.guard_user_role_mutations()
 RETURNS trigger
 LANGUAGE plpgsql
-SECURITY DEFINER
 SET search_path = ''
 AS $guard_roles$
 BEGIN
