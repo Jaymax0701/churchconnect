@@ -1,6 +1,6 @@
 # ChurchConnect Security Migration Plan
 
-Status: Draft for review — no database changes applied.
+Status: Draft for review — staging privilege postconditions verified; authorization schema/policies are not yet implemented.
 
 ## Scope and safety boundary
 
@@ -21,9 +21,11 @@ The audit found RLS enabled on all seven tables, no policies, and an enabled `en
 
 The staging audit found that `anon`, `authenticated`, and `service_role` have effective `REFERENCES`, `TRIGGER`, and `TRUNCATE` privileges on all seven existing tables. Direct ACL entries from `postgres` also show `MAINTAIN` for those roles. The direct ACL output supplied so far did not show CRUD grants to these roles; do not confuse it with the default-privilege inventory.
 
-The default-privilege inventory separately reports:
+The initial default-privilege inventory reported:
 - `postgres` defaults in `public`: `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` for `anon`, `authenticated`, and `service_role`.
 - `supabase_admin` defaults in `public`: CRUD plus those additional privileges for the same API roles.
+
+**Latest staging postconditions (2026-10-28):** the effective-privilege verification query returned zero rows for `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` across the seven existing tables for `anon`, `authenticated`, and `service_role`. The latest default-ACL output no longer showed `postgres`-owned defaults for those API roles; `supabase_admin`-owned defaults remained. These results confirm the observed database state, but do not by themselves prove which exact SQL file was executed.
 
 The audited session is `postgres`, which is not a member of `supabase_admin`. The migration draft `supabase/migrations/0002_restrict_future_table_defaults.sql` has therefore been narrowed to revoke defaults only for tables created by `postgres`. It intentionally leaves `supabase_admin` defaults unchanged. Resolve those defaults through an authorized Supabase/platform administrative path; do not change privileged role memberships to bypass the access boundary.
 
@@ -31,7 +33,7 @@ Two draft migrations exist on the security branch:
 - `supabase/migrations/0001_revoke_unsafe_table_privileges.sql` — revokes `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` on the seven existing tables from the three API roles. It does not grant CRUD.
 - `supabase/migrations/0002_restrict_future_table_defaults.sql` — revokes all default table privileges for those roles on future public tables created by `postgres`.
 
-**Neither migration has been applied.** Before execution, confirm the target is staging and review `service_role` access requirements. After execution, inspect effective grants and default ACLs. New migrations should explicitly grant only required privileges, together with reviewed RLS policies. Do not apply either draft to production.
+The effective-privilege postcondition for migration `0001` is now satisfied in staging (zero rows returned). The latest default-ACL inventory also indicates that the `postgres`-owned defaults targeted by migration `0002` are no longer present for these API roles. The user has not separately confirmed the exact execution history, so retain the scripts as reviewed artifacts and do not infer more than the observed postconditions. New migrations should explicitly grant only required privileges, together with reviewed RLS policies. Do not apply either draft to production.
 
 The remaining `supabase_admin` default ACL is a known unresolved issue: until an authorized administrative path corrects it, tables created under that role may inherit overly broad privileges. Avoid creating application tables under that owner until the issue is resolved, and inspect grants immediately for any table created by platform tooling.
 
