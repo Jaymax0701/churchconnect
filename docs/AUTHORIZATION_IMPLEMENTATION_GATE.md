@@ -1,6 +1,6 @@
 # ChurchConnect Authorization Implementation Gate
 
-Status: Draft artifacts added on 2026-10-28. No authorization-foundation draft has been applied or database-tested.
+Status: Draft artifacts added on 2026-10-28. Authorization-foundation draft has not been applied or database-tested. Staging-only SQL files were moved out of supabase/migrations to prevent automatic migration deployment.
 
 ## Verified staging state
 
@@ -20,6 +20,9 @@ These are user-supplied verification results. They do not mean this repository m
 
 ## Draft artifacts
 
+- `supabase/drafts/0001_revoke_unsafe_table_privileges.staging.sql`: staging privilege hardening draft; verify current postconditions before any reapplication.
+- `supabase/drafts/0002_restrict_future_table_defaults.staging.sql`: staging default-privilege draft; postgres-owned defaults were audited, while supabase_admin-owned defaults remain unresolved.
+- `supabase/drafts/0003_member_approval_and_bootstrap_audit.staging.sql`: staging approval/bootstrap schema script. Its objects were observed in staging after the SQL Editor run hit a duplicate-function error; do not rerun this script as a whole.
 - `supabase/drafts/0004_authorization_foundation.staging.sql`: review-only, intentionally outside `supabase/migrations` so CLI migration deployment cannot pick it up automatically.
 - `supabase/tests/0004_authorization_foundation_catalog.test.sql`: catalog assertions to run only after the draft has been deliberately reviewed and applied to staging.
 
@@ -58,4 +61,4 @@ Still unresolved before production-ready authorization:
 7. Add behavioral tests with real test Auth users for approved/unapproved profiles, self-profile access, denied approval changes, denied direct role assignment, cross-ministry isolation, missing permission deny, explicit user deny, and concurrent last-superadmin removal attempts.
 8. Do not apply to production. Production requires a separate review, explicit authorization, tested rollback/restore, and its own current inventory.
 
-No SQL in the draft or test file has been executed by the assistant.
+No SQL in the authorization-foundation draft or catalog test has been executed by the assistant. The approval/bootstrap objects and first-superadmin operation were run by the owner in staging; the SQL Editor reported a duplicate-function error, after which catalog checks confirmed the expected objects and bootstrap state.
