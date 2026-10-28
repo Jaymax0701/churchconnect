@@ -1,6 +1,6 @@
 # ChurchConnect Security Migration Plan
 
-Status: Draft for review — staging privilege postconditions verified; authorization schema/policies are not yet implemented.
+Status: Draft for review — staging privilege postconditions verified; approval schema and bootstrap drafts added but NOT applied; authorization policies are not yet implemented.
 
 ## Scope and safety boundary
 
@@ -45,10 +45,12 @@ Before authoring executable SQL, capture the exact column types, primary keys, u
 
 Proposed additions from the specification:
 - `roles.hierarchy_level`
-- `profiles.is_approved` and approval timestamp (confirm canonical column name)
+- `profiles.is_approved`, `approved_at`, and `approved_by` (now designed in draft migration `0003_member_approval_and_bootstrap_audit.sql`)
 - `ministries.leader_id`
 - `role_module_permissions`
 - `user_module_permissions`
+
+The approval/bootstrap design is documented in `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`. New profiles default to unapproved. The schema migration does not assign a superadmin. A separate manual staging-only bootstrap template requires a verified existing Auth user, fails if any superadmin assignment or prior bootstrap event exists, and writes the approval, global role assignment, and restricted audit event in one transaction. Neither file has been executed.
 
 Do not create foreign keys or seed mappings until their target types and canonical role/module identifiers are verified. Keep legacy `permissions` and `role_permissions` intact. Any historical permission mapping must be reviewed and migrated through a separate auditable mapping step; do not guess mappings.
 
@@ -96,9 +98,11 @@ Do not copy the proposed trigger verbatim into a migration.
 1. Produce a schema inventory from the current staging database and compare it with the production schema. No writes.
 2. Confirm canonical role IDs/names, module identifiers, and whether any production records need backfill.
 3. Review and test the table-privilege and default-privilege drafts in staging only, with explicit preconditions and postcondition checks.
-4. Resolve the `supabase_admin` default ACL through an authorized platform path before creating application tables under that owner.
-5. Write the authorization migration with explicit preconditions and fail-fast checks. Preserve legacy tables and existing rows.
-6. Add SQL regression tests for:
+4. Review `0003_member_approval_and_bootstrap_audit.sql`; apply it to staging only after confirming the exact project reference and taking the agreed backup/restore precautions. Verify the `false` default and audit-table restrictions.
+5. If and only if the staging schema migration passes verification, use the separate manual bootstrap template with an independently verified existing Auth user. Do not automate or include bootstrap assignment in deployment migrations.
+6. Resolve the `supabase_admin` default ACL through an authorized platform path before creating application tables under that owner.
+7. Write the remaining authorization migration with explicit preconditions and fail-fast checks. Preserve legacy tables and existing rows.
+8. Add SQL regression tests for:
    - anonymous protected reads/writes denied;
    - approved member self-profile access only;
    - unapproved member blocked from protected features;
@@ -112,9 +116,9 @@ Do not copy the proposed trigger verbatim into a migration.
    - last active approved superadmin cannot be removed/deactivated;
    - concurrent demotions cannot leave zero active superadmins;
    - legacy permission tables do not affect live permission resolution.
-7. Apply only to staging after reviewing the SQL. Test using real authenticated test users and the publishable key, not only the database owner or service role.
-8. Inspect resulting policies, grants, function definitions, and trigger definitions; run regression tests and app build/workflow checks.
-9. Production rollout remains a separate, explicitly approved action with a rollback/restore plan.
+9. Apply remaining changes only to staging after reviewing the SQL. Test using real authenticated test users and the publishable key, not only the database owner or service role.
+10. Inspect resulting policies, grants, function definitions, and trigger definitions; run regression tests and app build/workflow checks.
+11. Production rollout remains a separate, explicitly approved action with a rollback/restore plan.
 
 ## Authentication dependency
 
