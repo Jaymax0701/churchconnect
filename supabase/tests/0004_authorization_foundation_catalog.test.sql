@@ -74,9 +74,13 @@ BEGIN
     FROM pg_trigger t
     JOIN pg_class c ON c.oid = t.tgrelid
     JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_proc p ON p.oid = t.tgfoid
+    JOIN pg_namespace fn ON fn.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND c.relname = 'profiles'
       AND t.tgname = 'guard_profile_approval_fields'
+      AND fn.nspname = 'public'
+      AND p.proname = 'guard_profile_approval_fields'
       AND NOT t.tgisinternal
       AND t.tgenabled = 'O'
   ) THEN
@@ -88,9 +92,13 @@ BEGIN
     FROM pg_trigger t
     JOIN pg_class c ON c.oid = t.tgrelid
     JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_proc p ON p.oid = t.tgfoid
+    JOIN pg_namespace fn ON fn.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND c.relname = 'user_roles'
       AND t.tgname = 'guard_user_role_mutations'
+      AND fn.nspname = 'public'
+      AND p.proname = 'guard_user_role_mutations'
       AND NOT t.tgisinternal
       AND t.tgenabled = 'O'
   ) THEN
