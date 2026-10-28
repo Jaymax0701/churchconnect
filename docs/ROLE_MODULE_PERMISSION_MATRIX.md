@@ -11,8 +11,9 @@ This matrix is the required owner-review artifact before writing permission seed
 - Use exact role IDs and module IDs below; IDs are case-sensitive.
 - For each role/module pair, explicitly choose `ALLOW`, `DENY`, or `PENDING` for each action.
 - An omitted or `PENDING` decision must remain denied by the implementation until explicitly approved.
-- Role-derived grants are only a capability baseline. Approval status, authentication, module/record scope, ministry assignment, and ownership constraints still apply.
-- An explicit per-user `DENY` overrides role grants. An explicit per-user `ALLOW` never bypasses those constraints.
+- Role-derived grants are only a capability baseline. Approval status, authentication, module/record scope, ministry assignment, ownership constraints, and agreed safeguards still apply.
+- **Owner-approved exception (2026-10-28):** a valid, authenticated, approved `superadmin` bypasses ordinary per-user overrides, including explicit per-user `DENY` and `ALLOW` values. Evaluate this path before per-user overrides. It does not bypass authentication, account integrity/approval, applicable record/ministry scope, database constraints, or audit safeguards.
+- For non-superadmins, an explicit per-user `DENY` overrides role grants; an explicit per-user `ALLOW` never bypasses the safeguards above.
 - Do not translate legacy `permissions` / `role_permissions` rows automatically. They are empty in the staging restore, and the legacy action/scope model differs from the proposed CRUD booleans.
 - Define `manage`, `approve`, and `assign` separately before mapping any legacy capability or administrative action.
 
