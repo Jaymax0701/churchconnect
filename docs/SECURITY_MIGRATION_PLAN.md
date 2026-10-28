@@ -133,3 +133,8 @@ Do not apply to production until:
 - last-superadmin concurrency tests pass;
 - authentication/session implementation is in place for end-to-end tests;
 - a separate production rollout is explicitly approved.
+
+
+## Deployment safety correction (2026-10-28)
+
+The staging-only SQL files `0001_revoke_unsafe_table_privileges`, `0002_restrict_future_table_defaults`, and `0003_member_approval_and_bootstrap_audit` have been moved from `supabase/migrations/` to `supabase/drafts/` with `.staging.sql` names. This prevents them from being picked up as numbered Supabase migrations if this PR is merged. The owner has run staging SQL manually; the approval/bootstrap objects were verified in staging after the migration run encountered a duplicate-function error. Do not rerun draft 0003 as a whole. No production SQL has been run by the assistant. Any future production rollout requires a separate approved migration plan.
