@@ -84,4 +84,4 @@ RLS and SQL privileges must be reviewed together. Policies cannot grant privileg
 - Confirm whether module names should remain the 12 existing IDs or whether new modules are needed for workflows not represented in current schema.
 - Inventory real application tables and data access paths before authoring table-specific RLS policies.
 
-No SQL in this document should be executed. This is a design checkpoint for review before writing the numbered migration.
+No SQL in this document should be executed. This is a design checkpoint for review. Staging-only SQL drafts are intentionally stored under `supabase/drafts/`, not `supabase/migrations/`, until reviewed and approved for a controlled deployment.
