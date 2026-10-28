@@ -12,7 +12,7 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 2. **User Override Precedence:** For non-superadmins, an explicit per-user permission record (`user_module_permissions`) takes precedence over the role-derived baseline. A valid, authenticated, approved `superadmin` bypasses ordinary per-user overrides, including explicit per-user denials.
 3. **Explicit Grant Precondition:** An explicit user grant (`can_<action> = TRUE`) authorizes the action *only* when all applicable authentication, account approval, and record-scoping requirements are satisfied.
 4. **Explicit Denial Primacy for Non-Superadmins:** An explicit user denial (`can_<action> = FALSE`) denies the action for a non-superadmin even if an ordinary role would otherwise permit it. It does not constrain the approved superadmin path.
-5. **Default Deny:** If neither an explicit user grant nor an applicable role grant exists, access is denied by default.
+5. **Default Deny:** For non-superadmins, if neither an explicit user grant nor an applicable role grant exists, access is denied by default. The approved superadmin path is the documented exception to ordinary override/grant evaluation, not to the safeguards below.
 6. **No Scope or Integrity Bypass:** Permission checks do not bypass authentication, member account approval (`is_approved = TRUE`), ministry-scope boundaries, record ownership, or database constraints.
 7. **Database is Sole Authority:** All access boundaries are enforced server-side via PostgreSQL Row Level Security (RLS) policies and security-definer functions. Frontend navigation checks and conditional button rendering are user-experience conveniences only.
 8. **Anti-Escalation & Self-Approval Guard:** Users cannot grant themselves roles, approve their own accounts, or alter their own protected privilege fields.
@@ -40,8 +40,8 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
                            │
 ┌──────────────────────────▼─────────────────────────────┐
 │ Step 3: Is user an active, approved superadmin?        │
-│ ├─ YES ──► Bypass ordinary permission overrides        │
-│ │          Continue through scope/integrity safeguards │
+│ ├─ YES ──► Skip ordinary override/grant checks         │
+│ │          Proceed directly to Step 7 safeguards       │
 │ └─ NO  ──► Proceed to Step 4                           │
 └──────────────────────────┬─────────────────────────────┘
                            │
@@ -61,6 +61,12 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 ┌──────────────────────────▼─────────────────────────────┐
 │ Step 6: Default Deny Gate                              │
 │ └─ Neither explicit nor role grant exists ──► DENY     │
+└────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────┐
+│ Step 7: Apply required scope/integrity/audit safeguards│
+│ ├─ Any required safeguard fails ──► DENY               │
+│ └─ All required safeguards pass ──► ALLOW              │
 └────────────────────────────────────────────────────────┘
 ```
 
