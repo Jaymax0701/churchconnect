@@ -50,7 +50,7 @@ Proposed additions from the specification:
 - `role_module_permissions`
 - `user_module_permissions`
 
-The approval/bootstrap design is documented in `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`. New profiles default to unapproved. The schema migration does not assign a superadmin. A separate manual staging-only bootstrap template requires a verified existing Auth user, fails if any superadmin assignment or prior bootstrap event exists, and writes the approval, global role assignment, and restricted audit event in one transaction. Neither file has been executed.
+The approval/bootstrap design is documented in `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`. New profiles default to unapproved, and the draft adds an `auth.users` trigger to create each new profile with approval set to false. The schema migration does not assign a superadmin. A separate manual staging-only bootstrap template requires a verified existing Auth user, fails if any superadmin assignment or prior bootstrap event exists, and writes the approval, global role assignment, and restricted audit event in one transaction. Neither file has been executed.
 
 Do not create foreign keys or seed mappings until their target types and canonical role/module identifiers are verified. Keep legacy `permissions` and `role_permissions` intact. Any historical permission mapping must be reviewed and migrated through a separate auditable mapping step; do not guess mappings.
 
