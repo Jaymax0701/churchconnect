@@ -8,11 +8,11 @@ Reviewed on 2026-10-28 against the authorization foundation draft, catalog test,
 
 ## Findings that must be resolved before implementing live authorization
 
-### AUTH-REV-01 — Permission precedence conflicts with superadmin bypass
+### AUTH-REV-01 — Resolved: superadmin bypasses ordinary per-user overrides
 
-`docs/PERMISSIONS.md` places an active superadmin allow before the per-user explicit-deny check, while its rule 3 says explicit user denial strictly denies access regardless of assigned roles. The matrix template correctly keeps even superadmin CRUD grants pending. These rules cannot all be true simultaneously.
+**Owner decision (2026-10-28):** an authenticated, approved user with a valid `superadmin` assignment bypasses ordinary per-user permission overrides, including explicit per-user DENY records. Evaluate the superadmin path before checking `user_module_permissions`. This does not bypass authentication, account approval/integrity checks, applicable record/ministry scope, database constraints, audit requirements, or other agreed safeguards.
 
-**Required decision:** explicitly define whether a per-user deny can constrain superadmin. Document any non-overridable emergency/system operations as separate audited capabilities. Do not implement the resolver until this precedence is unambiguous.
+**Implementation requirement:** preserve this precedence explicitly and test it with real test-user JWTs. Do not let a per-user override accidentally supersede the superadmin path. Any emergency/system operation that intentionally differs must be separately specified and audited. This decision does not approve the pending role/module matrix or authorize permission seeds.
 
 ### AUTH-REV-02 — Documentation module aliases do not match the restored schema
 

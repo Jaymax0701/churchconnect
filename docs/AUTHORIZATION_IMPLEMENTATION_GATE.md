@@ -41,6 +41,8 @@ The draft is deliberately restrictive and may temporarily break any application 
 
 `docs/ROLE_MODULE_PERMISSION_MATRIX.md` still marks all CRUD permissions as PENDING. No role/module grants may be seeded until the owner approves the matrix. The draft therefore does not assume that any role, including `superadmin`, has implicit CRUD access.
 
+Resolved policy decision (2026-10-28): an authenticated, approved user with a valid `superadmin` assignment bypasses ordinary per-user permission overrides, including explicit per-user DENY records. Evaluate this path before per-user overrides. Authentication, account integrity/approval, applicable record/ministry scope, database constraints, audit requirements, and other agreed safeguards still apply. This is a precedence decision only; it does not approve permission grants.
+
 Still unresolved before production-ready authorization:
 1. Approved role/module/action matrix for all six roles and twelve modules.
 2. Special capabilities `manage`, `approve`, and `assign`.

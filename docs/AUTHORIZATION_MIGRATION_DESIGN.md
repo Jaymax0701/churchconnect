@@ -41,9 +41,10 @@ Do not add speculative modules called `portal`, `ministry`, `events`, or `regist
 
 - Unauthenticated callers receive only explicitly public-site read access through narrowly scoped policies.
 - Authenticated users must be approved for internal features; unapproved users may access only their own minimal profile as defined by policy.
-- Resolve a module/action using this precedence: explicit user FALSE => deny; explicit user TRUE => continue to approval/scope gates; otherwise union role grants; otherwise deny.
-- Approval, active module/ministry, and record-scope checks are separate gates and cannot be bypassed by a permission grant.
-- SUPERADMIN status must be determined by the real role ID `superadmin` and trusted `auth.uid()`, not by caller-supplied user IDs.
+- **Owner-approved precedence (2026-10-28):** after authentication and account-approval/integrity gates pass, a caller with a valid `superadmin` assignment bypasses ordinary per-user overrides in `user_module_permissions`, including explicit FALSE/DENY and TRUE/ALLOW values. Evaluate this superadmin path before checking per-user overrides.
+- For non-superadmins, an explicit user FALSE => deny; explicit user TRUE => continue to applicable scope gates; otherwise union applicable role grants; otherwise deny.
+- Approval, active module/ministry, record-scope and ownership checks, database constraints, and agreed audit/safeguard requirements remain separate gates; a permission grant or superadmin status must not bypass them.
+- Superadmin status must be determined from the canonical role ID `superadmin` and trusted `auth.uid()`, not by caller-supplied user IDs. This decision does not approve any role/module/action matrix entries or permission seeds.
 - Record-level policies must be designed per real table. Do not invent policies for events/rosters until those tables exist.
 
 ## 4. Role and assignment safeguards
