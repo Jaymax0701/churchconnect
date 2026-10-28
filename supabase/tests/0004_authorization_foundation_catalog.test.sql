@@ -63,7 +63,7 @@ BEGIN
     RAISE EXCEPTION 'FAIL: authenticated lacks SELECT grant required by own-profile policy';
   END IF;
 
-  IF has_column_privilege('authenticated', 'public.profiles', 'UPDATE', 'is_approved') THEN
+  IF has_column_privilege('authenticated', 'public.profiles', 'is_approved', 'UPDATE') THEN
     RAISE EXCEPTION 'FAIL: authenticated can update profiles.is_approved';
   END IF;
 
