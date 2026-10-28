@@ -9,9 +9,9 @@ This document establishes the precise operational rules, precedence engine, func
 The ChurchConnect authorization engine operates under nine strict, non-negotiable rules enforced at the PostgreSQL database layer:
 
 1. **Role Baseline:** Role-module permissions (`role_module_permissions`) define the baseline CRUD grants (`can_view`, `can_create`, `can_update`, `can_delete`) for each system role.
-2. **User Override Precedence:** An explicit per-user permission record (`user_module_permissions`) strictly takes precedence over any role-derived baseline.
+2. **User Override Precedence:** For non-superadmins, an explicit per-user permission record (`user_module_permissions`) takes precedence over the role-derived baseline. A valid, authenticated, approved `superadmin` bypasses ordinary per-user overrides, including explicit per-user denials.
 3. **Explicit Grant Precondition:** An explicit user grant (`can_<action> = TRUE`) authorizes the action *only* when all applicable authentication, account approval, and record-scoping requirements are satisfied.
-4. **Explicit Denial Primacy:** An explicit user denial (`can_<action> = FALSE`) strictly denies the action even if one or more of the user's assigned roles would otherwise permit it.
+4. **Explicit Denial Primacy for Non-Superadmins:** An explicit user denial (`can_<action> = FALSE`) denies the action for a non-superadmin even if an ordinary role would otherwise permit it. It does not constrain the approved superadmin path.
 5. **Default Deny:** If neither an explicit user grant nor an applicable role grant exists, access is denied by default.
 6. **No Scope or Integrity Bypass:** Permission checks do not bypass authentication, member account approval (`is_approved = TRUE`), ministry-scope boundaries, record ownership, or database constraints.
 7. **Database is Sole Authority:** All access boundaries are enforced server-side via PostgreSQL Row Level Security (RLS) policies and security-definer functions. Frontend navigation checks and conditional button rendering are user-experience conveniences only.
@@ -39,8 +39,9 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 └──────────────────────────┬─────────────────────────────┘
                            │
 ┌──────────────────────────▼─────────────────────────────┐
-│ Step 3: Is user an active SUPERADMIN?                  │
-│ ├─ YES ──► ALLOW (Global administrative authority)     │
+│ Step 3: Is user an active, approved superadmin?        │
+│ ├─ YES ──► Bypass ordinary permission overrides        │
+│ │          Continue through scope/integrity safeguards │
 │ └─ NO  ──► Proceed to Step 4                           │
 └──────────────────────────┬─────────────────────────────┘
                            │
@@ -66,13 +67,15 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 ### B. Deterministic Resolution Rules
 
 1. **Role Grants vs. Explicit Per-User Overrides:**
-   * Role-module permissions (`role_module_permissions`) establish the default baseline for a given role.
-   * Explicit per-user permissions (`user_module_permissions`) supersede any role-derived baseline.
-2. **Explicit Denial Primacy:**
-   * If `user_module_permissions.can_<action> = FALSE`, access is **strictly denied**, regardless of how many roles or how elevated the user's roles are. An explicit denial cannot be overridden by an administrative role assignment.
+   * Role-module permissions (`role_module_permissions`) establish the default baseline for ordinary roles.
+   * For non-superadmins, explicit per-user permissions (`user_module_permissions`) supersede any role-derived baseline.
+   * A valid, authenticated, approved user with the canonical `superadmin` role bypasses ordinary per-user overrides (both TRUE and FALSE). This is the owner-approved precedence decision dated 2026-10-28.
+2. **Explicit Denial Primacy for Non-Superadmins:**
+   * If a non-superadmin has `user_module_permissions.can_<action> = FALSE`, access is denied regardless of their ordinary role grants.
+   * A per-user denial does not constrain superadmin. Superadmin status does not bypass authentication, account approval/integrity, applicable record/ministry scope, database constraints, audit requirements, or other agreed safeguards.
 3. **Multiple Role Assignment Resolution:**
    * When a user holds multiple roles (e.g., `MINISTRY_LEADER` and `CHURCH_COUNCIL`), baseline role permissions are combined using an **additive logical OR (`bool_or`)**. If *any* active assigned role grants `can_<action> = TRUE`, the role baseline evaluates to `TRUE`.
-   * However, if an explicit per-user denial (`FALSE`) exists for that module and action, it immediately overrides the union of all roles.
+   * For non-superadmins, an explicit per-user denial (`FALSE`) overrides the union of ordinary role grants. For superadmin, ordinary per-user overrides are bypassed.
 4. **Scope & Ministry Isolation Across Multi-Role Assignments:**
    * **Module Permission vs. Record Scope:** A module permission grant (e.g., `events.can_update = TRUE`) grants the *capability* to update events, but table-level RLS policies strictly evaluate *record scope*.
    * **Multi-Role Scoping Invariant:** Holding `MINISTRY_LEADER` for Ministry A (e.g., Youth) and `VOLUNTEER` for Ministry B (e.g., Worship) does **not** grant leadership privileges over Ministry B. RLS policies evaluate `events.ministry_id IN (SELECT id FROM public.ministries WHERE leader_id = auth.uid()) OR public.is_admin()`. An elevated role in one scope never bleeds into another scope.
