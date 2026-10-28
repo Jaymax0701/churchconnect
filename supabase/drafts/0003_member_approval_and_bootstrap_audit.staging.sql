@@ -2,9 +2,13 @@
 -- Do not run via automated migration deployment or apply to production.
 
 -- ChurchConnect: member approval state and restricted one-time bootstrap audit.
--- DRAFT FOR STAGING REVIEW ONLY. Not applied to any database.
--- Never apply this draft to production without separate explicit approval.
--- This migration does not approve an account or assign the first superadmin.
+-- STAGING-ONLY HISTORICAL SCRIPT. Do not rerun as a whole.
+-- The owner ran this in staging and received a duplicate-function error; subsequent
+-- catalog checks confirmed the approval columns, audit table, trigger function,
+-- and auth.users trigger already existed. The first-superadmin bootstrap was then
+-- executed separately and verified. Inspect current state before any targeted repair.
+-- This file is stored outside supabase/migrations to prevent automatic deployment.
+-- Never apply this script to production without a separate approved rollout plan.
 BEGIN;
 
 DO $$
