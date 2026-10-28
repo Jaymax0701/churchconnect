@@ -84,14 +84,14 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $profile_fn$
 BEGIN
   INSERT INTO public.profiles (id, full_name, is_approved)
   VALUES (NEW.id, NEW.raw_user_meta_data ->> 'full_name', false)
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
-$;
+$profile_fn$;
 
 REVOKE ALL PRIVILEGES ON FUNCTION public.handle_new_auth_user_profile()
   FROM PUBLIC, anon, authenticated, service_role;
