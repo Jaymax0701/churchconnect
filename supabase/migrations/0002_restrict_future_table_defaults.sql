@@ -1,35 +1,33 @@
 -- ChurchConnect: restrict default privileges for future public tables.
--- REVIEW ONLY: draft for STAGING; NOT EXECUTED.
--- The staging diagnostic reported broad default table privileges for anon,
--- authenticated, and service_role under both postgres and supabase_admin.
+-- REVIEW ONLY: staging draft; NOT EXECUTED.
 --
--- This removes all default table privileges for those API roles from tables
--- created by either owner in public. Future migrations must explicitly grant
--- only the CRUD privileges needed, paired with reviewed RLS policies.
+-- Audit findings:
+-- * postgres-owned public-table defaults grant MAINTAIN, REFERENCES, TRIGGER,
+--   and TRUNCATE to anon, authenticated, and service_role.
+-- * supabase_admin-owned public-table defaults grant CRUD plus those extra
+--   privileges to the same roles.
+-- * The current SQL session is postgres and is not a member of supabase_admin.
 --
--- Prerequisites:
--- 1. Confirm this is the staging project, never production.
--- 2. Confirm the current session is authorized to alter default privileges
---    for BOTH postgres and supabase_admin. If either statement is denied,
---    stop and resolve role ownership/authority; do not work around it by
---    changing platform-owned roles or memberships.
--- 3. Review service_role usage before execution.
+-- This file ONLY changes postgres-owned defaults, which the audited session
+-- can manage. It deliberately does not attempt to change supabase_admin-owned
+-- defaults. Resolve those separately through an authorized Supabase/platform
+-- administrative path; do not change privileged role memberships to bypass
+-- the access boundary.
 --
--- This migration intentionally fails atomically if the session cannot change
--- one of the owners' default privileges.
+-- Future migrations must explicitly grant only required table privileges,
+-- together with reviewed RLS policies. Review service_role access requirements
+-- before applying.
 
 BEGIN;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
   REVOKE ALL PRIVILEGES ON TABLES FROM anon, authenticated, service_role;
 
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public
-  REVOKE ALL PRIVILEGES ON TABLES FROM anon, authenticated, service_role;
-
 COMMIT;
 
--- Postcondition: inspect pg_default_acl for public table defaults.
--- The query reports remaining default ACL entries for these API roles.
+-- Postcondition: should return no postgres-owned public table default ACL
+-- privileges for these three API roles. supabase_admin rows may remain and
+-- are intentionally outside this migration's authority.
 SELECT n.nspname AS schema_name,
        owner.rolname AS default_privilege_owner,
        grantee.rolname AS grantee,
