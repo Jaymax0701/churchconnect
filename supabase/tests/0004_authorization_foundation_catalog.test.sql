@@ -55,6 +55,33 @@ BEGIN
     RAISE EXCEPTION 'FAIL: own-profile name UPDATE policy missing';
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_trigger t
+    JOIN pg_class c ON c.oid = t.tgrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND c.relname = 'profiles'
+      AND t.tgname = 'guard_profile_approval_fields'
+      AND NOT t.tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'FAIL: profile approval-field guard trigger missing';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_trigger t
+    JOIN pg_class c ON c.oid = t.tgrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND c.relname = 'user_roles'
+      AND t.tgname = 'guard_user_role_mutations'
+      AND NOT t.tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'FAIL: direct role-assignment guard trigger missing';
+  END IF;
+
+
   IF has_table_privilege('anon', 'public.profiles', 'SELECT') THEN
     RAISE EXCEPTION 'FAIL: anon unexpectedly has SELECT on profiles';
   END IF;
@@ -72,6 +99,19 @@ BEGIN
      OR has_table_privilege('authenticated', 'public.user_roles', 'DELETE') THEN
     RAISE EXCEPTION 'FAIL: authenticated can directly mutate user_roles';
   END IF;
+
+  -- Fail closed on protected data for API roles. The only exception in
+  -- this foundation is authenticated own-profile access.
+  IF has_table_privilege('anon', 'public.ministries', 'SELECT')
+     OR has_table_privilege('authenticated', 'public.ministries', 'SELECT')
+     OR has_table_privilege('service_role', 'public.user_roles', 'INSERT')
+     OR has_table_privilege('service_role', 'public.role_module_permissions', 'SELECT')
+     OR has_table_privilege('anon', 'public.security_bootstrap_audit', 'SELECT')
+     OR has_table_privilege('authenticated', 'public.security_bootstrap_audit', 'SELECT')
+     OR has_table_privilege('service_role', 'public.security_bootstrap_audit', 'SELECT') THEN
+    RAISE EXCEPTION 'FAIL: unexpected API-role privilege on protected authorization data';
+  END IF;
+
 
   SELECT prosecdef INTO v_security_definer
   FROM pg_proc p
