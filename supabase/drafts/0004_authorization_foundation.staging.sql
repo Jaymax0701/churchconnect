@@ -26,20 +26,26 @@ BEGIN
     RAISE EXCEPTION 'Required ChurchConnect staging objects are missing; aborting.';
   END IF;
 
+  -- Resolve the bootstrap identity from the restricted one-time audit row,
+  -- rather than baking a personal account UUID into the reusable draft.
   IF NOT EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = '6bbc55e2-bda8-4609-b0c4-a4f4e5308a5b'::uuid
-      AND is_approved IS TRUE
+    SELECT 1
+    FROM public.security_bootstrap_audit a
+    JOIN public.profiles p ON p.id = a.target_user_id
+    WHERE a.event_type = 'first_superadmin_bootstrap'
+      AND p.is_approved IS TRUE
   ) THEN
-    RAISE EXCEPTION 'Verified staging bootstrap profile is missing or not approved; aborting.';
+    RAISE EXCEPTION 'Verified staging bootstrap audit/profile is missing or not approved; aborting.';
   END IF;
 
   IF NOT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = '6bbc55e2-bda8-4609-b0c4-a4f4e5308a5b'::uuid
-      AND role_id = 'superadmin'
-      AND scope_type = 'global'
-      AND ministry_id IS NULL
+    SELECT 1
+    FROM public.security_bootstrap_audit a
+    JOIN public.user_roles ur ON ur.user_id = a.target_user_id
+    WHERE a.event_type = 'first_superadmin_bootstrap'
+      AND ur.role_id = 'superadmin'
+      AND ur.scope_type = 'global'
+      AND ur.ministry_id IS NULL
   ) THEN
     RAISE EXCEPTION 'Verified global staging superadmin assignment is missing; aborting.';
   END IF;
@@ -237,17 +243,18 @@ EXECUTE FUNCTION public.guard_user_role_mutations();
 COMMIT;
 
 -- Postconditions to inspect manually after staging-only review/application.
-SELECT tablename, rowsecurity, forcerowsecurity
-FROM pg_tables
-JOIN pg_class ON pg_class.relname = pg_tables.tablename
-JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
-WHERE schemaname = 'public'
-  AND tablename IN (
+SELECT c.relname AS tablename, c.relrowsecurity AS rowsecurity,
+       c.relforcerowsecurity AS forcerowsecurity
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND c.relkind IN ('r', 'p')
+  AND c.relname IN (
     'ministries', 'modules', 'permissions', 'profiles', 'role_permissions',
     'roles', 'user_roles', 'role_module_permissions',
     'user_module_permissions', 'security_bootstrap_audit'
   )
-ORDER BY tablename;
+ORDER BY c.relname;
 
 SELECT policyname, tablename, cmd, roles, qual, with_check
 FROM pg_policies
