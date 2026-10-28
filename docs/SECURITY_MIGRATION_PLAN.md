@@ -21,15 +21,21 @@ The audit found RLS enabled on all seven tables, no policies, and an enabled `en
 
 The staging audit found that `anon`, `authenticated`, and `service_role` have effective `REFERENCES`, `TRIGGER`, and `TRUNCATE` privileges on all seven existing tables. Direct ACL entries from `postgres` also show `MAINTAIN` for those roles. The direct ACL output supplied so far did not show CRUD grants to these roles; do not confuse it with the default-privilege inventory.
 
-The default-privilege inventory separately reports broad table privileges for `anon`, `authenticated`, and `service_role` under both `postgres` and `supabase_admin`. This means future tables may receive grants that are broader than the intended policy design. The role-membership output is not itself a reason to revoke memberships; the hardening plan targets table ACLs and default ACLs only.
+The default-privilege inventory separately reports:
+- `postgres` defaults in `public`: `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` for `anon`, `authenticated`, and `service_role`.
+- `supabase_admin` defaults in `public`: CRUD plus those additional privileges for the same API roles.
 
-Two draft files now exist on the security branch:
+The audited session is `postgres`, which is not a member of `supabase_admin`. The migration draft `supabase/migrations/0002_restrict_future_table_defaults.sql` has therefore been narrowed to revoke defaults only for tables created by `postgres`. It intentionally leaves `supabase_admin` defaults unchanged. Resolve those defaults through an authorized Supabase/platform administrative path; do not change privileged role memberships to bypass the access boundary.
+
+Two draft migrations exist on the security branch:
 - `supabase/migrations/0001_revoke_unsafe_table_privileges.sql` — revokes `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` on the seven existing tables from the three API roles. It does not grant CRUD.
-- `supabase/migrations/0002_restrict_future_table_defaults.sql` — proposes revoking all default table privileges for those roles from future public tables created by `postgres` and `supabase_admin`.
+- `supabase/migrations/0002_restrict_future_table_defaults.sql` — revokes all default table privileges for those roles on future public tables created by `postgres`.
 
-**Neither migration has been applied.** Before execution, confirm the target is staging, review `service_role` access requirements, and verify the current session is authorized to alter default privileges for both owner roles. If it is not authorized for either owner, stop and resolve the authority question; do not change platform-owned role memberships to work around it. Afterward, inspect effective grants and default ACLs. Do not apply either draft to production.
+**Neither migration has been applied.** Before execution, confirm the target is staging and review `service_role` access requirements. After execution, inspect effective grants and default ACLs. New migrations should explicitly grant only required privileges, together with reviewed RLS policies. Do not apply either draft to production.
 
-No CRUD grants should be added until the per-table access model and corresponding RLS policies are designed together. New migrations should explicitly grant only required privileges, then validate access as `anon`, `authenticated`, and service-role callers as appropriate.
+The remaining `supabase_admin` default ACL is a known unresolved issue: until an authorized administrative path corrects it, tables created under that role may inherit overly broad privileges. Avoid creating application tables under that owner until the issue is resolved, and inspect grants immediately for any table created by platform tooling.
+
+No CRUD grants should be added until the per-table access model and corresponding RLS policies are designed together.
 
 ## Required schema reconciliation
 
@@ -88,8 +94,9 @@ Do not copy the proposed trigger verbatim into a migration.
 1. Produce a schema inventory from the current staging database and compare it with the production schema. No writes.
 2. Confirm canonical role IDs/names, module identifiers, and whether any production records need backfill.
 3. Review and test the table-privilege and default-privilege drafts in staging only, with explicit preconditions and postcondition checks.
-4. Write the authorization migration with explicit preconditions and fail-fast checks. Preserve legacy tables and existing rows.
-5. Add SQL regression tests for:
+4. Resolve the `supabase_admin` default ACL through an authorized platform path before creating application tables under that owner.
+5. Write the authorization migration with explicit preconditions and fail-fast checks. Preserve legacy tables and existing rows.
+6. Add SQL regression tests for:
    - anonymous protected reads/writes denied;
    - approved member self-profile access only;
    - unapproved member blocked from protected features;
@@ -103,9 +110,9 @@ Do not copy the proposed trigger verbatim into a migration.
    - last active approved superadmin cannot be removed/deactivated;
    - concurrent demotions cannot leave zero active superadmins;
    - legacy permission tables do not affect live permission resolution.
-6. Apply only to staging after reviewing the SQL. Test using real authenticated test users and the publishable key, not only the database owner or service role.
-7. Inspect resulting policies, grants, function definitions, and trigger definitions; run regression tests and app build/workflow checks.
-8. Production rollout remains a separate, explicitly approved action with a rollback/restore plan.
+7. Apply only to staging after reviewing the SQL. Test using real authenticated test users and the publishable key, not only the database owner or service role.
+8. Inspect resulting policies, grants, function definitions, and trigger definitions; run regression tests and app build/workflow checks.
+9. Production rollout remains a separate, explicitly approved action with a rollback/restore plan.
 
 ## Authentication dependency
 
