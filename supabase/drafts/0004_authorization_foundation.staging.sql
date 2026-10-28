@@ -243,17 +243,18 @@ EXECUTE FUNCTION public.guard_user_role_mutations();
 COMMIT;
 
 -- Postconditions to inspect manually after staging-only review/application.
-SELECT tablename, rowsecurity, forcerowsecurity
-FROM pg_tables
-JOIN pg_class ON pg_class.relname = pg_tables.tablename
-JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
-WHERE schemaname = 'public'
-  AND tablename IN (
+SELECT c.relname AS tablename, c.relrowsecurity AS rowsecurity,
+       c.relforcerowsecurity AS forcerowsecurity
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND c.relkind IN ('r', 'p')
+  AND c.relname IN (
     'ministries', 'modules', 'permissions', 'profiles', 'role_permissions',
     'roles', 'user_roles', 'role_module_permissions',
     'user_module_permissions', 'security_bootstrap_audit'
   )
-ORDER BY tablename;
+ORDER BY c.relname;
 
 SELECT policyname, tablename, cmd, roles, qual, with_check
 FROM pg_policies
