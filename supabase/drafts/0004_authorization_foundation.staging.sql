@@ -257,7 +257,7 @@ ORDER BY tablename, policyname;
 SELECT
   has_table_privilege('anon', 'public.profiles', 'SELECT') AS anon_can_read_profiles,
   has_table_privilege('authenticated', 'public.profiles', 'SELECT') AS authenticated_can_read_profiles,
-  has_column_privilege('authenticated', 'public.profiles', 'UPDATE', 'full_name') AS authenticated_can_update_own_name_column,
-  has_column_privilege('authenticated', 'public.profiles', 'UPDATE', 'is_approved') AS authenticated_can_update_approval_column,
+  has_column_privilege('authenticated', 'public.profiles', 'full_name', 'UPDATE') AS authenticated_can_update_own_name_column,
+  has_column_privilege('authenticated', 'public.profiles', 'is_approved', 'UPDATE') AS authenticated_can_update_approval_column,
   has_table_privilege('authenticated', 'public.user_roles', 'INSERT') AS authenticated_can_insert_user_roles,
   has_table_privilege('service_role', 'public.user_roles', 'INSERT') AS service_role_can_insert_user_roles;
