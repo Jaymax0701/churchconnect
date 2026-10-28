@@ -1,6 +1,6 @@
 # ChurchConnect Authorization Schema Reconciliation
 
-Status: Staging inventory captured; executable authorization migration not yet approved or created.
+Status: Staging inventory captured; approval/bootstrap design drafted on the security branch; no migration applied.
 
 ## Verified staging schema
 
@@ -43,7 +43,7 @@ RLS is enabled on the seven existing tables. The inventory returned no policies 
 - Keep `permissions` and `role_permissions` intact for audit/backward compatibility. Do not treat them as the live authorization source once a new permission engine is introduced.
 - Do not seed role grants until the owner-approved role/module/action matrix is established.
 - Do not add ministry leader ownership semantics until the owner chooses whether ministry leadership is represented by `user_roles` with `scope_type = 'ministry'`, a new `ministries.leader_id`, or both.
-- Define approval behavior before adding `profiles.is_approved`, including the safe default for new accounts and the bootstrap path for the first superadmin. Do not infer approval from role assignment.
+- Approval decision is now set: new profile rows default to `is_approved = false`; approval does not itself grant module permissions. Draft schema: `supabase/migrations/0003_member_approval_and_bootstrap_audit.sql`. A separate manually run staging bootstrap template is `supabase/operations/0001_bootstrap_first_superadmin.staging.template.sql`. Neither has been applied. The bootstrap requires a verified existing Auth user, refuses any pre-existing superadmin assignment or prior bootstrap audit event, and records the action transactionally. See `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`.
 - Define the meaning of `active` roles and the source of truth for role hierarchy before implementing protected role assignment and last-superadmin protections.
 - Audit all table grants completely before deciding which privileges to revoke. The supplied staging grant output appears truncated, so do not use it as a complete grant inventory.
 - Keep production untouched. All migration design and validation must be performed against staging first.
@@ -54,9 +54,10 @@ Before writing the first executable migration, complete these decisions:
 
 1. Confirm whether ministry-scoped `user_roles` is the intended source of ministry leadership scope.
 2. Approve a role/module/action matrix, including whether `manage`, `approve`, and `assign` are separate capabilities.
-3. Choose the approval field and account bootstrap process.
+3. Review the drafted approval schema and bootstrap safeguards; run them only against staging after verifying the project reference. Confirm the target user identity before the one-time bootstrap.
 4. Decide whether role hierarchy is required now and define its values for all six canonical role IDs.
-5. Capture the complete staging and production table grants separately; never assume the two environments match.
-6. Inspect current frontend data-access paths and align them with the verified module IDs.
+5. Approve a role/module/action matrix, including `manage`, `approve`, and `assign`.
+6. Capture the complete staging and production table grants separately; never assume the two environments match.
+7. Inspect current frontend data-access paths and align them with the verified module IDs.
 
 No database changes are performed by this document.
