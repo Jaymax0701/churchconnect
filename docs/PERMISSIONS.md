@@ -16,7 +16,7 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 6. **No Scope or Integrity Bypass:** Permission checks do not bypass authentication, member account approval (`is_approved = TRUE`), ministry-scope boundaries, record ownership, or database constraints.
 7. **Database is Sole Authority:** All access boundaries are enforced server-side via PostgreSQL Row Level Security (RLS) policies and security-definer functions. Frontend navigation checks and conditional button rendering are user-experience conveniences only.
 8. **Anti-Escalation & Self-Approval Guard:** Users cannot grant themselves roles, approve their own accounts, or alter their own protected privilege fields.
-9. **Hierarchical Administration:** Only authorized administrators can assign roles or configure permissions, strictly constrained by role hierarchy (`roles.hierarchy_level`) and immutable system role definitions.
+9. **Hierarchical Administration:** Only authorized administrators can assign roles or configure permissions, strictly constrained by role hierarchy (a schema-backed role hierarchy (not currently present in staging)) and immutable system role definitions.
 
 ---
 
@@ -83,14 +83,14 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
    * When a user holds multiple roles (e.g., `MINISTRY_LEADER` and `CHURCH_COUNCIL`), baseline role permissions are combined using an **additive logical OR (`bool_or`)**. If *any* active assigned role grants `can_<action> = TRUE`, the role baseline evaluates to `TRUE`.
    * For non-superadmins, an explicit per-user denial (`FALSE`) overrides the union of ordinary role grants. For superadmin, ordinary per-user overrides are bypassed.
 4. **Scope & Ministry Isolation Across Multi-Role Assignments:**
-   * **Module Permission vs. Record Scope:** A module permission grant (e.g., `events.can_update = TRUE`) grants the *capability* to update events, but table-level RLS policies strictly evaluate *record scope*.
-   * **Multi-Role Scoping Invariant:** Holding `MINISTRY_LEADER` for Ministry A (e.g., Youth) and `VOLUNTEER` for Ministry B (e.g., Worship) does **not** grant leadership privileges over Ministry B. RLS policies evaluate `events.ministry_id IN (SELECT id FROM public.ministries WHERE leader_id = auth.uid()) OR public.is_admin()`. An elevated role in one scope never bleeds into another scope.
+   * **Module Permission vs. Record Scope:** A module permission grant (e.g., `sunday_service.can_update = TRUE`) grants the *capability* to update events, but table-level RLS policies strictly evaluate *record scope*.
+   * **Multi-Role Scoping Invariant:** Holding `MINISTRY_LEADER` for Ministry A (e.g., Youth) and `VOLUNTEER` for Ministry B (e.g., Worship) does **not** grant leadership privileges over Ministry B. RLS policies evaluate a table-specific policy that verifies the row's ministry against the caller's authorized ministry assignments and, where applicable, `ministries.leader_id = auth.uid()`. An elevated role in one scope never bleeds into another scope.
 5. **Account Approval & Inactive Users:**
    * **Unapproved Account Gate:** If `profiles.is_approved = FALSE`, the user is strictly barred from all internal congregation features (member directory, cell groups, internal rosters), even if they have been assigned an administrative role or an explicit user grant.
-   * **Inactive / Deleted Users:** When a user is unauthenticated (`auth.uid() IS NULL`) or deleted from `auth.users`, all permission checks immediately return `FALSE`. Only records with `is_public = TRUE` can be viewed.
+   * **Inactive / Deleted Users:** When a user is unauthenticated (`auth.uid() IS NULL`) or deleted from `auth.users`, all permission checks immediately return `FALSE`. Only explicitly allowlisted public data may be viewed; do not assume a generic `is_public` column exists on every table.
    * **Inactive Modules / Ministries:** If `modules.is_active = FALSE` or `ministries.is_active = FALSE`, non-SUPERADMIN access to those entities is disabled.
 6. **Record Ownership Invariants:**
-   * For user-scoped records (personal profile, roster notes), users may only view or update records where `id = auth.uid()` or `created_by = auth.uid()`, unless the actor possesses elevated administrative module permissions (`portal.can_update = TRUE` with `ADMIN` or `SUPERADMIN`).
+   * For user-scoped records (personal profile, roster notes), users may only view or update records where `id = auth.uid()` or `created_by = auth.uid()`, unless the actor possesses elevated administrative module permissions (`member_portal.can_update = TRUE` with a separately approved administrative capability).
 7. **Missing Grants & Default Deny:**
    * If no explicit user override exists and no assigned role grants the action, the evaluation strictly defaults to **DENY**.
 8. **Legacy Permission Coexistence & Cutover (DEC-002):**

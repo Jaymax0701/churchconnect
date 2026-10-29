@@ -20,11 +20,11 @@ The permissions architecture refers to `portal`, `ministry`, `events`, and `regi
 
 **Required action:** use exact canonical module IDs in implementation and label any domain/table examples separately from module identifiers. Do not create alias modules or map legacy identifiers implicitly.
 
-### AUTH-REV-03 — Role hierarchy is specified but not represented in the schema
+### AUTH-REV-03 — Role hierarchy is deferred pending a schema-backed decision
 
 `docs/PERMISSIONS.md` requires `roles.hierarchy_level`, but the staging schema inventory shows no hierarchy column. Role names or text sorting are not a safe substitute for an approved hierarchy.
 
-**Required decision:** either approve and design a schema-backed hierarchy with exact levels and comparison semantics, or defer hierarchy-based delegation and prohibit role delegation until a separately reviewed rule exists.
+**Current safe default:** hierarchy-based role delegation is deferred; prohibit role delegation until a schema-backed hierarchy with exact levels and comparison semantics is separately approved. Documentation has been aligned to this deferral; no hierarchy column or delegation capability is added by this change.
 
 ### AUTH-REV-04 — Public-site access has no allowlist yet
 
