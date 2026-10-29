@@ -12,11 +12,11 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 2. **User Override Precedence:** For non-superadmins, an explicit per-user permission record (`user_module_permissions`) takes precedence over the role-derived baseline. A valid, authenticated, approved `superadmin` bypasses ordinary per-user overrides, including explicit per-user denials.
 3. **Explicit Grant Precondition:** An explicit user grant (`can_<action> = TRUE`) authorizes the action *only* when all applicable authentication, account approval, and record-scoping requirements are satisfied.
 4. **Explicit Denial Primacy for Non-Superadmins:** An explicit user denial (`can_<action> = FALSE`) denies the action for a non-superadmin even if an ordinary role would otherwise permit it. It does not constrain the approved superadmin path.
-5. **Default Deny:** For non-superadmins, if neither an explicit user grant nor an applicable role grant exists, access is denied by default. The approved superadmin path is the documented exception to ordinary override/grant evaluation, not to the safeguards below.
+5. **Default Deny:** If no applicable role/module grant exists, access is denied by default. The approved superadmin exception bypasses ordinary per-user overrides only; it does not itself grant module/action capabilities. The role/module matrix remains subject to explicit approval, and pending grants remain denied.
 6. **No Scope or Integrity Bypass:** Permission checks do not bypass authentication, member account approval (`is_approved = TRUE`), ministry-scope boundaries, record ownership, or database constraints.
 7. **Database is Sole Authority:** All access boundaries are enforced server-side via PostgreSQL Row Level Security (RLS) policies and security-definer functions. Frontend navigation checks and conditional button rendering are user-experience conveniences only.
 8. **Anti-Escalation & Self-Approval Guard:** Users cannot grant themselves roles, approve their own accounts, or alter their own protected privilege fields.
-9. **Hierarchical Administration:** Only authorized administrators can assign roles or configure permissions, strictly constrained by role hierarchy (a schema-backed role hierarchy (not currently present in staging)) and immutable system role definitions.
+9. **Administrative Delegation:** Role assignment and permission configuration must use a separately reviewed, authorized workflow. Hierarchy-based delegation remains blocked until a schema-backed role hierarchy and exact assignment rules are approved; role names alone do not establish hierarchy. System role definitions remain protected.
 
 ---
 
@@ -27,7 +27,7 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 ```
 ┌────────────────────────────────────────────────────────┐
 │ Step 1: Is user authenticated and active?              │
-│ ├─ NO  ──► Public Access Only (is_public = TRUE)       │
+│ ├─ NO  ──► Allowlisted public data only                 │
 │ └─ YES ──► Proceed to Step 2                           │
 └──────────────────────────┬─────────────────────────────┘
                            │
@@ -40,8 +40,8 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
                            │
 ┌──────────────────────────▼─────────────────────────────┐
 │ Step 3: Is user an active, approved superadmin?        │
-│ ├─ YES ──► Skip ordinary override/grant checks         │
-│ │          Proceed directly to Step 7 safeguards       │
+│ ├─ YES ──► Skip per-user override check only            │
+│ │          Continue to Step 5 role/module grants       │
 │ └─ NO  ──► Proceed to Step 4                           │
 └──────────────────────────┬─────────────────────────────┘
                            │
@@ -75,7 +75,7 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 1. **Role Grants vs. Explicit Per-User Overrides:**
    * Role-module permissions (`role_module_permissions`) establish the default baseline for ordinary roles.
    * For non-superadmins, explicit per-user permissions (`user_module_permissions`) supersede any role-derived baseline.
-   * A valid, authenticated, approved user with the canonical `superadmin` role bypasses ordinary per-user overrides (both TRUE and FALSE). This is the owner-approved precedence decision dated 2026-10-28.
+   * A valid, authenticated, approved user with the canonical `superadmin` role bypasses ordinary per-user overrides (both TRUE and FALSE). This is the owner-approved precedence decision dated 2026-10-28. It does not implicitly grant every module/action; the approved role/module grant model and all safeguards still apply.
 2. **Explicit Denial Primacy for Non-Superadmins:**
    * If a non-superadmin has `user_module_permissions.can_<action> = FALSE`, access is denied regardless of their ordinary role grants.
    * A per-user denial does not constrain superadmin. Superadmin status does not bypass authentication, account approval/integrity, applicable record/ministry scope, database constraints, audit requirements, or other agreed safeguards.
@@ -263,9 +263,9 @@ Permission to perform an action on a module does not grant unrestricted access t
 
 | Module | Role / Context | Ownership & Scope Enforcement Rule |
 | :--- | :--- | :--- |
-| `portal` | `MEMBER` | Member can only read and update their personal profile (`profiles.id = auth.uid()`). |
-| `ministry` | `MINISTRY_LEADER` | Leader can only manage rosters and team members for ministries where `ministries.leader_id = auth.uid()`. |
-| `events` | `MINISTRY_LEADER` | Leader can only update events where `events.ministry_id` is under their direct leadership (`ministries.leader_id = auth.uid()`). Multi-ministry leaders only manage their specific assigned ministries. |
-| `registration`| `CHURCH_ADMIN` | Admin can approve members (`is_approved = TRUE`), but cannot demote, debar, or modify `SUPERADMIN` profiles. |
-| `cms` | `CHURCH_ADMIN` | Admin can publish public announcements and update service times. |
-| All Modules | `SUPERADMIN` | System-wide administrative scope, constrained by database relational integrity and audit triggers. |
+| `member_portal` | `member` | Member can only read and update their own permitted profile fields (`profiles.id = auth.uid()`). |
+| Ministry-specific modules | `ministry_leader` | Leader can only access records within explicitly authorized ministry scope, verified against assignments and, where applicable, `ministries.leader_id = auth.uid()`. |
+| `sunday_service` | `ministry_leader` | Access is limited to records within explicitly authorized ministry scope; do not assume an `events` table or `ministry_id` column without schema verification. |
+| `congregation` | `church_admin` | Member approval requires a separately approved capability and trusted workflow; this module label alone does not grant approval authority. |
+| `cms` | `church_admin` | Content publishing requires approved action grants and table-specific public/private data policies. |
+| All Modules | `superadmin` | The role name alone does not seed CRUD grants. The approved superadmin precedence bypasses per-user overrides but does not bypass authentication, approval/integrity, applicable scope, relational integrity, or audit safeguards. |
