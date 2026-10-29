@@ -50,7 +50,7 @@ Do not add speculative modules called `portal`, `ministry`, `events`, or `regist
 ## 4. Role and assignment safeguards
 
 - A caller cannot assign a role to themselves, approve themselves, or edit protected privilege fields.
-- Role assignment is permitted only to an authorized administrator whose hierarchy level exceeds the target role's level, subject to a specifically defined exception for superadmin.
+- Role delegation remains blocked until a schema-backed hierarchy and exact assignment rules are approved; the current staging schema has no `roles.hierarchy_level` column. Do not infer hierarchy from role names.
 - System role definitions are immutable to ordinary administrators.
 - Keep at least one approved superadmin. A concurrency-safe trigger must serialize all role/profile/auth-user paths that can remove, deactivate, or demote a superadmin. The trigger must handle INSERT, UPDATE, DELETE correctly and use the actual lowercase role ID.
 - Do not rely on the current ON DELETE CASCADE from roles to user_roles as the only safeguard. Add a role-deletion guard or alter delete semantics in the reviewed migration so a protected role cannot disappear through a cascade.
