@@ -45,18 +45,84 @@ This matrix is the required owner-review artifact before writing permission seed
 | `women` | Women Ministry |
 | `youth` | Youth Ministry |
 
-## Matrix template
+## Explicit role/module decision matrix (72 pairs)
 
-For each role/module pair, decide `view`, `create`, `update`, and `delete`. Use `PENDING` until approved. This template intentionally does not supply permissions based on assumptions.
+Each of the six canonical roles is listed against each of the twelve canonical modules. All four CRUD decisions intentionally remain `PENDING`; this is a review aid, not an authorization decision. For each cell, the owner must replace `PENDING` with `ALLOW` or `DENY` after review. Any remaining `PENDING` must fail closed. Scope notes are guardrails, not grants.
 
 | Role ID | Module ID | View | Create | Update | Delete | Scope / notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `superadmin` | all modules | PENDING | PENDING | PENDING | PENDING | Proposed global administrative capability; still subject to integrity and audit safeguards |
-| `church_council` | all modules | PENDING | PENDING | PENDING | PENDING | Define governance-only modules and actions |
-| `church_admin` | all modules | PENDING | PENDING | PENDING | PENDING | Define administration scope; cannot manage protected superadmin assignments |
-| `ministry_leader` | all modules | PENDING | PENDING | PENDING | PENDING | Only within explicitly assigned/led ministry scope where applicable |
-| `ministry_volunteer` | all modules | PENDING | PENDING | PENDING | PENDING | Only assigned duties and ministry scope |
-| `member` | all modules | PENDING | PENDING | PENDING | PENDING | Protected records remain self-scoped unless separately approved |
+| `superadmin` | `public_site` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `member_portal` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `congregation` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `cell_groups` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `children` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `cms` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `evangelism` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `men` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `praise_worship` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `sunday_service` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `women` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `superadmin` | `youth` | PENDING | PENDING | PENDING | PENDING | PENDING — precedence exception does not itself grant this module/action; safeguards still apply. |
+| `church_council` | `public_site` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `member_portal` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `congregation` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `cell_groups` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `children` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `cms` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `evangelism` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `men` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `praise_worship` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `sunday_service` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `women` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_council` | `youth` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `public_site` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `member_portal` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `congregation` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `cell_groups` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `children` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `cms` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `evangelism` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `men` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `praise_worship` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `sunday_service` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `women` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `church_admin` | `youth` | PENDING | PENDING | PENDING | PENDING | PENDING — owner decision required; do not infer from role/module names. |
+| `ministry_leader` | `public_site` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `member_portal` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `congregation` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `cell_groups` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `children` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `cms` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `evangelism` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `men` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `praise_worship` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `sunday_service` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `women` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_leader` | `youth` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `public_site` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `member_portal` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `congregation` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `cell_groups` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `children` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `cms` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `evangelism` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `men` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `praise_worship` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `sunday_service` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `women` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `ministry_volunteer` | `youth` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, limit to explicitly authorized ministry/record scope. |
+| `member` | `public_site` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `member_portal` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `congregation` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `cell_groups` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `children` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `cms` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `evangelism` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `men` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `praise_worship` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `sunday_service` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `women` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
+| `member` | `youth` | PENDING | PENDING | PENDING | PENDING | PENDING — if approved, preserve self/ownership scope for protected records. |
 
 ## Additional decisions required
 
