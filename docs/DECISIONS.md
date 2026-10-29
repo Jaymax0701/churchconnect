@@ -58,9 +58,12 @@ This document records confirmed architectural decisions, dates of confirmation, 
 
 ## 2. Mandatory Security Refinements (Milestone 2B Refinements)
 
-### SEC-REF-01: Explicit User-Denial Precedence & Default Deny
-* **Specification:** In `has_module_permission()`, an explicit per-user denial (`user_module_permissions.can_<action> = FALSE`) strictly overrides any and all role grants (including administrative roles). When neither an explicit user grant nor an applicable role grant exists, the system defaults to deny.
-* **Status:** **[CONFIRMED SPECIFICATION]**
+### SEC-REF-01: Superadmin Precedence, User Overrides & Default Deny
+* **Specification:** Authentication, account-integrity, and account-approval checks occur first. A valid, authenticated, approved user with the canonical `superadmin` assignment bypasses ordinary `user_module_permissions` overrides, including explicit per-user `FALSE` and `TRUE` values. Evaluate this exception before per-user overrides. This is a precedence rule only: it does not itself grant any module/action capability and does not bypass applicable record/ministry scope, database constraints, audit requirements, or other approved safeguards.
+* **Non-superadmin behavior:** An explicit per-user `FALSE` denies the action; an explicit per-user `TRUE` is considered only subject to all applicable safeguards; otherwise evaluate an applicable approved role/module grant.
+* **Default deny:** Missing or `PENDING` role/module/action decisions deny access. No grants may be inferred from role names or automatically translated from legacy `permissions` / `role_permissions` rows.
+* **Confirmed owner decision:** October 28, 2026.
+* **Status:** **[CONFIRMED PRECEDENCE; ROLE/MODULE GRANTS STILL PENDING]**
 
 ### SEC-REF-02: Hardened `SECURITY DEFINER` Function Standards
 * **Specification:** Every database authorization helper function must:
@@ -72,14 +75,25 @@ This document records confirmed architectural decisions, dates of confirmation, 
   6. Avoid all dynamic SQL.
 * **Status:** **[CONFIRMED SPECIFICATION]**
 
-### SEC-REF-03: Transactional, Concurrency-Safe Last-SUPERADMIN Protection
-* **Specification:** All mutations affecting the `SUPERADMIN` role or SUPERADMIN user profiles must acquire an exclusive row-level lock on `public.roles WHERE id = 'SUPERADMIN' FOR UPDATE` within the mutation transaction. This serializes concurrent demotions and guarantees that at least one active SUPERADMIN remains.
-* **Status:** **[CONFIRMED SPECIFICATION]**
+### SEC-REF-03: Last-Active-Superadmin Invariant (Implementation Requirement)
+* **Requirement:** Preserve at least one active, approved user with a valid global `superadmin` assignment. The implementation must serialize competing changes and validate the invariant inside the same transaction.
+* **Coverage required:** Review every path that can remove or invalidate the final superadmin, including `user_roles` INSERT/UPDATE/DELETE, profile approval/status changes, role deletion or mutation, `auth.users` deletion and cascading effects, and any trusted administrative workflow. A lock on the lowercase canonical role row `public.roles.id = 'superadmin'` may be part of the design, but is not sufficient unless every relevant path participates and the invariant is rechecked after the proposed mutation.
+* **Verification required:** Test concurrent operations using independent database sessions and prove that all failure paths roll back without leaving zero active approved superadmins.
+* **Status:** **[REQUIRED; NOT YET IMPLEMENTED OR VERIFIED]**
 
 ---
 
-## 3. Decisions Blocking Migration Execution (None Remaining for Milestone 2B)
+## 3. Decisions and Controls Still Blocking Migration Execution
 
-With DEC-001 through DEC-004 approved and the three security refinements formalized, **no architectural decisions remain that block migration planning**. 
+The following remain open. Planning documents do not authorize execution, and no database migration should be applied merely because a draft exists.
 
-Execution of migrations remains strictly gated until the user reviews Milestone 2B planning documents and explicitly authorizes Milestone 2C (Implementation).
+1. **Role/module/action grants:** Owner review of all 72 role/module pairs. CRUD cells remain `PENDING`; pending decisions fail closed.
+2. **Special capabilities:** Define `manage`, `approve`, and `assign` independently, including scope and who may exercise each capability.
+3. **Public data exposure:** Inventory the actual tables and columns, then approve a narrow anonymous-read allowlist. Do not add broad `anon` access for the currently static public homepage.
+4. **Role hierarchy and delegation:** Approve a schema-backed hierarchy and exact role-assignment rules before implementing delegation. Role names do not establish ordering.
+5. **Trusted administrative workflows:** Inventory external/server-side and service-role consumers before applying privilege revocations; design narrow, auditable transactional operations for approval and role changes.
+6. **Last-superadmin protection:** Implement and test the invariant across every mutation and deletion path, including concurrency and cascading effects.
+7. **Application authentication:** Replace the demo login with real Supabase Auth session handling and route UX guards; database RLS remains the security boundary.
+8. **Validation and rollback:** Confirm a restorable staging backup, review the effects of the strict privilege draft, and run catalog plus real-JWT behavioral tests in staging before considering any production plan.
+
+**Execution gate:** The authorization-foundation draft remains review-only and unapplied unless the owner explicitly approves staging execution after the above checks. Production remains out of scope without separate explicit authorization.
