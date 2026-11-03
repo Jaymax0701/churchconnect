@@ -1,5 +1,9 @@
 # ChurchConnect Security Migration Plan
 
+> **Current-state correction (2026-11-03):** The current staging schema and row counts are documented in `docs/SCHEMA_RECONCILIATION.md`. In particular, `profiles.is_approved`, `approved_at`, and `approved_by` are present; the staging profile count is 1; the approval/bootstrap objects and first-superadmin bootstrap were verified by the owner in staging. Older statements elsewhere in this plan that these objects were not applied are historical and must not be treated as current state. Do not rerun `0003_member_approval_and_bootstrap_audit` as a whole. The current seven-table privilege and schema evidence is also recorded in `docs/SCHEMA_RECONCILIATION.md`. No production change is implied.
+
+# ChurchConnect Security Migration Plan
+
 Status: Draft for review — staging privilege postconditions verified; approval schema and bootstrap drafts added but NOT applied; authorization policies are not yet implemented.
 
 ## Scope and safety boundary
