@@ -2,7 +2,7 @@
 
 > **Historical snapshot notice (2026-11-03):** This document records an earlier October 18, 2026 audit and contains findings that are now superseded, including claims that approval fields were absent, that profile count was zero, and examples of uppercase role IDs/module IDs. Do not use it as the current schema source. The owner-supplied November 3 staging diagnostics are authoritative for the seven inventoried tables; see `docs/SCHEMA_RECONCILIATION.md`. Preserve this document as historical audit evidence rather than silently rewriting its original observations.
 
-# ChurchConnect — Milestone 2A: Database Security Audit & Schema Verification
+
 
 **Audit Date:** October 18, 2026  
 **Audit Scope:** Active Supabase PostgreSQL Database, Prototype Assets, and Authorization Architecture  
