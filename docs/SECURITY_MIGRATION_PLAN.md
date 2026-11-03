@@ -4,7 +4,7 @@
 
 
 
-Status: Draft for review — staging privilege postconditions verified; approval schema and bootstrap drafts added but NOT applied; authorization policies are not yet implemented.
+Status: Draft for review — staging approval/bootstrap schema and first-superadmin bootstrap verified by the owner; authorization policies and permission resolver are not yet implemented.
 
 ## Scope and safety boundary
 
@@ -60,12 +60,12 @@ Before authoring executable SQL, capture the exact column types, primary keys, u
 
 Proposed additions from the specification:
 - `roles.hierarchy_level`
-- `profiles.is_approved`, `approved_at`, and `approved_by` (now designed in draft migration `0003_member_approval_and_bootstrap_audit.sql`)
+- `profiles.is_approved`, `approved_at`, and `approved_by` (present and verified in staging; the historical draft is not to be rerun wholesale)
 - `ministries.leader_id`
 - `role_module_permissions`
 - `user_module_permissions`
 
-The approval/bootstrap design is documented in `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`. New profiles default to unapproved, and the draft adds an `auth.users` trigger to create each new profile with approval set to false. The schema migration does not assign a superadmin. A separate manual staging-only bootstrap template requires a verified existing Auth user, fails if any superadmin assignment or prior bootstrap event exists, and writes the approval, global role assignment, and restricted audit event in one transaction. Neither file has been executed.
+The approval/bootstrap design is documented in `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`. The owner has verified in staging that new profiles default to unapproved, the `auth.users` profile-creation trigger exists, the restricted audit table exists, and the one-time first-superadmin bootstrap was recorded. The historical schema script encountered a duplicate-function error during execution; subsequent catalog checks verified the expected objects. Do not rerun the historical script or bootstrap template. Use targeted, separately reviewed repairs only if a current catalog check identifies a specific missing object.
 
 Do not create foreign keys or seed mappings until their target types and canonical role/module identifiers are verified. Keep legacy `permissions` and `role_permissions` intact. Any historical permission mapping must be reviewed and migrated through a separate auditable mapping step; do not guess mappings.
 
