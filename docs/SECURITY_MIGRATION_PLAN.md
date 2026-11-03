@@ -19,25 +19,36 @@ The audit found RLS enabled on all seven tables, no policies, and an enabled `en
 
 ### Staging privilege audit
 
-The staging audit found that `anon`, `authenticated`, and `service_role` have effective `REFERENCES`, `TRIGGER`, and `TRUNCATE` privileges on all seven existing tables. Direct ACL entries from `postgres` also show `MAINTAIN` for those roles. The direct ACL output supplied so far did not show CRUD grants to these roles; do not confuse it with the default-privilege inventory.
+Evidence received from the owner on 2026-11-03 from read-only diagnostics `0004_privilege_sources.sql` and `0005_default_privilege_authority.sql` against the staging project (`aibstkdijaruvtvqaxke`). These findings supersede earlier, inaccurate summaries in this document.
 
-The initial default-privilege inventory reported:
-- `postgres` defaults in `public`: `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` for `anon`, `authenticated`, and `service_role`.
-- `supabase_admin` defaults in `public`: CRUD plus those additional privileges for the same API roles.
+**Existing application tables (seven-table scope):**
+- The direct relation ACL query showed `postgres` as the only grantee for the seven audited tables (`ministries`, `modules`, `permissions`, `profiles`, `role_permissions`, `roles`, `user_roles`). It did not show direct ACL entries granted to `anon`, `authenticated`, or `service_role`.
+- The effective-privilege query for `REFERENCES`, `TRIGGER`, and `TRUNCATE` returned no rows for `anon`, `authenticated`, or `service_role` on those seven tables.
+- This is not a complete CRUD audit. Effective `SELECT`, `INSERT`, `UPDATE`, and `DELETE` privileges across all public tables remain to be checked with `supabase/diagnostics/0003_privilege_inventory.sql`. Do not infer that API roles have no CRUD access from the seven-table ACL output alone.
 
-**Latest staging postconditions (2026-10-28):** the effective-privilege verification query returned zero rows for `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` across the seven existing tables for `anon`, `authenticated`, and `service_role`. The latest default-ACL output no longer showed `postgres`-owned defaults for those API roles; `supabase_admin`-owned defaults remained. These results confirm the observed database state, but do not by themselves prove which exact SQL file was executed.
+**Default table privileges in `public`:**
+- The latest default-ACL output showed grants owned by `supabase_admin` to `anon`, `authenticated`, and `service_role` for `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES`, `TRIGGER`, and `MAINTAIN`.
+- The latest output did not show `postgres`-owned default table ACL entries for those API roles. Therefore, the current evidence does not support claiming that the `postgres`-owned defaults targeted by draft `0002` are still present.
+- These are defaults for future tables created under the respective default-privilege owner. They do not establish that every existing table currently has those grants.
 
-The audited session is `postgres`, which is not a member of `supabase_admin`. The migration draft `supabase/migrations/0002_restrict_future_table_defaults.sql` has therefore been narrowed to revoke defaults only for tables created by `postgres`. It intentionally leaves `supabase_admin` defaults unchanged. Resolve those defaults through an authorized Supabase/platform administrative path; do not change privileged role memberships to bypass the access boundary.
+**Authority boundary:**
+- The SQL Editor session reported `current_user = postgres` and `session_user = postgres`.
+- `postgres` was a member of `postgres`, but was not a member of `supabase_admin` and did not inherit its privileges.
+- The `supabase_admin` role reported `rolsuper = true`; this does not confer superuser authority on the current `postgres` session.
+- Do not attempt to change role memberships or assume the current session can alter `supabase_admin` defaults. Resolve that finding through an authorized Supabase/platform administrative path.
 
-Two draft migrations exist on the security branch:
-- `supabase/migrations/0001_revoke_unsafe_table_privileges.sql` — revokes `MAINTAIN`, `REFERENCES`, `TRIGGER`, and `TRUNCATE` on the seven existing tables from the three API roles. It does not grant CRUD.
-- `supabase/migrations/0002_restrict_future_table_defaults.sql` — revokes all default table privileges for those roles on future public tables created by `postgres`.
+**Disposition of existing drafts:**
+- `supabase/drafts/0001_revoke_unsafe_table_privileges.staging.sql` is not approved to run based on the current evidence. Its target non-CRUD privileges were not found as effective privileges for the three API roles on the seven existing tables. Revisit only if a broader inventory identifies a concrete grant requiring removal.
+- `supabase/drafts/0002_restrict_future_table_defaults.staging.sql` is not approved to run based on the current evidence. Its target `postgres`-owned defaults were not present in the latest default-ACL output; it would not resolve the remaining `supabase_admin`-owned defaults.
+- Do not attempt to revoke or alter `supabase_admin` defaults from the current `postgres` session.
+- No privilege-changing SQL was authorized or executed as part of this audit exchange.
 
-The effective-privilege postcondition for migration `0001` is now satisfied in staging (zero rows returned). The latest default-ACL inventory also indicates that the `postgres`-owned defaults targeted by migration `0002` are no longer present for these API roles. The user has not separately confirmed the exact execution history, so retain the scripts as reviewed artifacts and do not infer more than the observed postconditions. New migrations should explicitly grant only required privileges, together with reviewed RLS policies. Do not apply either draft to production.
-
-The remaining `supabase_admin` default ACL is a known unresolved issue: until an authorized administrative path corrects it, tables created under that role may inherit overly broad privileges. Avoid creating application tables under that owner until the issue is resolved, and inspect grants immediately for any table created by platform tooling.
-
-No CRUD grants should be added until the per-table access model and corresponding RLS policies are designed together.
+**Remaining checks and constraints:**
+1. Run `supabase/diagnostics/0003_privilege_inventory.sql` in staging and review all three result sets. This is the outstanding check for effective CRUD access across all public tables and public-schema `USAGE`/`CREATE`.
+2. Identify whether application tables are ever created under `supabase_admin` ownership and which trusted platform workflows use that owner. Do not create new application tables under that owner until the default ACL issue is resolved through an authorized route.
+3. Keep service-role consumers and external administrative workflows inventoried before any broad revocation. The trusted workflow inventory remains owner-confirmation work; repository inspection alone does not prove external workflows are absent.
+4. No CRUD grants should be added until the per-table access model and corresponding RLS policies are designed together.
+5. Preserve the existing RLS event trigger and bootstrap/audit safeguards unless a separate review explicitly justifies a change.
 
 ## Required schema reconciliation
 
