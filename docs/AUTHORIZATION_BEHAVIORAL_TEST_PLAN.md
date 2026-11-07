@@ -4,7 +4,7 @@ Status: Test specification only. Not executable against the current authorizatio
 
 ## Safety and test fixtures
 
-- Target only staging project ref `aibstkdijaruvtvqaxke`.
+- Target only staging project ref `the designated non-production project`.
 - Use dedicated, disposable Auth accounts and synthetic ministry/member records. Never use the real bootstrap superadmin as a test subject for destructive cases.
 - Obtain authenticated sessions through Supabase Auth. SQL Editor `SET ROLE` alone is not proof that PostgREST/JWT authorization behaves correctly.
 - Record expected status/result, actual result, SQL/API error code, actor ID, target ID, module/action, and ministry scope for every case.
