@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/Badge";
 import { Icon } from "../../../components/ui/Icon";
 import { useAuth } from "../../auth/AuthContext";
+import { useCongregationMembership } from "../hooks/useCongregationMembership";
 
 interface ServingAssignment {
   id: string;
@@ -50,6 +51,8 @@ const EmptyState: React.FC<{ title: string; description: string }> = ({
 
 export const MemberPortalPage: React.FC = () => {
   const { user, profile } = useAuth();
+  const { membership, loading: membershipLoading, error: membershipError } =
+    useCongregationMembership(user?.id ?? null);
   const displayName = profile?.full_name?.trim() || user?.email || "Account";
   const email = user?.email || "—";
 
@@ -64,7 +67,19 @@ export const MemberPortalPage: React.FC = () => {
             Welcome, <strong>{displayName}</strong>
           </p>
         </div>
-        <Badge variant="neutral">No membership assigned</Badge>
+        <Badge variant={membership?.status === "active" ? "sage" : "neutral"}>
+          {membershipLoading
+            ? "Checking membership"
+            : membershipError
+              ? "Membership unavailable"
+              : membership?.status === "active"
+                ? "Active member"
+                : membership?.status === "pending"
+                  ? "Membership pending"
+                  : membership?.status === "inactive"
+                    ? "Membership inactive"
+                    : "No membership assigned"}
+        </Badge>
       </div>
 
       <div
@@ -158,6 +173,14 @@ export const MemberPortalPage: React.FC = () => {
             <div style={{ fontSize: "var(--text-sm)", lineHeight: 1.8, marginBottom: "var(--space-3)" }}>
               <div><strong>Name:</strong> {profile?.full_name || "Not provided"}</div>
               <div><strong>Email:</strong> {email}</div>
+              <div><strong>Membership:</strong> {membershipLoading
+                ? "Checking…"
+                : membershipError
+                  ? "Temporarily unavailable"
+                  : membership?.status ?? "Not assigned"}</div>
+              {membership?.member_since && (
+                <div><strong>Member since:</strong> {new Date(membership.member_since).toLocaleDateString()}</div>
+              )}
               <div><strong>Directory:</strong> Not configured</div>
             </div>
             <Button variant="secondary" size="sm" disabled>Edit Contact Info</Button>
