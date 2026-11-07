@@ -9,7 +9,7 @@ export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const displayName = profile?.full_name || user?.email || "Administrator";
-  const initials = displayName.split(/\\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
+  const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
 
   const getAdminNavLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
     display: "flex",
