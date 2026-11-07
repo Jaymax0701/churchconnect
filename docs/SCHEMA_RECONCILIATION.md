@@ -4,7 +4,7 @@ Status: Staging inventory captured; approval/bootstrap design drafted on the sec
 
 ## Verified staging schema
 
-Source: `supabase/diagnostics/0002_schema_details.sql`, run by the project owner against `churchconnect-staging` on 2026-10-27.
+Source: `supabase/diagnostics/0002_schema_details.sql`, run by the project owner against `non-production test project` on 2026-10-27.
 
 Existing public tables and important columns:
 
