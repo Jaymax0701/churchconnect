@@ -9,7 +9,7 @@ export const MemberPortalLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const displayName = profile?.full_name || user?.email || "Member";
-  const initials = displayName.split(/\\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
+  const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
 
   const getNavLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
     display: "flex",
