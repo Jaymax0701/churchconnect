@@ -129,6 +129,8 @@ export const MemberPortalLayout: React.FC = () => {
               {initials}
             </div>
 
+            <Button variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
+
             {/* Mobile Hamburger */}
             <button
               type="button"
