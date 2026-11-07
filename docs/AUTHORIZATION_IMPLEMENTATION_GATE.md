@@ -4,7 +4,7 @@ Status: Draft artifacts added on 2026-10-28. Authorization-foundation draft has 
 
 ## Verified staging state
 
-Project: `churchconnect-staging`, ref `aibstkdijaruvtvqaxke`.
+Project: `non-production test project`, ref `the designated non-production project`.
 
 The owner supplied SQL Editor results verifying:
 - `profiles.is_approved` exists, is NOT NULL, and defaults to false.
@@ -55,7 +55,7 @@ Still unresolved before production-ready authorization:
 ## Safe validation sequence
 
 1. Inspect the draft in a clean working tree and review every statement.
-2. Confirm staging project ref `aibstkdijaruvtvqaxke` in the SQL Editor.
+2. Confirm staging project ref `the designated non-production project` in the SQL Editor.
 3. Take/verify a restorable staging backup and confirm the restore procedure.
 4. Check that the draft's strict revokes will not break required server-side workflows.
 5. Apply the draft manually to staging only, if approved.
