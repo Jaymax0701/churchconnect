@@ -25,6 +25,7 @@ export function useCongregationMembership(userId: string | null) {
       }
 
       setLoading(true);
+      setMembership(null);
       setError(null);
 
       const { data, error: queryError } = await supabase
