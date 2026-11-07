@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Alert } from "../../../components/ui/Alert";
 import { Button } from "../../../components/ui/Button";
 import { Card, CardBody } from "../../../components/ui/Card";
@@ -6,9 +7,32 @@ import { useAuth } from "../AuthContext";
 
 export const PendingApprovalPage = () => {
   const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   async function handleSignOut() {
-    await signOut();
+    if (signingOut) return;
+
+    setSigningOut(true);
+    setSignOutError(null);
+
+    try {
+      const { error } = await signOut();
+
+      if (error) {
+        setSignOutError(error);
+        return;
+      }
+
+      navigate("/", { replace: true });
+    } catch (error) {
+      setSignOutError(
+        error instanceof Error ? error.message : "Unable to sign out. Please try again.",
+      );
+    } finally {
+      setSigningOut(false);
+    }
   }
 
   return (
@@ -29,8 +53,15 @@ export const PendingApprovalPage = () => {
                 Signed in as <strong>{profile.full_name}</strong>
               </p>
             )}
+            {signOutError && (
+              <Alert variant="danger" title="Sign out failed" style={{ marginTop: "var(--space-4)" }}>
+                {signOutError}
+              </Alert>
+            )}
             <div style={{ display: "flex", justifyContent: "center", gap: "var(--space-3)", marginTop: "var(--space-6)", flexWrap: "wrap" }}>
-              <Button variant="secondary" onClick={handleSignOut}>Sign out</Button>
+              <Button variant="secondary" onClick={handleSignOut} disabled={signingOut}>
+                {signingOut ? "Signing out…" : "Sign out"}
+              </Button>
               <Link to="/" style={{ alignSelf: "center", fontSize: "var(--text-sm)" }}>Return to public website</Link>
             </div>
           </CardBody>
