@@ -19,7 +19,7 @@ The audit found RLS enabled on all seven tables, no policies, and an enabled `en
 
 ### Staging privilege audit
 
-Evidence received from the owner on 2026-11-03 from read-only diagnostics `0004_privilege_sources.sql` and `0005_default_privilege_authority.sql` against the staging project (`aibstkdijaruvtvqaxke`). These findings supersede earlier, inaccurate summaries in this document.
+Evidence received from the owner on 2026-11-03 from read-only diagnostics `0004_privilege_sources.sql` and `0005_default_privilege_authority.sql` against the staging project (`the designated non-production project`). These findings supersede earlier, inaccurate summaries in this document.
 
 **Existing application tables (seven-table scope):**
 - The direct relation ACL query showed `postgres` as the only grantee for the seven audited tables (`ministries`, `modules`, `permissions`, `profiles`, `role_permissions`, `roles`, `user_roles`). It did not show direct ACL entries granted to `anon`, `authenticated`, or `service_role`.
