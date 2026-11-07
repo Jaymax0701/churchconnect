@@ -1,12 +1,49 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
 import { Card, CardBody } from "../../../components/ui/Card";
 import { Alert } from "../../../components/ui/Alert";
 import { Icon } from "../../../components/ui/Icon";
+import { Input } from "../../../components/ui/Input";
+import { useAuth } from "../AuthContext";
 
-export const LoginPage: React.FC = () => {
+interface LoginLocationState {
+  from?: {
+    pathname?: string;
+  };
+}
+
+export const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, loading: authLoading, signIn } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const requestedPath = (location.state as LoginLocationState | null)?.from?.pathname;
+  const destination = requestedPath?.startsWith("/") ? requestedPath : "/portal";
+
+  if (!authLoading && user) {
+    return <Navigate to={destination} replace />;
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    const result = await signIn(email, password);
+
+    setSubmitting(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    navigate(destination, { replace: true });
+  }
 
   return (
     <div
@@ -37,35 +74,48 @@ export const LoginPage: React.FC = () => {
                 <Icon name="church" size={28} color="var(--color-white)" />
               </div>
               <h1 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, margin: "0 0 var(--space-1)" }}>
-                Sign-in is coming soon
+                Welcome back
               </h1>
               <p style={{ fontSize: "var(--text-sm)", margin: 0 }}>
-                ChurchConnect member accounts are not available in this preview yet.
+                Sign in to your ChurchConnect account.
               </p>
             </div>
 
-            <Alert variant="warning" style={{ marginBottom: "var(--space-6)" }}>
-              <strong>Preview environment:</strong> Sign-in and password verification are not connected. Do not enter real account credentials here. Live Supabase Auth will be implemented as part of the authentication milestone.
-            </Alert>
+            {error && (
+              <Alert variant="danger" title="Sign-in unsuccessful" style={{ marginBottom: "var(--space-5)" }}>
+                {error}
+              </Alert>
+            )}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => navigate("/portal")}
-                style={{ width: "100%" }}
-              >
-                Preview Member Portal
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+              <Input
+                id="email"
+                label="Email address"
+                type="email"
+                autoComplete="username"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+              <Input
+                id="password"
+                label="Password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+              <Button type="submit" size="lg" isLoading={submitting} disabled={submitting || authLoading} style={{ width: "100%" }}>
+                Sign in
               </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => navigate("/admin")}
-                style={{ width: "100%" }}
-              >
-                Preview Admin Panel
-              </Button>
-            </div>
+            </form>
+
+            <p style={{ fontSize: "var(--text-xs)", textAlign: "center", marginTop: "var(--space-5)" }}>
+              New account registration is not open yet. Contact your church administrator for access.
+            </p>
           </CardBody>
         </Card>
 

@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { Badge } from "../components/ui/Badge";
-import { Alert } from "../components/ui/Alert";
 import { Icon } from "../components/ui/Icon";
+import { Button } from "../components/ui/Button";
+import { useAuth } from "../modules/auth/AuthContext";
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  const displayName = profile?.full_name || user?.email || "Administrator";
+  const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
 
   const getAdminNavLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
     display: "flex",
@@ -113,11 +117,11 @@ export const AdminLayout: React.FC = () => {
                 fontSize: "var(--text-sm)",
               }}
             >
-              SA
+              {initials}
             </div>
             <div>
-              <div style={{ fontSize: "var(--text-xs)", fontWeight: 600 }}>System Admin</div>
-              <Badge variant="superadmin">SUPERADMIN (Demo)</Badge>
+              <div style={{ fontSize: "var(--text-xs)", fontWeight: 600 }}>{displayName}</div>
+              <Badge variant="superadmin">SUPERADMIN</Badge>
             </div>
           </div>
         </div>
@@ -161,7 +165,8 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
-            <Badge variant="superadmin">SUPERADMIN Protected</Badge>
+            <Badge variant="superadmin">SUPERADMIN</Badge>
+            <Button variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
           </div>
         </header>
 
@@ -188,13 +193,6 @@ export const AdminLayout: React.FC = () => {
             </Link>
           </div>
         )}
-
-        {/* Global Demo Notice for Admin */}
-        <div style={{ padding: "var(--space-4) var(--space-6) 0" }}>
-          <Alert variant="warning" title="Development Preview Mode">
-            Controls on this dashboard are preview demonstrations. No real database modifications or role changes are executed until Milestone 2 & Milestone 6.
-          </Alert>
-        </div>
 
         {/* Content Outlet */}
         <main style={{ flex: 1, padding: "var(--space-6)" }}>

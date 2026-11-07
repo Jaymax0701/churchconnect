@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { Badge } from "../components/ui/Badge";
-import { Alert } from "../components/ui/Alert";
 import { Icon } from "../components/ui/Icon";
+import { Button } from "../components/ui/Button";
+import { useAuth } from "../modules/auth/AuthContext";
 
 export const MemberPortalLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, profile, signOut } = useAuth();
+  const displayName = profile?.full_name || user?.email || "Member";
+  const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
 
   const getNavLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
     display: "flex",
@@ -101,7 +105,7 @@ export const MemberPortalLayout: React.FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
             <div style={{ textAlign: "right", display: "none" }} className="portal-user-meta">
               <div style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--color-text-primary)" }}>
-                Sarah Miller
+                {displayName}
               </div>
               <Badge variant="approved">Approved Member</Badge>
             </div>
@@ -120,10 +124,12 @@ export const MemberPortalLayout: React.FC = () => {
                 fontSize: "var(--text-sm)",
                 border: "2px solid var(--color-border)",
               }}
-              title="Demo Member"
+              title={displayName}
             >
-              SM
+              {initials}
             </div>
+
+            <Button variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
 
             {/* Mobile Hamburger */}
             <button
@@ -152,8 +158,8 @@ export const MemberPortalLayout: React.FC = () => {
             className="portal-mobile-dropdown"
           >
             <div style={{ paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border-default)" }}>
-              <div style={{ fontWeight: 600 }}>Sarah Miller</div>
-              <Badge variant="approved">Approved Member (Demo)</Badge>
+              <div style={{ fontWeight: 600 }}>{displayName}</div>
+              <Badge variant="approved">Approved Member</Badge>
             </div>
             <NavLink to="/portal" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)} end>
               <Icon name="dashboard" size={18} /> Dashboard
@@ -167,13 +173,6 @@ export const MemberPortalLayout: React.FC = () => {
           </div>
         )}
       </header>
-
-      {/* Global Demo Notice for Member Portal */}
-      <div className="container" style={{ paddingTop: "var(--space-4)" }}>
-        <Alert variant="info" title="Development Demo Mode">
-          Viewing preview member interface. Real authentication and Supabase database authorization will be connected in Milestone 3.
-        </Alert>
-      </div>
 
       {/* Main Content View */}
       <main style={{ flex: 1, padding: "var(--space-6) 0 var(--space-12)" }}>
