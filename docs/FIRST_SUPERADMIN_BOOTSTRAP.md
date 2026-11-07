@@ -8,7 +8,7 @@ New profile rows must default to `is_approved = false`. A user must not be able 
 
 ## Trusted one-time bootstrap
 
-1. Confirm the Supabase dashboard/project reference is `aibstkdijaruvtvqaxke` (`churchconnect-staging`). Do not rely on a project display name alone.
+1. Confirm the Supabase dashboard/project reference is `the designated non-production project` (`non-production test project`). Do not rely on a project display name alone.
 2. Create the intended first administrator through the trusted Supabase Auth/admin process. Verify the identity independently before using the account UUID.
 3. Review and apply the separate schema migration to staging only. It adds `profiles.is_approved NOT NULL DEFAULT false`, approval metadata columns, a restricted bootstrap audit table, and an `auth.users` trigger that creates each new profile with `is_approved = false`. Verify the default, trigger, RLS state, and lack of grants to `PUBLIC`, `anon`, `authenticated`, or `service_role` on the audit table.
 4. A trusted database operator runs the separate manual bootstrap template with the verified existing `auth.users` UUID and a meaningful operator/ticket reference. Do not expose it as an RPC or frontend action.
