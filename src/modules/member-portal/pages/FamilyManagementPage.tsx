@@ -218,8 +218,15 @@ export const FamilyManagementPage: React.FC = () => {
   };
 
   const today = new Date();
-  const maxDob = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()).toISOString().slice(0, 10);
-  const minDob = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate() + 1).toISOString().slice(0, 10);
+  const toLocalDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+  const maxDob = toLocalDate(today);
+  const minDobDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate() + 1);
+  const minDob = toLocalDate(minDobDate);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
