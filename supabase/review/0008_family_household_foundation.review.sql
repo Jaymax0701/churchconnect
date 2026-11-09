@@ -62,6 +62,10 @@ CREATE TABLE public.people (
   auth_user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE SET NULL,
   full_name text,
   date_of_birth date,
+  minor_review_status text NOT NULL DEFAULT 'not_required'
+    CHECK (minor_review_status IN ('not_required', 'pending_review', 'cleared', 'rejected')),
+  minor_reviewed_at timestamptz,
+  minor_reviewed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_by_auth_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -71,6 +75,8 @@ COMMENT ON TABLE public.people IS
   'Durable person identity independent of authentication. Children under 12 may have a person record without an Auth account.';
 COMMENT ON COLUMN public.people.auth_user_id IS
   'Nullable one-to-one link to Supabase Auth. NULL means this person has no individual login account.';
+COMMENT ON COLUMN public.people.minor_review_status IS
+  'Safeguarding/guardian review state for the person, independent of login-account approval. A cleared marker is not proof of legal guardian authority.';
 
 -- Link current account profiles to their durable person record.
 ALTER TABLE public.profiles
