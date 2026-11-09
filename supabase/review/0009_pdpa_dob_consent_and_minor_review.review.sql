@@ -159,7 +159,7 @@ BEGIN
   VALUES (
     NEW.id, v_full_name, v_dob,
     CASE
-      WHEN v_dob > (((now() AT TIME ZONE 'Asia/Kuching')::date) - INTERVAL '18 years')::date
+      WHEN v_dob > ((now() AT TIME ZONE 'Asia/Kuching')::date - INTERVAL '18 years')::date
         THEN 'pending_review'
       ELSE 'not_required'
     END
@@ -277,7 +277,7 @@ BEGIN
       updated_at = now()
   WHERE person.auth_user_id = target_user_id
     AND person.minor_review_status = 'pending_review'
-    AND person.date_of_birth > (CURRENT_DATE - INTERVAL '18 years')::date
+    AND person.date_of_birth > ((now() AT TIME ZONE 'Asia/Kuching')::date - INTERVAL '18 years')::date
     AND EXISTS (
       SELECT 1 FROM public.profiles AS p
       WHERE p.id = target_user_id AND p.is_approved IS FALSE
