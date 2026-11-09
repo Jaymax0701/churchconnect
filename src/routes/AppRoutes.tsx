@@ -12,6 +12,7 @@ import { LoginPage } from "../modules/auth/pages/LoginPage";
 import { SignUpPage } from "../modules/auth/pages/SignUpPage";
 import { ResetPasswordPage } from "../modules/auth/pages/ResetPasswordPage";
 import { AccountSettingsPage } from "../modules/auth/pages/AccountSettingsPage";
+import { FamilyManagementPage } from "../modules/member-portal/pages/FamilyManagementPage";
 import { PendingApprovalPage } from "../modules/auth/pages/PendingApprovalPage";
 import { RequireApprovedUser } from "../modules/auth/RequireApprovedUser";
 import { RequireSuperadmin } from "../modules/auth/RequireSuperadmin";
@@ -35,6 +36,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/portal" element={<MemberPortalLayout />}>
           <Route index element={<MemberPortalPage />} />
           <Route path="settings" element={<AccountSettingsPage />} />
+          <Route path="family" element={<FamilyManagementPage />} />
         </Route>
 
         <Route element={<RequireSuperadmin />}>
