@@ -206,7 +206,7 @@ export const PublicLayout: React.FC = () => {
                   <div style={{ padding: "8px 10px", color: "white", fontSize: "var(--text-xs)", opacity: .75, overflowWrap: "anywhere" }}>{user.email}</div>
                   {profile?.is_approved && <Link to="/portal" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({isActive:false}), display:"block" }}>Member Portal</Link>}
                   {isSuperadmin && <Link to="/admin" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({isActive:false}), display:"block" }}>Admin Panel</Link>}
-                  <Link to="/portal/settings" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({isActive:false}), display:"block" }}>Account Settings</Link>
+                  {profile?.is_approved && <Link to="/portal/settings" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({isActive:false}), display:"block" }}>Account Settings</Link>}
                   <button type="button" onClick={() => void signOut()} style={{ textAlign:"left", padding:"10px 12px", border:0, borderRadius:8, background:"transparent", color:"white", cursor:"pointer" }}>Sign Out</button>
                 </div>}
               </div>
@@ -256,7 +256,7 @@ export const PublicLayout: React.FC = () => {
               </div>
               {profile?.is_approved && <NavLink to="/portal" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Member Portal</NavLink>}
               {isSuperadmin && <NavLink to="/admin" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Admin Panel</NavLink>}
-              <NavLink to="/portal/settings" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Account Settings</NavLink>
+              {profile?.is_approved && <NavLink to="/portal/settings" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Account Settings</NavLink>}
               <button type="button" onClick={() => void signOut()} style={{ textAlign:"left", padding:"12px", border:0, borderRadius:8, background:"rgba(255,255,255,.08)", color:"white" }}>Sign Out</button>
             </> : null}
           </div>
