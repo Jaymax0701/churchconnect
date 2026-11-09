@@ -1,172 +1,146 @@
 # ChurchConnect Family and Household Architecture
 
-Status: design decision for the registration and privacy work. This document is not a database migration.
+Status: approved product rules and implementation design. This document is not a database migration.
 
 ## 1. Core model
 
-A household is a group of related people. A ChurchConnect login is an authentication identity. These are separate concepts.
+A person, a login account, a household, and a church membership are separate records.
 
-- Every person in the household has one family-member/person record.
-- A person may have a linked Supabase Auth account, but an account is not required for every person.
+- `people` is the durable identity for every individual.
+- `profiles` is the authenticated account profile and links to `people`.
+- `families` represents a household.
+- `family_members` links people to a household.
+- `congregation_memberships` links a person to church membership independently of login access.
 - Never create placeholder Auth users or shared passwords for children.
-- A family has one primary Family Leader initially.
-- The Family Leader manages shared household details and coordinates family membership.
-- Church account approval, role assignment, congregation membership, and minor safeguarding review remain separate workflows.
+
+A family has one primary Family Leader in the first release. Church account approval, roles, congregation membership, family approval, and minor safeguarding review remain separate workflows.
 
 ## 2. Age and account policy
 
-Age is calculated from the person's date of birth using the church's configured local date, not a client-supplied age.
+Age is calculated from date of birth using the church's configured local date, not a client-supplied age.
 
-- Under 12: no individual login account; the Family Leader manages the child's person record.
-- Ages 12–17: individual login accounts are permitted, subject to the under-18 safeguarding/guardian review and the normal account approval workflow. The account holder owns their password and authentication factors.
-- 18 and above: individual login account and self-management of authentication credentials.
-- Future enhancement: when a managed child reaches their 13th birthday, show an optional action inviting them to create/link an individual ChurchConnect account. This is an option, not an automatic account creation. Preserve the existing person/family record and do not create a duplicate person. The feature is intentionally deferred until the family foundation and registration work are complete.
+- **Under 12:** no individual login account. The Family Leader creates and manages the child's person record.
+- **12–17:** an individual login account is permitted. The account holder owns their password and authentication factors. Under-18 safeguarding/guardian review and normal account approval remain required.
+- **18+:** individual login account and self-management of authentication credentials.
+- **Future age-13 enhancement:** on the child's 13th birthday, show an optional action to create/link an individual account. It must never create an account automatically. The new Auth identity must link to the existing person record without creating a duplicate. This feature is deferred until the initial family foundation is complete.
 
-The age-13 prompt is a future account-onboarding enhancement; it does not silently change the age policy above or automatically create an account.
+The age-13 option does not change the policy that under-12 children have no login.
 
-## 3. Household membership
+## 3. Household membership and relationships
 
-Default household registration is immediate family. Extended family is optional.
+Immediate family is the default. Extended family is optional. In-laws are not automatically part of a household; they may be added as optional extended members when appropriate.
 
-Immediate-family relationship values (relative to the Family Leader):
-- spouse
-- father
-- mother
-- son
-- daughter
+Immediate relationships (relative to the Family Leader):
+- spouse, father, mother, son, daughter.
 
-Optional extended-family values:
-- grandfather
-- grandmother
-- grandson
-- granddaughter
-- brother
-- sister
-- uncle
-- aunt
-- nephew
-- niece
-- cousin
-- guardian
-- ward
-- other_relative
-- other_household_member
+Optional extended relationships:
+- grandfather, grandmother, grandson, granddaughter;
+- brother, sister, uncle, aunt, nephew, niece, cousin;
+- father-in-law, mother-in-law, son-in-law, daughter-in-law, brother-in-law, sister-in-law;
+- guardian, ward, other relative, other household member.
 
-In-law relationships are not part of the default immediate-family list. They may be added as optional extended relationships where relevant. Do not assume an in-law belongs to the same household merely because of the relationship.
+A short custom description is available for the two "other" categories. Relationships are recorded relative to the Family Leader. Do not infer reciprocal relationships automatically.
 
-Relationship values are recorded relative to a clearly identified reference person (initially the Family Leader). Do not infer reciprocal relationships automatically where ambiguity exists. Allow a short custom description for the "other" values.
-
-A person may have one active primary household in the initial release. Design for future multiple-household affiliations (for example, children whose parents live separately), but do not implement that complexity in the first release.
+Initial release: one active primary household per person. Design for future split-household/custody arrangements, but do not implement multiple active households in this release.
 
 ## 4. Family permissions and approvals
 
-Family Leader can:
-- create and update shared household details (family display name, household address, shared contact details);
-- invite or request to add people to their household;
+The Family Leader can:
+- create and update shared household details (family name, household address, shared contact details);
+- add managed children under 12 without creating Auth accounts;
+- invite or approve eligible members who have their own login accounts;
 - approve or reject household join requests;
-- review and approve/reject profile-change requests submitted by other household members;
-- manage records for children who do not have login accounts.
+- approve or reject personal-detail change requests submitted by other household members;
+- maintain household relationships and member status.
 
-A family member may submit proposed changes to their own personal details. For family-managed fields, the request is pending until the Family Leader approves it. The system must preserve current values until approval and retain requester, proposed values, decision, reviewer and timestamps.
+A member's proposed personal-detail change remains pending until the Family Leader approves it. Current values must not be overwritten before approval. Retain requester, proposed values, decision, reviewer, timestamps and audit information.
 
-The Family Leader must not:
+The Family Leader cannot:
 - view, set, reset, or change another person's password;
-- access another person's private authentication factors or private login email without a separately authorised account-management workflow;
-- approve their own change requests;
-- bypass Church Administration account approval or minor safeguarding review.
+- access another person's private authentication factors;
+- approve their own change request;
+- bypass church account approval or minor safeguarding review.
 
-The Family Leader's approval is not a substitute for Church Administration approval, legal guardian authority, safeguarding checks, or a person's own legally required consent.
+Family Leader approval is not a substitute for legal guardian authority, safeguarding checks, church administrator approval, or legally required consent.
 
 ## 5. Data model
 
-The first reviewed schema foundation is in `supabase/review/0008_family_household_foundation.review.sql`. It is additive and remains review-only; it must be applied before the PDPA/DOB SQL. The durable person identity is separate from both authentication and household membership.
+### `people`
+One row per individual, regardless of login status:
+- `id` UUID primary key;
+- `auth_user_id` nullable unique FK to `auth.users` (NULL for managed children without login);
+- `full_name`, `date_of_birth`;
+- `minor_review_status`, `minor_reviewed_at`, `minor_reviewed_by`;
+- `created_by_auth_user_id`, timestamps.
 
-### people
-- `id` (UUID primary key)
-- `auth_user_id` (nullable unique FK to `auth.users`; NULL for children without login)
-- `full_name`, `date_of_birth`
-- `created_by_auth_user_id`, timestamps
+### `profiles`
+Existing Auth-linked account profile. A non-null unique `person_id` links it to `people`. Account approval remains here and is separate from the person's minor review state.
 
-Existing Auth profiles are backfilled to one `people` row and linked through `profiles.person_id`. `congregation_memberships` is extended with `person_id` so managed children can be represented without an Auth account.
+### `families`
+- `id`, `family_name`, `household_address`, optional shared contact phone;
+- creator person and Auth user;
+- timestamps.
 
-### families
-- id (UUID primary key)
-- family_name
-- household_address fields
-- shared_contact details (only what is needed)
-- primary_leader_member_id
-- created_at, updated_at
+### `family_members`
+- `id`, `family_id`, `person_id`;
+- `relationship_group` (immediate/extended);
+- `relationship_to_leader`, optional custom description;
+- `is_primary_leader`;
+- `status` (pending/active/rejected/removed);
+- adding Auth user, join and audit timestamps.
 
-### family_members
-- id (UUID primary key; person/household-member identity)
-- family_id
-- auth_user_id (nullable unique FK to auth.users; NULL for children without login)
-- full_name
-- date_of_birth
-- relationship_to_leader
-- relationship_description (nullable)
-- member_status (pending, active, rejected, removed)
-- added_by / joined_at
-- created_at, updated_at
-
-The `people` record is the durable person identity. A `family_members` row associates that person with a household. Linking an Auth account later must attach to the existing person record, not create a duplicate.
-
-### family_change_requests
-- id
-- family_member_id (whose details are changing)
-- requested_by_auth_user_id
-- change_type / proposed values
-- status (pending, approved, rejected, cancelled)
-- reviewed_by_auth_user_id
-- reviewed_at, decision_note
-- created_at
-
-Use an auditable, typed change representation; never accept arbitrary client-supplied column names or SQL fragments.
+### `family_change_requests`
+- family and target person;
+- requesting Auth user;
+- proposed values in a typed/allowlisted JSON object;
+- status (pending/approved/rejected/cancelled);
+- reviewer, decision note and timestamps.
 
 ### Consent and minor review
-Privacy/guardian consent events must identify:
-- the person the record concerns (family_member_id);
-- who provided/recorded the consent (actor Auth user / guardian);
-- consent type, policy version, language, choice, source and timestamp;
-- the basis/relationship/authority recorded for acting on behalf of a child, where applicable.
+Consent records identify the person, consent type, notice version/language, choice, source, timestamp, and who recorded/provided the consent. A parent/guardian acting for a child must have their relationship and authority explicitly recorded; Family Leader status alone does not prove legal guardian authority. Minor safeguarding review is separate from consent.
 
-Minor safeguarding review is separate from consent. Record review status, reviewer, timestamp and the church's process reference. A "cleared" status is an administrative marker, not proof of legal guardian authority by itself.
+### `congregation_memberships`
+Retains the existing church-membership workflow but gains a `person_id` link. `user_id` becomes nullable for people without login accounts. Church membership remains independent of household membership and Auth approval.
 
-### Existing tables
-- public.profiles remains the Auth-linked profile/account record.
-- public.congregation_memberships remains a separate church-membership record. It must be extended or redesigned to refer to a person/family-member identity if children without Auth accounts need congregation membership.
-- public.user_roles remains an account authorisation structure; do not assign roles to non-login child records.
+### `user_roles`
+Remains an account authorisation structure. Do not assign login roles to managed child person records without Auth accounts.
 
-## 6. Registration and linking flows
+## 6. Registration and account linking
 
-1. Adult/eligible Family Leader creates their own Auth account and verifies email.
-2. Family Leader creates a household and adds person records for immediate family.
-3. Children under 12 are added as managed family-member records without Auth users.
-4. Members who are eligible for login register with their own email/password and request to join the household, or accept a secure invitation.
-5. The Family Leader approves the household link. Church account approval and minor review remain separate.
-6. When a managed child later creates an account (including the future optional age-13 prompt), securely link the Auth identity to the existing family-member record after verification and approval. Enforce uniqueness to prevent duplicate person records.
+1. An eligible Family Leader registers their own Auth account, verifies email, and passes normal ChurchConnect approval.
+2. The Family Leader creates a household and adds immediate-family person records.
+3. Children under 12 are created as managed person/family-member records without Auth users.
+4. People aged 12+ and adults register using their own credentials and request to join a household or accept a secure invitation.
+5. The Family Leader approves the household link. Account approval and minor review remain separate.
+6. When a managed child later creates an account (including the future age-13 prompt), link the verified Auth identity to the existing person record. Enforce uniqueness and do not create a duplicate person.
 
-## 7. Required security controls
+## 7. Security requirements
 
-- RLS must scope family reads/writes to active household membership and explicit permissions.
-- Do not rely on hidden UI controls; enforce Family Leader authority in database policies or trusted server-side functions.
-- Derive the actor from auth.uid()/verified JWT. Never trust a caller-supplied actor ID.
-- Family Leader must not approve their own change requests.
-- Prevent unauthorised changes to family_id, auth_user_id, relationship, leader designation, DOB, and review status.
+- RLS scopes reads to the person and active household; sensitive person details such as DOB are visible to the person and authorised Family Leader only.
+- Other household members receive a roster-safe view that does not expose DOB or other restricted details.
+- Family writes and privileged transitions use trusted server-side functions; hiding buttons is not security.
+- Derive the actor from verified JWT/`auth.uid()`; never trust caller-supplied actor IDs.
+- Family Leader cannot approve their own change request.
+- Protect `family_id`, `person_id`, `auth_user_id`, relationship, leader designation, DOB, and review status from direct client mutation.
 - Keep audit history for membership, leader, profile-change and consent decisions.
-- Use server-side functions for privileged transitions and linking identities.
-- Keep Auth secrets and service-role credentials server-side only.
+- Service-role credentials remain server-side only.
 
-## 8. Dependency for PR #26
+## 8. PR #26 database work and deployment gate
 
-The current PR #26 SQL assumes every person being registered has an Auth user. Its profiles.date_of_birth and privacy_consent_records.user_id-only design cannot represent a child under 12 without a login. Do not execute the current PR #26 SQL as-is.
+The PR branch contains:
+- `supabase/review/0008_family_household_foundation.review.sql`: creates person/household structures, backfills existing Auth profiles to people, links congregation memberships, and adds RLS read policies. It is review-only.
+- `supabase/review/0009_pdpa_dob_consent_and_minor_review.review.sql`: the next migration in sequence; links Auth signups and consent records to people, and stores minor review against the person. It is review-only.
 
-Before PR #26 can be considered deployable, reconcile DOB, consent and minor-review records with the family-member/person identity described above. The Auth trigger must not be used to create under-12 child records; those records must be created through a Family Leader-authorized workflow. The family schema and RLS must be reviewed before the signup/consent UI is enabled.
+Apply in numeric order only after reviewing the complete scripts against the live Supabase catalog. No SQL has been applied by this change.
 
-## 9. Out of scope for the first family release
+The schema foundation does not yet provide all trusted write workflows or UI needed to create families, add managed children, process join requests, approve changes, link accounts, or record guardian consent. Do not enable public family registration or deploy this PR until those server-side workflows, screens, behavioral tests and RLS checks are complete.
 
-- Multiple primary Family Leaders (start with one; secondary family administrator can be added later).
-- Multiple active household affiliations for one person.
+The signup UI blocks individual account creation for under-12 registrations. It explains that a Family Leader must register the child as a managed member; that workflow must be completed before public rollout.
+
+## 9. Out of scope for first release
+
+- Multiple primary Family Leaders (one primary leader initially; a secondary family administrator may follow).
+- Multiple active household affiliations for a person.
 - Automatic account creation at age thresholds.
 - Automatic transfer of household ownership.
-- Treating Family Leader approval as a replacement for church or safeguarding approval.
+- Treating Family Leader approval as a replacement for church approval, guardian authority or safeguarding review.
