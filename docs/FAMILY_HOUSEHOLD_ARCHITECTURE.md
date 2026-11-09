@@ -17,7 +17,7 @@ A family has one primary Family Leader in the first release. Church account appr
 
 ## 2. Age and account policy
 
-Age is calculated from date of birth using the church's configured local date, not a client-supplied age.
+Age is calculated from date of birth using Malaysia local date (Asia/Kuching for the initial Sarawak deployment), not a client-supplied age. The database and browser must use the same local calendar date.
 
 - **Under 12:** no individual login account. The Family Leader creates and manages the child's person record.
 - **12–17:** an individual login account is permitted. The account holder owns their password and authentication factors. Under-18 safeguarding/guardian review and normal account approval remain required.
@@ -101,6 +101,7 @@ Remains an account authorisation structure. Do not assign login roles to managed
 ## 7. Security requirements
 
 - RLS scopes reads to the person and active household; sensitive person details such as DOB are visible to the person and authorised Family Leader only.
+- A non-leader household member cannot directly update their own profile name; they must use the Family Leader approval workflow. Superadmin name updates synchronise the Auth profile and durable person record through a trusted database function.
 - Other household members receive a roster-safe view that does not expose DOB or other restricted details.
 - Family writes and privileged transitions use trusted server-side functions; hiding buttons is not security.
 - Derive the actor from verified JWT/`auth.uid()`; never trust caller-supplied actor IDs.
