@@ -324,6 +324,42 @@ GRANT EXECUTE ON FUNCTION public.is_active_family_member(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_primary_family_leader(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_active_family_leader_of_person(uuid) TO authenticated;
 
+-- A non-leader household member must submit personal-name changes
+-- through the Family Leader approval workflow, not update profiles directly.
+CREATE OR REPLACE FUNCTION public.can_update_own_profile_name()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  SELECT NOT EXISTS (
+    SELECT 1
+    FROM public.profiles AS p
+    JOIN public.family_members AS fm ON fm.person_id = p.person_id
+    WHERE p.id = (SELECT auth.uid())
+      AND fm.status = 'active'
+      AND fm.is_primary_leader = false
+  );
+$function$;
+
+REVOKE ALL ON FUNCTION public.can_update_own_profile_name() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.can_update_own_profile_name() TO authenticated;
+
+DROP POLICY IF EXISTS profiles_update_own_name ON public.profiles;
+CREATE POLICY profiles_update_own_name
+  ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING (
+    id = (SELECT auth.uid())
+    AND public.can_update_own_profile_name()
+  )
+  WITH CHECK (
+    id = (SELECT auth.uid())
+    AND public.can_update_own_profile_name()
+  );
+
 CREATE POLICY people_select_self_or_family_leader
   ON public.people FOR SELECT TO authenticated
   USING (
