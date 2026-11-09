@@ -193,7 +193,7 @@ export const UserAccountsPage: React.FC = () => {
                         <div style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>{account.email || "Email unavailable"}</div>
                       </td>
                       <td style={{ padding: "var(--space-4)" }}>
-                        <Badge variant={account.is_approved ? "success" : "pending"}>{account.is_approved ? "Approved" : "Pending"}</Badge>
+                        <Badge variant={account.is_approved ? "approved" : "pending"}>{account.is_approved ? "Approved" : "Pending"}</Badge>
                       </td>
                       <td style={{ padding: "var(--space-4)", minWidth: "180px", color: "var(--color-text-secondary)" }}>
                         {account.role_assignments || "No role assigned"}
