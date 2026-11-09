@@ -113,9 +113,17 @@ export const LoginPage = () => {
               </Button>
             </form>
 
-            <p style={{ fontSize: "var(--text-xs)", textAlign: "center", marginTop: "var(--space-5)" }}>
-              New account registration is not open yet. Contact your church administrator for access.
-            </p>
+            <div style={{ marginTop: "var(--space-5)", textAlign: "center", fontSize: "var(--text-sm)" }}>
+              <span style={{ color: "var(--color-text-secondary)" }}>New to ChurchConnect? </span>
+              <Link to="/signup" style={{ color: "var(--color-forest-green)", fontWeight: 700, textDecoration: "none" }}>
+                Create an account
+              </Link>
+            </div>
+            <div style={{ marginTop: "var(--space-3)", textAlign: "center" }}>
+              <Link to="/forgot-password" style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)", textDecoration: "none" }}>
+                Forgot your password?
+              </Link>
+            </div>
           </CardBody>
         </Card>
 
