@@ -119,7 +119,7 @@ export const AdminDashboardPage: React.FC = () => {
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "var(--space-3)" }}>
             <div>
               <h3 style={{ fontSize: "var(--text-lg)", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-                <Icon name="user-check" size={20} color="var(--color-forest-green)" />
+                <Icon name="how_to_reg" size={20} color="var(--color-forest-green)" />
                 Pending Account Approvals
               </h3>
               <p style={{ fontSize: "var(--text-xs)", margin: "2px 0 0", color: "var(--color-text-secondary)" }}>
@@ -156,7 +156,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           ) : filteredAccounts.length === 0 ? (
             <div style={{ padding: "var(--space-8)", textAlign: "center" }}>
-              <Icon name="check-circle" size={28} color="var(--color-success-text)" />
+              <Icon name="check_circle" size={28} color="var(--color-success-text)" />
               <h4 style={{ margin: "var(--space-2) 0" }}>
                 {accounts.length === 0 ? "No pending approvals" : "No matching accounts"}
               </h4>
