@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -30,13 +31,52 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastActivity = useRef(Date.now());
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!session?.user) {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = null;
+      return;
+    }
+
+    const clearIdleTimer = () => {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      idleTimer.current = null;
+    };
+
+    const signOutAfterInactivity = async () => {
+      const remaining = SESSION_IDLE_TIMEOUT_MS - (Date.now() - lastActivity.current);
+      if (remaining > 0) {
+        idleTimer.current = setTimeout(signOutAfterInactivity, remaining);
+        return;
+      }
+      await supabase.auth.signOut({ scope: "local" });
+    };
+
+    const recordActivity = () => {
+      lastActivity.current = Date.now();
+      clearIdleTimer();
+      idleTimer.current = setTimeout(signOutAfterInactivity, SESSION_IDLE_TIMEOUT_MS);
+    };
+
+    const events: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "touchstart", "scroll"];
+    events.forEach((eventName) => window.addEventListener(eventName, recordActivity, { passive: true }));
+    recordActivity();
+    return () => {
+      clearIdleTimer();
+      events.forEach((eventName) => window.removeEventListener(eventName, recordActivity));
+    };
+  }, [session?.user.id]);
   const refreshProfile = useCallback(async () => {
     const currentUser = session?.user;
     if (!currentUser) {
@@ -136,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: "local" });
     return { error: error?.message ?? null };
   }, []);
 

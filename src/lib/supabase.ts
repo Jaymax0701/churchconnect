@@ -8,4 +8,4 @@ if (!url || !key) {
     throw new Error("Missing Supabase environment variables.");
 }
 
-export const supabase = createClient(url, key);
+export const supabase = createClient(url, key, { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true, flowType: "pkce" } });
