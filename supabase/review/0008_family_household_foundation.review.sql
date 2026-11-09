@@ -36,6 +36,14 @@ BEGIN
     RAISE EXCEPTION 'Family/person objects already exist or are partially deployed; inspect and reconcile before running.';
   END IF;
 
+  IF EXISTS (
+    SELECT 1 FROM public.congregation_memberships AS cm
+    LEFT JOIN public.profiles AS p ON p.id = cm.user_id
+    WHERE p.id IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Every existing congregation membership must map to a profile before person backfill.';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM pg_class
     WHERE oid = 'public.profiles'::regclass AND relrowsecurity
@@ -56,8 +64,7 @@ CREATE TABLE public.people (
   date_of_birth date,
   created_by_auth_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT people_dob_not_future CHECK (date_of_birth IS NULL OR date_of_birth <= CURRENT_DATE)
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 COMMENT ON TABLE public.people IS
