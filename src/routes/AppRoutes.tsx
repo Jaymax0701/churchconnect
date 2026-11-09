@@ -8,6 +8,8 @@ import { MemberPortalPage } from "../modules/member-portal/pages/MemberPortalPag
 import { AdminDashboardPage } from "../modules/admin/pages/AdminDashboardPage";
 import { UserAccountsPage } from "../modules/admin/pages/UserAccountsPage";
 import { LoginPage } from "../modules/auth/pages/LoginPage";
+import { SignUpPage } from "../modules/auth/pages/SignUpPage";
+import { ResetPasswordPage } from "../modules/auth/pages/ResetPasswordPage";
 import { PendingApprovalPage } from "../modules/auth/pages/PendingApprovalPage";
 import { RequireApprovedUser } from "../modules/auth/RequireApprovedUser";
 import { RequireSuperadmin } from "../modules/auth/RequireSuperadmin";
@@ -19,6 +21,8 @@ export const AppRoutes: React.FC = () => {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<PublicHomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/pending" element={<PendingApprovalPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
