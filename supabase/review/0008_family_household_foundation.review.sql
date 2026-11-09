@@ -360,6 +360,32 @@ CREATE POLICY profiles_update_own_name
     AND public.can_update_own_profile_name()
   );
 
+-- Keep the Auth profile display name and durable person name aligned
+-- when a self-service update is permitted (no family, or Family Leader).
+CREATE OR REPLACE FUNCTION public.sync_profile_name_to_person()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+BEGIN
+  UPDATE public.people
+  SET full_name = NEW.full_name,
+      updated_at = now()
+  WHERE id = NEW.person_id;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.sync_profile_name_to_person() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS sync_profile_name_to_person ON public.profiles;
+CREATE TRIGGER sync_profile_name_to_person
+AFTER UPDATE OF full_name ON public.profiles
+FOR EACH ROW
+WHEN (OLD.full_name IS DISTINCT FROM NEW.full_name)
+EXECUTE FUNCTION public.sync_profile_name_to_person();
+
 CREATE POLICY people_select_self_or_family_leader
   ON public.people FOR SELECT TO authenticated
   USING (
