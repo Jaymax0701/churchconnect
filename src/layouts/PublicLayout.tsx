@@ -167,10 +167,11 @@ export const PublicLayout: React.FC = () => {
             <NavLink to="/portal" style={getNavLinkStyle}>Member Portal</NavLink>
             <NavLink to="/admin" style={getNavLinkStyle}>Admin Panel</NavLink>
             <div style={{ width: "1px", height: "24px", backgroundColor: "rgba(255, 255, 255, 0.15)", margin: "0 var(--space-2)" }} />
-            <Link to="/login">
-              <Button variant="secondary" size="sm">
-                Member Sign In
-              </Button>
+            <Link to="/signup" style={{ textDecoration: "none" }}>
+              <Button variant="primary" size="sm">Sign Up</Button>
+            </Link>
+            <Link to="/login" style={{ textDecoration: "none" }}>
+              <Button variant="secondary" size="sm">Member Sign In</Button>
             </Link>
 
           </nav>
@@ -210,10 +211,11 @@ export const PublicLayout: React.FC = () => {
             <NavLink to="/portal" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Member Portal</NavLink>
             <NavLink to="/admin" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Admin Panel</NavLink>
             <div style={{ height: "1px", backgroundColor: "rgba(255, 255, 255, 0.15)", margin: "var(--space-2) 0" }} />
+            <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
+              <Button variant="primary" size="md" style={{ width: "100%" }}>Sign Up</Button>
+            </Link>
             <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="secondary" size="md" style={{ width: "100%" }}>
-                Member Sign In
-              </Button>
+              <Button variant="secondary" size="md" style={{ width: "100%" }}>Member Sign In</Button>
             </Link>
           </div>
         )}
@@ -271,6 +273,7 @@ export const PublicLayout: React.FC = () => {
                 <li><Link to="/portal" style={{ color: "var(--color-soft-sage)" }}>Member Portal</Link></li>
                 <li><Link to="/admin" style={{ color: "var(--color-soft-sage)" }}>Admin Dashboard</Link></li>
                 <li><Link to="/login" style={{ color: "var(--color-soft-sage)" }}>Member Login</Link></li>
+                <li><Link to="/signup" style={{ color: "var(--color-soft-sage)" }}>Create an Account</Link></li>
               </ul>
             </div>
           </div>
