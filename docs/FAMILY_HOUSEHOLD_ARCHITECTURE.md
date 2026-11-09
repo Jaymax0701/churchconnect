@@ -77,9 +77,17 @@ The Family Leader must not:
 
 The Family Leader's approval is not a substitute for Church Administration approval, legal guardian authority, safeguarding checks, or a person's own legally required consent.
 
-## 5. Suggested data model
+## 5. Data model
 
-This is the intended logical model; exact SQL, constraints, RLS policies and migration order must be reviewed against the live schema before deployment.
+The first reviewed schema foundation is in `supabase/review/0008_family_household_foundation.review.sql`. It is additive and remains review-only; it must be applied before the PDPA/DOB SQL. The durable person identity is separate from both authentication and household membership.
+
+### people
+- `id` (UUID primary key)
+- `auth_user_id` (nullable unique FK to `auth.users`; NULL for children without login)
+- `full_name`, `date_of_birth`
+- `created_by_auth_user_id`, timestamps
+
+Existing Auth profiles are backfilled to one `people` row and linked through `profiles.person_id`. `congregation_memberships` is extended with `person_id` so managed children can be represented without an Auth account.
 
 ### families
 - id (UUID primary key)
@@ -101,7 +109,7 @@ This is the intended logical model; exact SQL, constraints, RLS policies and mig
 - added_by / joined_at
 - created_at, updated_at
 
-The family-member record is the durable person identity. Linking an Auth account later must attach to the existing record, not create a duplicate person.
+The `people` record is the durable person identity. A `family_members` row associates that person with a household. Linking an Auth account later must attach to the existing person record, not create a duplicate.
 
 ### family_change_requests
 - id
