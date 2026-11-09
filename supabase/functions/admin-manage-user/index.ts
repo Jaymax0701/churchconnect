@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
 
   let auditAction = "";
   let auditDetails: Record<string, unknown> = {};
+  let actionWarning: string | null = null;
 
   if (body.action === "update_secondary_email") {
     const secondaryEmail = body.secondary_email?.trim().toLowerCase() || null;
@@ -111,10 +112,7 @@ Deno.serve(async (req) => {
       user_metadata: { ...existingUser.user.user_metadata, full_name: fullName },
     });
     if (metadataError) {
-      return Response.json({
-        success: true,
-        warning: "The profile name was updated, but Auth display metadata could not be synchronized.",
-      }, { headers: corsHeaders });
+      actionWarning = "The profile name was updated, but Auth display metadata could not be synchronized.";
     }
     auditAction = "update_account";
     auditDetails = { name_updated: true, primary_email_changed: emailChanged };
@@ -137,9 +135,10 @@ Deno.serve(async (req) => {
   if (auditError) {
     return Response.json({
       success: true,
-      warning: "The account action succeeded, but the audit event could not be saved. Notify the system administrator.",
+      warning: [actionWarning, "The account action succeeded, but the audit event could not be saved. Notify the system administrator."]
+        .filter(Boolean).join(" "),
     }, { headers: corsHeaders });
   }
 
-  return Response.json({ success: true }, { headers: corsHeaders });
+  return Response.json(actionWarning ? { success: true, warning: actionWarning } : { success: true }, { headers: corsHeaders });
 });
