@@ -1,313 +1,217 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../../../components/ui/Button";
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/Badge";
 import { Alert } from "../../../components/ui/Alert";
 import { Icon } from "../../../components/ui/Icon";
+import { supabase } from "../../../lib/supabase";
 
-interface ModulePermissionRow {
-  id: string;
-  name: string;
-  category: string;
-  canView: boolean;
-  canCreate: boolean;
-  canUpdate: boolean;
-  canDelete: boolean;
+interface PendingAccount {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  registered_at: string;
 }
 
-const INITIAL_MODULES: ModulePermissionRow[] = [
-  { id: "registration", name: "Registration", category: "Core Identity", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "ministry", name: "Ministry", category: "Core Operations", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "mainpage_cms", name: "MainPage CMS", category: "Public Content", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "member_portal", name: "Member Portal", category: "Congregation", canView: true, canCreate: false, canUpdate: false, canDelete: false },
-  { id: "cell_groups", name: "Cell Groups", category: "Discipleship", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "youth", name: "Youth", category: "Generations", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "children", name: "Children", category: "Generations", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "women", name: "Women", category: "Fellowship", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "men", name: "Men", category: "Fellowship", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "evangelism", name: "Evangelism", category: "Missions", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "praise_worship", name: "Praise & Worship", category: "Service", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-  { id: "sunday_service", name: "Sunday Service", category: "Service", canView: true, canCreate: true, canUpdate: true, canDelete: false },
-];
-
 export const AdminDashboardPage: React.FC = () => {
-  const [modules, setModules] = useState<ModulePermissionRow[]>(INITIAL_MODULES);
+  const [accounts, setAccounts] = useState<PendingAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [demoNotice, setDemoNotice] = useState<string | null>(null);
 
-  const togglePermission = (moduleId: string, field: "canView" | "canCreate" | "canUpdate" | "canDelete") => {
-    setModules((prev) =>
-      prev.map((mod) => (mod.id === moduleId ? { ...mod, [field]: !mod[field] } : mod))
+  const loadPendingAccounts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const { data, error: rpcError } = await supabase.rpc("list_pending_accounts");
+
+    if (rpcError) {
+      setError(rpcError.message);
+      setAccounts([]);
+    } else {
+      setAccounts((data ?? []) as PendingAccount[]);
+    }
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void loadPendingAccounts();
+  }, [loadPendingAccounts]);
+
+  const handleApprove = async (account: PendingAccount) => {
+    if (!account.user_id || approvingUserId) return;
+
+    const confirmed = window.confirm(
+      `Approve ${account.full_name || account.email || "this account"}? This will allow the account to pass the account-approval gate.`,
     );
-    setDemoNotice(`Toggled ${field} for module "${moduleId}". Changes are interactive in-memory demo.`);
+    if (!confirmed) return;
+
+    setApprovingUserId(account.user_id);
+    setError(null);
+    setNotice(null);
+
+    const { error: approvalError } = await supabase.rpc("approve_account", {
+      target_user_id: account.user_id,
+    });
+
+    if (approvalError) {
+      setError(approvalError.message);
+    } else {
+      setNotice(`${account.full_name || account.email || "Account"} has been approved.`);
+      setAccounts((current) => current.filter((item) => item.user_id !== account.user_id));
+    }
+
+    setApprovingUserId(null);
   };
 
-  const filteredModules = modules.filter(
-    (m) => m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAccounts = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return accounts;
+    return accounts.filter((account) =>
+      [account.full_name, account.email]
+        .some((value) => value?.toLowerCase().includes(query)),
+    );
+  }, [accounts, searchTerm]);
+
+  const formatDate = (value: string) =>
+    new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(value));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-      {/* Page Header */}
-      <div>
-        <h2 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, margin: 0 }}>
-          Church Overview & Administration
-        </h2>
-        <p style={{ margin: "var(--space-1) 0 0" }}>
-          Manage congregation accounts, ministry departments, service rosters, and access privileges.
-        </p>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-3)" }}>
+        <div>
+          <h2 style={{ fontSize: "var(--text-2xl)", fontWeight: 700, margin: 0 }}>
+            Church Administration
+          </h2>
+          <p style={{ margin: "var(--space-1) 0 0", color: "var(--color-text-secondary)" }}>
+            Review verified registrations and manage account access.
+          </p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => void loadPendingAccounts()} disabled={loading || Boolean(approvingUserId)}>
+          <Icon name="refresh" size={16} /> Refresh
+        </Button>
       </div>
 
-      {demoNotice && (
-        <Alert variant="info" title="Interactive UI Demonstration">
-          {demoNotice}
+      {error && (
+        <Alert variant="danger" title="Unable to load or update account approvals">
+          {error}
+          {error.includes("list_pending_accounts") || error.includes("approve_account")
+            ? " The reviewed account-approval SQL may not have been applied yet."
+            : ""}
         </Alert>
       )}
 
-      {/* KPI Stats Grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: "var(--space-4)",
-        }}
-      >
-        <Card>
-          <CardBody style={{ padding: "var(--space-5)" }}>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Total Members
-            </div>
-            <div style={{ fontSize: "var(--text-3xl)", fontWeight: 700, color: "var(--color-deep-forest)", margin: "var(--space-1) 0" }}>
-              142
-            </div>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-success-text)", display: "flex", alignItems: "center", gap: "4px" }}>
-              <Icon name="check_circle" size={14} color="var(--color-success-text)" />
-              <span>139 Active Congregation</span>
-            </div>
-          </CardBody>
-        </Card>
+      {notice && (
+        <Alert variant="success" title="Account updated">
+          {notice}
+        </Alert>
+      )}
 
-        <Card>
-          <CardBody style={{ padding: "var(--space-5)" }}>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Pending Approvals
+      <Card>
+        <CardHeader>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "var(--space-3)" }}>
+            <div>
+              <h3 style={{ fontSize: "var(--text-lg)", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                <Icon name="user-check" size={20} color="var(--color-forest-green)" />
+                Pending Account Approvals
+              </h3>
+              <p style={{ fontSize: "var(--text-xs)", margin: "2px 0 0", color: "var(--color-text-secondary)" }}>
+                Only email-verified accounts awaiting administrator approval are shown.
+              </p>
             </div>
-            <div style={{ fontSize: "var(--text-3xl)", fontWeight: 700, color: "var(--color-warning-text)", margin: "var(--space-1) 0" }}>
-              3
-            </div>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-              Awaiting review in queue
-            </div>
-          </CardBody>
-        </Card>
+            <Badge variant="pending">{accounts.length} pending</Badge>
+          </div>
+        </CardHeader>
 
-        <Card>
-          <CardBody style={{ padding: "var(--space-5)" }}>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Registered Modules
-            </div>
-            <div style={{ fontSize: "var(--text-3xl)", fontWeight: 700, color: "var(--color-deep-forest)", margin: "var(--space-1) 0" }}>
-              12
-            </div>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-forest-green)" }}>
-              Full CRUD matrix active
-            </div>
-          </CardBody>
-        </Card>
+        <CardBody style={{ padding: 0 }}>
+          <div style={{ padding: "var(--space-4) var(--space-6)", borderBottom: "1px solid var(--border-default)" }}>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by name or email…"
+              aria-label="Search pending accounts"
+              style={{
+                width: "100%",
+                maxWidth: "360px",
+                height: "38px",
+                padding: "0 var(--space-3)",
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--border-default)",
+                background: "var(--color-white)",
+              }}
+            />
+          </div>
 
-        <Card>
-          <CardBody style={{ padding: "var(--space-5)" }}>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Scheduled Services
+          {loading ? (
+            <div role="status" style={{ padding: "var(--space-8)", textAlign: "center", color: "var(--color-text-secondary)" }}>
+              Loading pending accounts…
             </div>
-            <div style={{ fontSize: "var(--text-3xl)", fontWeight: 700, color: "var(--color-deep-forest)", margin: "var(--space-1) 0" }}>
-              8
+          ) : filteredAccounts.length === 0 ? (
+            <div style={{ padding: "var(--space-8)", textAlign: "center" }}>
+              <Icon name="check-circle" size={28} color="var(--color-success-text)" />
+              <h4 style={{ margin: "var(--space-2) 0" }}>
+                {accounts.length === 0 ? "No pending approvals" : "No matching accounts"}
+              </h4>
+              <p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>
+                {accounts.length === 0
+                  ? "There are currently no email-verified registrations waiting for approval."
+                  : "Try another name or email address."}
+              </p>
             </div>
-            <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
-              Next 14 days
-            </div>
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* User Management Section */}
-      <section id="users">
-        <Card>
-          <CardHeader>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "var(--space-3)" }}>
-              <div>
-                <h3 style={{ fontSize: "var(--text-lg)", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Icon name="group" size={20} color="var(--color-forest-green)" />
-                  <span>Congregation Members</span>
-                </h3>
-                <p style={{ fontSize: "var(--text-xs)", margin: "2px 0 0" }}>Recent accounts and approval queue preview</p>
-              </div>
-              <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                <Button variant="secondary" size="sm" onClick={() => setDemoNotice("Filter dialog placeholder.")}>
-                  <Icon name="tune" size={16} /> Filter
-                </Button>
-                <Button variant="primary" size="sm" onClick={() => setDemoNotice("Invite member modal placeholder.")}>
-                  <Icon name="person_add" size={16} /> Add Member
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardBody style={{ padding: 0 }}>
+          ) : (
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "var(--text-sm)" }}>
                 <thead>
                   <tr style={{ backgroundColor: "var(--color-ivory-subtle)", borderBottom: "1px solid var(--border-default)" }}>
-                    <th style={{ padding: "var(--space-3) var(--space-6)", color: "var(--color-text-secondary)", fontWeight: 600 }}>Member Name</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", color: "var(--color-text-secondary)", fontWeight: 600 }}>Email Address</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", color: "var(--color-text-secondary)", fontWeight: 600 }}>Role</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", color: "var(--color-text-secondary)", fontWeight: 600 }}>Status</th>
-                    <th style={{ padding: "var(--space-3) var(--space-6)", textAlign: "right", color: "var(--color-text-secondary)", fontWeight: 600 }}>Actions</th>
+                    <th scope="col" style={{ padding: "var(--space-3) var(--space-6)" }}>Name</th>
+                    <th scope="col" style={{ padding: "var(--space-3) var(--space-4)" }}>Email</th>
+                    <th scope="col" style={{ padding: "var(--space-3) var(--space-4)" }}>Registered</th>
+                    <th scope="col" style={{ padding: "var(--space-3) var(--space-6)", textAlign: "right" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { name: "Sarah Miller", email: "sarah.miller@demo.church", role: "VOLUNTEER", status: "approved" as const },
-                    { name: "David Chen", email: "david.chen@demo.church", role: "MINISTRY_LEADER", status: "approved" as const },
-                    { name: "Michael Vance", email: "m.vance@demo.church", role: "MEMBER", status: "pending" as const },
-                    { name: "Jonathan Edwards", email: "admin@demo.church", role: "SUPERADMIN", status: "approved" as const },
-                  ].map((user) => (
-                    <tr key={user.email} style={{ borderBottom: "1px solid var(--border-default)" }}>
-                      <td style={{ padding: "var(--space-4) var(--space-6)", fontWeight: 600 }}>{user.name}</td>
-                      <td style={{ padding: "var(--space-4) var(--space-4)", color: "var(--color-text-secondary)" }}>{user.email}</td>
-                      <td style={{ padding: "var(--space-4) var(--space-4)" }}>
-                        <Badge variant={user.role === "SUPERADMIN" ? "superadmin" : user.role === "MINISTRY_LEADER" ? "admin" : "neutral"}>
-                          {user.role}
-                        </Badge>
+                  {filteredAccounts.map((account) => (
+                    <tr key={account.user_id} style={{ borderBottom: "1px solid var(--border-default)" }}>
+                      <td style={{ padding: "var(--space-4) var(--space-6)", fontWeight: 600 }}>
+                        {account.full_name || "Name not provided"}
                       </td>
-                      <td style={{ padding: "var(--space-4) var(--space-4)" }}>
-                        <Badge variant={user.status}>{user.status === "approved" ? "Approved" : "Pending Approval"}</Badge>
+                      <td style={{ padding: "var(--space-4) var(--space-4)", color: "var(--color-text-secondary)" }}>
+                        {account.email || "Email unavailable"}
+                      </td>
+                      <td style={{ padding: "var(--space-4) var(--space-4)", whiteSpace: "nowrap" }}>
+                        {formatDate(account.registered_at)}
                       </td>
                       <td style={{ padding: "var(--space-4) var(--space-6)", textAlign: "right" }}>
-                        {user.status === "pending" ? (
-                          <Button variant="primary" size="sm" onClick={() => setDemoNotice(`Approved ${user.name} (Simulation)`)}>
-                            <Icon name="check" size={16} /> Approve
-                          </Button>
-                        ) : (
-                          <Button variant="ghost" size="sm" onClick={() => setDemoNotice(`Edit permissions for ${user.name} (Simulation)`)}>
-                            <Icon name="edit" size={16} /> Manage
-                          </Button>
-                        )}
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          disabled={Boolean(approvingUserId)}
+                          isLoading={approvingUserId === account.user_id}
+                          onClick={() => void handleApprove(account)}
+                        >
+                          <Icon name="check" size={15} /> Approve
+                        </Button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </CardBody>
-        </Card>
-      </section>
+          )}
+        </CardBody>
+      </Card>
 
-      {/* Module CRUD Permission Matrix */}
-      <section id="permissions">
-        <Card>
-          <CardHeader>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "var(--space-3)" }}>
-              <div>
-                <h3 style={{ fontSize: "var(--text-lg)", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Icon name="shield_person" size={20} color="var(--color-forest-green)" />
-                  <span>Module CRUD Permissions Matrix</span>
-                </h3>
-                <p style={{ fontSize: "var(--text-xs)", margin: "2px 0 0" }}>
-                  Demonstrating the 12 required church modules with independent View, Create, Update, and Delete toggles.
-                </p>
-              </div>
-
-              {/* Search input for modules */}
-              <div style={{ maxWidth: "240px", width: "100%" }}>
-                <input
-                  type="text"
-                  placeholder="Filter modules..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: "100%",
-                    height: "36px",
-                    padding: "0 var(--space-3)",
-                    fontSize: "var(--text-sm)",
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--border-default)",
-                    backgroundColor: "var(--color-white)",
-                  }}
-                />
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardBody style={{ padding: 0 }}>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "var(--text-sm)" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "var(--color-ivory-subtle)", borderBottom: "1px solid var(--border-default)" }}>
-                    <th style={{ padding: "var(--space-3) var(--space-6)", color: "var(--color-text-secondary)", fontWeight: 600 }}>Module</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", color: "var(--color-text-secondary)", fontWeight: 600 }}>Category</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center", color: "var(--color-text-secondary)", fontWeight: 600 }}>View</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center", color: "var(--color-text-secondary)", fontWeight: 600 }}>Create</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center", color: "var(--color-text-secondary)", fontWeight: 600 }}>Update</th>
-                    <th style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center", color: "var(--color-text-secondary)", fontWeight: 600 }}>Delete</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredModules.map((mod) => (
-                    <tr key={mod.id} style={{ borderBottom: "1px solid var(--border-default)" }}>
-                      <td style={{ padding: "var(--space-3) var(--space-6)" }}>
-                        <div style={{ fontWeight: 600 }}>{mod.name}</div>
-                        <div style={{ fontSize: "11px", color: "var(--color-text-secondary)" }}>
-                          id: <code>{mod.id}</code>
-                        </div>
-                      </td>
-                      <td style={{ padding: "var(--space-3) var(--space-4)" }}>
-                        <Badge variant="sage">{mod.category}</Badge>
-                      </td>
-                      <td style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={mod.canView}
-                          onChange={() => togglePermission(mod.id, "canView")}
-                          style={{ width: "18px", height: "18px", accentColor: "var(--color-forest-green)", cursor: "pointer" }}
-                          aria-label={`View permission for ${mod.name}`}
-                        />
-                      </td>
-                      <td style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={mod.canCreate}
-                          onChange={() => togglePermission(mod.id, "canCreate")}
-                          style={{ width: "18px", height: "18px", accentColor: "var(--color-forest-green)", cursor: "pointer" }}
-                          aria-label={`Create permission for ${mod.name}`}
-                        />
-                      </td>
-                      <td style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={mod.canUpdate}
-                          onChange={() => togglePermission(mod.id, "canUpdate")}
-                          style={{ width: "18px", height: "18px", accentColor: "var(--color-forest-green)", cursor: "pointer" }}
-                          aria-label={`Update permission for ${mod.name}`}
-                        />
-                      </td>
-                      <td style={{ padding: "var(--space-3) var(--space-4)", textAlign: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={mod.canDelete}
-                          onChange={() => togglePermission(mod.id, "canDelete")}
-                          style={{ width: "18px", height: "18px", accentColor: "var(--color-forest-green)", cursor: "pointer" }}
-                          aria-label={`Delete permission for ${mod.name}`}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardBody>
-        </Card>
-      </section>
+      <Alert variant="info" title="Approval is separate from membership and role assignment">
+        Approving an account updates its approval status only. It does not automatically activate congregation membership or assign a role.
+      </Alert>
     </div>
   );
 };
