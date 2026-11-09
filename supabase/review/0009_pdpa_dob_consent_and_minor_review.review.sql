@@ -143,7 +143,7 @@ BEGIN
       USING ERRCODE = '22007';
   END;
 
-  IF v_dob IS NULL OR v_dob > CURRENT_DATE THEN
+  IF v_dob IS NULL OR v_dob > (now() AT TIME ZONE 'Asia/Kuching')::date THEN
     RAISE EXCEPTION 'A valid date of birth is required.'
       USING ERRCODE = '23514';
   END IF;
@@ -159,7 +159,7 @@ BEGIN
   VALUES (
     NEW.id, v_full_name, v_dob,
     CASE
-      WHEN v_dob > (CURRENT_DATE - INTERVAL '18 years')::date
+      WHEN v_dob > (((now() AT TIME ZONE 'Asia/Kuching')::date) - INTERVAL '18 years')::date
         THEN 'pending_review'
       ELSE 'not_required'
     END
