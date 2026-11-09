@@ -138,6 +138,18 @@ CREATE TABLE public.family_members (
       AND relationship_group = 'immediate')
     OR
     (NOT is_primary_leader AND relationship_to_leader <> 'family_leader')
+  ),
+  CONSTRAINT family_relationship_group_consistent CHECK (
+    (relationship_group = 'immediate' AND relationship_to_leader IN
+      ('family_leader', 'spouse', 'father', 'mother', 'son', 'daughter'))
+    OR
+    (relationship_group = 'extended' AND relationship_to_leader IN (
+      'grandfather', 'grandmother', 'grandson', 'granddaughter',
+      'brother', 'sister', 'uncle', 'aunt', 'nephew', 'niece', 'cousin',
+      'father_in_law', 'mother_in_law', 'son_in_law', 'daughter_in_law',
+      'brother_in_law', 'sister_in_law', 'guardian', 'ward',
+      'other_relative', 'other_household_member'
+    ))
   )
 );
 
@@ -168,9 +180,11 @@ CREATE TABLE public.family_change_requests (
   decision_note text,
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT family_change_review_consistency CHECK (
-    (status = 'pending' AND reviewed_by_auth_user_id IS NULL AND reviewed_at IS NULL)
+    (status IN ('pending', 'cancelled')
+      AND reviewed_by_auth_user_id IS NULL AND reviewed_at IS NULL)
     OR
-    (status <> 'pending')
+    (status IN ('approved', 'rejected')
+      AND reviewed_by_auth_user_id IS NOT NULL AND reviewed_at IS NOT NULL)
   )
 );
 
@@ -239,23 +253,22 @@ REVOKE ALL ON TABLE public.people, public.families, public.family_members,
 GRANT SELECT ON TABLE public.people, public.families, public.family_members,
   public.family_change_requests TO authenticated;
 
-CREATE POLICY people_select_self_or_household
+CREATE POLICY people_select_self_or_family_leader
   ON public.people FOR SELECT TO authenticated
   USING (
     auth_user_id = (SELECT auth.uid())
     OR EXISTS (
       SELECT 1
-      FROM public.family_members AS mine
-      JOIN public.family_members AS theirs
-        ON theirs.family_id = mine.family_id
-      WHERE mine.person_id = (
-        SELECT own_profile.person_id
-        FROM public.profiles AS own_profile
-        WHERE own_profile.id = (SELECT auth.uid())
-      )
-        AND mine.status = 'active'
-        AND theirs.person_id = people.id
-        AND theirs.status = 'active'
+      FROM public.family_members AS leader
+      JOIN public.profiles AS own_profile
+        ON own_profile.person_id = leader.person_id
+      JOIN public.family_members AS target_member
+        ON target_member.family_id = leader.family_id
+      WHERE own_profile.id = (SELECT auth.uid())
+        AND leader.is_primary_leader = true
+        AND leader.status = 'active'
+        AND target_member.person_id = people.id
+        AND target_member.status = 'active'
     )
   );
 
