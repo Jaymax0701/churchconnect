@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
 
   if (body.action === "update_secondary_email") {
     const secondaryEmail = body.secondary_email?.trim().toLowerCase() || null;
-    if (secondaryEmail && (secondaryEmail.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(secondaryEmail))) {
+    if (secondaryEmail && (secondaryEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(secondaryEmail))) {
       return Response.json({ error: "Provide a valid secondary email address." }, { status: 400, headers: corsHeaders });
     }
     const { data: targetAuth, error: targetAuthError } = await adminClient.auth.admin.getUserById(targetId);
