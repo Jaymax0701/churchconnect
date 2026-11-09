@@ -10,6 +10,8 @@ import { supabase } from "../../../lib/supabase";
 interface UserAccount {
   user_id: string;
   email: string | null;
+  secondary_email: string | null;
+  secondary_email_verified_at: string | null;
   full_name: string | null;
   is_approved: boolean;
   approved_at: string | null;
@@ -36,6 +38,8 @@ export const UserAccountsPage: React.FC = () => {
   const [editing, setEditing] = useState<UserAccount | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editSecondaryEmail, setEditSecondaryEmail] = useState("");
+  const [savingSecondary, setSavingSecondary] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resettingUserId, setResettingUserId] = useState<string | null>(null);
 
@@ -76,6 +80,7 @@ export const UserAccountsPage: React.FC = () => {
     setEditing(account);
     setEditName(account.full_name ?? "");
     setEditEmail(account.email ?? "");
+    setEditSecondaryEmail(account.secondary_email ?? "");
     setError(null);
     setNotice(null);
   };
@@ -99,7 +104,7 @@ export const UserAccountsPage: React.FC = () => {
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);
       setNotice((email !== editing.email
-        ? "Name updated. An email-change confirmation has been sent to the new address; the address changes after confirmation."
+        ? "Account name and primary login email updated successfully. No email notification was sent."
         : "Account name updated successfully.") + (data?.warning ? ` ${data.warning}` : ""));
       setEditing(null);
       await loadAccounts();
@@ -108,6 +113,29 @@ export const UserAccountsPage: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+
+  const saveSecondaryEmail = async () => {
+    if (!editing || savingSecondary) return;
+    const secondaryEmail = editSecondaryEmail.trim().toLowerCase();
+    if (secondaryEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(secondaryEmail)) {
+      setError("Enter a valid secondary email address, or leave it blank to remove it.");
+      return;
+    }
+    setSavingSecondary(true); setError(null); setNotice(null);
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("admin-manage-user", {
+        body: { action: "update_secondary_email", target_user_id: editing.user_id, secondary_email: secondaryEmail || null },
+      });
+      if (invokeError) throw invokeError;
+      if (data?.error) throw new Error(data.error);
+      setNotice("Secondary email saved. It is not verified and cannot be used for account recovery yet.");
+      await loadAccounts();
+      setEditing((current) => current ? { ...current, secondary_email: secondaryEmail || null, secondary_email_verified_at: null } : current);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to update the secondary email.");
+    } finally { setSavingSecondary(false); }
   };
 
   const sendPasswordReset = async (account: UserAccount) => {
@@ -190,7 +218,7 @@ export const UserAccountsPage: React.FC = () => {
               <tbody>{filteredAccounts.map((account) => <tr key={account.user_id} style={{ borderBottom: "1px solid var(--border-default)" }}>
                 <td style={{ padding: "var(--space-4) var(--space-6)", minWidth: "220px" }}>
                   <div style={{ fontWeight: 600 }}>{account.full_name || "Name not provided"}</div>
-                  <div style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>{account.email || "Email unavailable"}</div>
+                  <div style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>{account.email || "Email unavailable"}</div>{account.secondary_email && <div style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>Backup: {account.secondary_email} · {account.secondary_email_verified_at ? "Verified" : "Unverified"}</div>}
                 </td>
                 <td style={{ padding: "var(--space-4)" }}><Badge variant={account.is_approved ? "approved" : "pending"}>{account.is_approved ? "Approved" : "Pending"}</Badge></td>
                 <td style={{ padding: "var(--space-4)", minWidth: "150px" }}>{account.role_assignments || "No role assigned"}</td>
@@ -213,17 +241,22 @@ export const UserAccountsPage: React.FC = () => {
       {editing && <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setEditing(null); }}
         style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.45)", display: "grid", placeItems: "center", padding: "var(--space-4)" }}>
         <Card><CardBody style={{ width: "min(440px, calc(100vw - 48px))", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
-          <div><h3 style={{ margin: 0 }}>Edit account</h3><p style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Changes apply to this user's profile and authentication email.</p></div>
+          <div><h3 style={{ margin: 0 }}>Edit account</h3><p style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Primary email changes apply immediately to the login account without an email notification.</p></div>
           <form onSubmit={(event) => void saveAccount(event)} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
             <Input id="account-name" label="Full name" value={editName} onChange={(event) => setEditName(event.target.value)} required autoComplete="name" />
             <Input id="account-email" label="Email address" type="email" value={editEmail} onChange={(event) => setEditEmail(event.target.value)} required autoComplete="email" />
-            {editEmail.trim().toLowerCase() !== (editing.email ?? "").toLowerCase() &&
-              <Alert variant="info" title="Email confirmation required">Supabase will send a confirmation link to the new email address. The existing email remains until the change is confirmed.</Alert>}
+            
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
               <Button type="button" variant="secondary" onClick={() => setEditing(null)} disabled={saving}>Cancel</Button>
               <Button type="submit" isLoading={saving} disabled={saving}><Icon name="save" size={15} /> Save changes</Button>
             </div>
           </form>
+
+          <div style={{ borderTop: "1px solid var(--border-default)", paddingTop: "var(--space-4)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            <div><strong>Secondary email</strong><p style={{ margin: "4px 0 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Backup contact only. Verification is not enabled yet, so this address cannot be used for recovery.</p></div>
+            <Input id="account-secondary-email" label="Secondary email address" type="email" value={editSecondaryEmail} onChange={(event) => setEditSecondaryEmail(event.target.value)} autoComplete="email" />
+            <div style={{ display: "flex", justifyContent: "flex-end" }}><Button type="button" variant="secondary" onClick={() => void saveSecondaryEmail()} isLoading={savingSecondary} disabled={savingSecondary}>Save secondary email</Button></div>
+          </div>
         </CardBody></Card>
       </div>}
 

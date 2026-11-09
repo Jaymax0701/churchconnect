@@ -37,15 +37,8 @@ Deno.serve(async (req) => {
 
   const { data: actorProfile, error: profileError } = await adminClient
     .from("profiles").select("is_approved").eq("id", actor.id).maybeSingle();
-  const { data: actorRoles, error: roleError } = await adminClient
-    .from("user_roles").select("id").eq("user_id", actor.id).eq("role_id", "superadmin")
-    .eq("scope_type", "global").is("ministry_id", null).limit(1);
 
-  if (profileError || roleError || actorProfile?.is_approved !== true || !actorRoles?.length) {
-    return Response.json({ error: "Only an approved global Superadmin can manage accounts." }, { status: 403, headers: corsHeaders });
-  }
-
-  let body: { action?: string; target_user_id?: string; full_name?: string; email?: string };
+  let body: { action?: string; target_user_id?: string; full_name?: string; email?: string; secondary_email?: string | null };
   try { body = await req.json(); } catch {
     return Response.json({ error: "Invalid request body" }, { status: 400, headers: corsHeaders });
   }
@@ -54,12 +47,44 @@ Deno.serve(async (req) => {
   if (!targetId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(targetId)) {
     return Response.json({ error: "A valid target user ID is required." }, { status: 400, headers: corsHeaders });
   }
-  if (targetId === actor.id) return Response.json({ error: "Use your own account settings to manage your account." }, { status: 400, headers: corsHeaders });
+  if (profileError || actorProfile?.is_approved !== true) {
+    return Response.json({ error: "An approved account is required." }, { status: 403, headers: corsHeaders });
+  }
+
+  const isSelfSecondaryUpdate = body.action === "update_secondary_email" && targetId === actor.id;
+  if (!isSelfSecondaryUpdate) {
+    if (targetId === actor.id) {
+      return Response.json({ error: "Use the secondary email setting for your own account." }, { status: 400, headers: corsHeaders });
+    }
+    const { data: actorRoles, error: roleError } = await adminClient
+      .from("user_roles").select("id").eq("user_id", actor.id).eq("role_id", "superadmin")
+      .eq("scope_type", "global").is("ministry_id", null).limit(1);
+    if (roleError || !actorRoles?.length) {
+      return Response.json({ error: "Only an approved global Superadmin can manage other accounts." }, { status: 403, headers: corsHeaders });
+    }
+  }
 
   let auditAction = "";
   let auditDetails: Record<string, unknown> = {};
 
-  if (body.action === "update_account") {
+  if (body.action === "update_secondary_email") {
+    const secondaryEmail = body.secondary_email?.trim().toLowerCase() || null;
+    if (secondaryEmail && (secondaryEmail.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(secondaryEmail))) {
+      return Response.json({ error: "Provide a valid secondary email address." }, { status: 400, headers: corsHeaders });
+    }
+    const { data: targetAuth, error: targetAuthError } = await adminClient.auth.admin.getUserById(targetId);
+    if (targetAuthError || !targetAuth.user) return Response.json({ error: "Target account not found." }, { status: 404, headers: corsHeaders });
+    if (secondaryEmail && targetAuth.user.email?.toLowerCase() === secondaryEmail) {
+      return Response.json({ error: "Secondary email must be different from the primary login email." }, { status: 400, headers: corsHeaders });
+    }
+    const { error: secondaryError } = await adminClient.from("profiles").update({
+      secondary_email: secondaryEmail,
+      secondary_email_verified_at: null,
+    }).eq("id", targetId);
+    if (secondaryError) return Response.json({ error: secondaryError.message }, { status: 500, headers: corsHeaders });
+    auditAction = "update_secondary_email";
+    auditDetails = { secondary_email_set: Boolean(secondaryEmail), verification_reset: true };
+  } else if (body.action === "update_account") {
     const fullName = body.full_name?.trim();
     const email = body.email?.trim().toLowerCase();
     if (!fullName || fullName.length > 160 || !email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -80,7 +105,7 @@ Deno.serve(async (req) => {
 
     await adminClient.auth.admin.updateUserById(targetId, { user_metadata: { ...existingUser.user.user_metadata, full_name: fullName } });
     auditAction = "update_account";
-    auditDetails = { name_updated: true, email_change_requested: emailChanged };
+    auditDetails = { name_updated: true, primary_email_changed: emailChanged };
   } else if (body.action === "send_password_reset") {
     const { data: targetUser, error: targetError } = await adminClient.auth.admin.getUserById(targetId);
     if (targetError || !targetUser.user?.email) return Response.json({ error: "Target account or email not found." }, { status: 404, headers: corsHeaders });

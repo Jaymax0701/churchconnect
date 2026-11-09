@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/Button";
 import { Card, CardHeader, CardBody } from "../../../components/ui/Card";
 import { Badge } from "../../../components/ui/Badge";
@@ -183,10 +184,7 @@ export const MemberPortalPage: React.FC = () => {
               )}
               <div><strong>Directory:</strong> Not configured</div>
             </div>
-            <Button variant="secondary" size="sm" disabled>Edit Contact Info</Button>
-            <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)", margin: "var(--space-2) 0 0" }}>
-              Profile editing will be enabled when the member profile workflow is connected.
-            </p>
+            <Link to="/portal/settings" style={{ display: "inline-flex", alignItems: "center", padding: "8px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-default)", color: "var(--color-forest-green)", textDecoration: "none", fontSize: "var(--text-sm)", fontWeight: 600 }}>Manage Account Settings</Link>
           </CardBody>
         </Card>
       </div>
