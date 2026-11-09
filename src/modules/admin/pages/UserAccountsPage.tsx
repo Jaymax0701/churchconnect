@@ -104,7 +104,7 @@ export const UserAccountsPage: React.FC = () => {
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);
       setNotice((email !== editing.email
-        ? "Name updated. An email-change confirmation has been sent to the new address; the address changes after confirmation."
+        ? "Account name and primary login email updated successfully. No email notification was sent."
         : "Account name updated successfully.") + (data?.warning ? ` ${data.warning}` : ""));
       setEditing(null);
       await loadAccounts();
