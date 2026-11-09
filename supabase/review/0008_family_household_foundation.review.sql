@@ -253,64 +253,91 @@ REVOKE ALL ON TABLE public.people, public.families, public.family_members,
 GRANT SELECT ON TABLE public.people, public.families, public.family_members,
   public.family_change_requests TO authenticated;
 
+-- SECURITY DEFINER membership predicates avoid recursive RLS evaluation
+-- when a policy needs to check membership in the same protected table.
+CREATE OR REPLACE FUNCTION public.is_active_family_member(target_family_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles AS p
+    JOIN public.family_members AS fm ON fm.person_id = p.person_id
+    WHERE p.id = (SELECT auth.uid())
+      AND fm.family_id = target_family_id
+      AND fm.status = 'active'
+  );
+$function$;
+
+CREATE OR REPLACE FUNCTION public.is_primary_family_leader(target_family_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles AS p
+    JOIN public.family_members AS fm ON fm.person_id = p.person_id
+    WHERE p.id = (SELECT auth.uid())
+      AND fm.family_id = target_family_id
+      AND fm.is_primary_leader = true
+      AND fm.status = 'active'
+  );
+$function$;
+
+CREATE OR REPLACE FUNCTION public.is_active_family_leader_of_person(target_person_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles AS p
+    JOIN public.family_members AS leader ON leader.person_id = p.person_id
+    JOIN public.family_members AS target
+      ON target.family_id = leader.family_id
+    WHERE p.id = (SELECT auth.uid())
+      AND leader.is_primary_leader = true
+      AND leader.status = 'active'
+      AND target.person_id = target_person_id
+      AND target.status = 'active'
+  );
+$function$;
+
+REVOKE ALL ON FUNCTION public.is_active_family_member(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.is_primary_family_leader(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.is_active_family_leader_of_person(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_active_family_member(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_primary_family_leader(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_active_family_leader_of_person(uuid) TO authenticated;
+
 CREATE POLICY people_select_self_or_family_leader
   ON public.people FOR SELECT TO authenticated
   USING (
     auth_user_id = (SELECT auth.uid())
-    OR EXISTS (
-      SELECT 1
-      FROM public.family_members AS leader
-      JOIN public.profiles AS own_profile
-        ON own_profile.person_id = leader.person_id
-      JOIN public.family_members AS target_member
-        ON target_member.family_id = leader.family_id
-      WHERE own_profile.id = (SELECT auth.uid())
-        AND leader.is_primary_leader = true
-        AND leader.status = 'active'
-        AND target_member.person_id = people.id
-        AND target_member.status = 'active'
-    )
+    OR public.is_active_family_leader_of_person(id)
   );
 
 CREATE POLICY families_select_active_member_household
   ON public.families FOR SELECT TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.family_members AS fm
-      JOIN public.profiles AS p ON p.person_id = fm.person_id
-      WHERE p.id = (SELECT auth.uid())
-        AND fm.family_id = families.id
-        AND fm.status = 'active'
-    )
-  );
+  USING (public.is_active_family_member(id));
 
 CREATE POLICY family_members_select_same_household
   ON public.family_members FOR SELECT TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1
-      FROM public.family_members AS mine
-      JOIN public.profiles AS p ON p.person_id = mine.person_id
-      WHERE p.id = (SELECT auth.uid())
-        AND mine.family_id = family_members.family_id
-        AND mine.status = 'active'
-    )
-  );
+  USING (public.is_active_family_member(family_id));
 
 CREATE POLICY family_change_requests_select_requester_or_leader
   ON public.family_change_requests FOR SELECT TO authenticated
   USING (
     requested_by_auth_user_id = (SELECT auth.uid())
-    OR EXISTS (
-      SELECT 1
-      FROM public.family_members AS leader
-      JOIN public.profiles AS p ON p.person_id = leader.person_id
-      WHERE p.id = (SELECT auth.uid())
-        AND leader.family_id = family_change_requests.family_id
-        AND leader.is_primary_leader = true
-        AND leader.status = 'active'
-    )
+    OR public.is_primary_family_leader(family_id)
   );
 
 COMMIT;
