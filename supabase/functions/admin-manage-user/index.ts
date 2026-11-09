@@ -72,6 +72,11 @@ Deno.serve(async (req) => {
     if (secondaryEmail && (secondaryEmail.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(secondaryEmail))) {
       return Response.json({ error: "Provide a valid secondary email address." }, { status: 400, headers: corsHeaders });
     }
+    const { data: targetAuth, error: targetAuthError } = await adminClient.auth.admin.getUserById(targetId);
+    if (targetAuthError || !targetAuth.user) return Response.json({ error: "Target account not found." }, { status: 404, headers: corsHeaders });
+    if (secondaryEmail && targetAuth.user.email?.toLowerCase() === secondaryEmail) {
+      return Response.json({ error: "Secondary email must be different from the primary login email." }, { status: 400, headers: corsHeaders });
+    }
     const { error: secondaryError } = await adminClient.from("profiles").update({
       secondary_email: secondaryEmail,
       secondary_email_verified_at: null,
