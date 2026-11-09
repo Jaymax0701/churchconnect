@@ -10,8 +10,8 @@ import { supabase } from "../../../lib/supabase";
 
 const PRIVACY_NOTICE_VERSION = "2026-11-v1";
 
-function isUnder18(dateOfBirth: string): boolean {
-  if (!dateOfBirth) return false;
+function getAge(dateOfBirth: string): number | null {
+  if (!dateOfBirth) return null;
   const [year, month, day] = dateOfBirth.split("-").map(Number);
   const today = new Date();
   let age = today.getFullYear() - year;
@@ -19,7 +19,7 @@ function isUnder18(dateOfBirth: string): boolean {
     today.getMonth() + 1 > month ||
     (today.getMonth() + 1 === month && today.getDate() >= day);
   if (!birthdayHasPassed) age -= 1;
-  return age < 18;
+  return age;
 }
 
 export const SignUpPage = () => {
@@ -37,7 +37,9 @@ export const SignUpPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const minorRegistration = useMemo(() => isUnder18(dateOfBirth), [dateOfBirth]);
+  const age = useMemo(() => getAge(dateOfBirth), [dateOfBirth]);
+  const under12Registration = age !== null && age < 12;
+  const minorRegistration = age !== null && age < 18;
 
   if (!authLoading && user) return <Navigate to="/portal" replace />;
 
@@ -46,6 +48,10 @@ export const SignUpPage = () => {
     setError(null);
     if (!dateOfBirth) {
       setError("Enter your date of birth.");
+      return;
+    }
+    if (under12Registration) {
+      setError("Children under 12 must be registered as a managed family member by their Family Leader. They cannot create an individual login account.");
       return;
     }
     if (new Date(dateOfBirth + "T00:00:00") > new Date()) {
@@ -113,7 +119,10 @@ export const SignUpPage = () => {
             <form onSubmit={(event) => void handleSubmit(event)} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", marginTop: "var(--space-4)" }}>
               <Input id="signup-name" label="Full name" autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Enter your full name" required />
               <Input id="signup-dob" label="Date of birth" type="date" autoComplete="bday" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} max={new Date().toISOString().slice(0, 10)} hint="Used to determine age eligibility and whether additional registration review is required." required />
-              {minorRegistration && <Alert variant="info" title="Administrator review required">
+              {under12Registration && <Alert variant="warning" title="Family Leader registration required">
+                Children under 12 do not create individual login accounts. Ask your Family Leader to register you as a managed family member. If your family has not been set up yet, contact your church administrator for assistance.
+              </Alert>}
+              {minorRegistration && !under12Registration && <Alert variant="info" title="Administrator review required">
                 Because you are under 18, your registration will be flagged for review. You will not receive member access until the church completes its review and any applicable parent/guardian or safeguarding checks. This notice is not a substitute for parent/guardian consent.
               </Alert>}
               <Input id="signup-email" label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
@@ -142,7 +151,7 @@ export const SignUpPage = () => {
                 </select>
               </div>
 
-              <Button type="submit" size="lg" isLoading={submitting} disabled={submitting || authLoading} style={{ width: "100%" }}>Create account</Button>
+              <Button type="submit" size="lg" isLoading={submitting} disabled={submitting || authLoading || under12Registration} style={{ width: "100%" }}>Create account</Button>
             </form>
             <p style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)", lineHeight: 1.6, marginTop: "var(--space-4)" }}>
               Registration does not automatically grant member access. Verify your email first; a ChurchConnect Superadmin must then approve your account. Under-18 registrations require an additional administrator review. Roles and congregation membership are assigned separately.
