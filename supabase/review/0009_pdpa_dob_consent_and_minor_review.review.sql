@@ -356,6 +356,80 @@ REVOKE ALL ON FUNCTION public.approve_account(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.approve_account(uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.approve_account(uuid) TO authenticated;
 
+
+-- Keep the durable person name and Auth profile name synchronized for
+-- Superadmin account maintenance. The caller must be service_role, and the
+-- supplied actor is independently verified against the approved global role.
+CREATE OR REPLACE FUNCTION public.admin_update_person_name(
+  actor_user_id uuid,
+  target_user_id uuid,
+  new_full_name text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  updated_person_id uuid;
+BEGIN
+  IF auth.role() IS DISTINCT FROM 'service_role' THEN
+    RAISE EXCEPTION 'This operation is available only to the trusted server workflow.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF actor_user_id IS NULL OR target_user_id IS NULL
+     OR actor_user_id = target_user_id
+     OR new_full_name IS NULL
+     OR length(pg_catalog.btrim(new_full_name)) NOT BETWEEN 1 AND 160 THEN
+    RAISE EXCEPTION 'Invalid account name update.'
+      USING ERRCODE = '22023';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.profiles AS actor_profile
+    JOIN public.user_roles AS actor_role
+      ON actor_role.user_id = actor_profile.id
+    WHERE actor_profile.id = actor_user_id
+      AND actor_profile.is_approved IS TRUE
+      AND actor_role.role_id = 'superadmin'
+      AND actor_role.scope_type = 'global'
+      AND actor_role.ministry_id IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Actor is not an approved global Superadmin.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  UPDATE public.people AS person
+  SET full_name = pg_catalog.btrim(new_full_name),
+      updated_at = now()
+  WHERE person.auth_user_id = target_user_id
+  RETURNING person.id INTO updated_person_id;
+
+  IF updated_person_id IS NULL THEN
+    RAISE EXCEPTION 'Target person record not found.'
+      USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.profiles AS p
+  SET full_name = pg_catalog.btrim(new_full_name),
+      updated_at = now()
+  WHERE p.id = target_user_id
+    AND p.person_id = updated_person_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Target account profile not found.'
+      USING ERRCODE = 'P0002';
+  END IF;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_update_person_name(uuid, uuid, text)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_update_person_name(uuid, uuid, text)
+  TO service_role;
+
 COMMIT;
 
 -- Verification: columns and constraints
