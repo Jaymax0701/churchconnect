@@ -125,6 +125,7 @@ export const SignUpPage = () => {
               {minorRegistration && !under12Registration && <Alert variant="info" title="Administrator review required">
                 Because you are under 18, your registration will be flagged for review. You will not receive member access until the church completes its review and any applicable parent/guardian or safeguarding checks. This notice is not a substitute for parent/guardian consent.
               </Alert>}
+              {!under12Registration && <>
               <Input id="signup-email" label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
               <Input id="signup-password" label="Password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} hint="At least 8 characters." required minLength={8} />
               <Input id="signup-confirm-password" label="Confirm password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} />
@@ -150,6 +151,7 @@ export const SignUpPage = () => {
                   <option value="ms">Bahasa Malaysia</option>
                 </select>
               </div>
+              </>}
 
               <Button type="submit" size="lg" isLoading={submitting} disabled={submitting || authLoading || under12Registration} style={{ width: "100%" }}>Create account</Button>
             </form>
