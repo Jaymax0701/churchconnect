@@ -17,6 +17,34 @@
 
 BEGIN;
 
+DO $preflight$
+BEGIN
+  IF current_user <> 'postgres' THEN
+    RAISE EXCEPTION 'Run this reviewed operation as the trusted postgres database role.';
+  END IF;
+  IF to_regclass('public.people') IS NULL
+     OR to_regclass('public.profiles') IS NULL
+     OR to_regclass('public.user_roles') IS NULL
+     OR to_regprocedure('public.handle_new_auth_user_profile()') IS NULL THEN
+    RAISE EXCEPTION 'Apply and verify the family/person foundation before this PDPA migration.';
+  END IF;
+  IF to_regclass('public.privacy_consent_records') IS NOT NULL THEN
+    RAISE EXCEPTION 'privacy_consent_records already exists; inspect and reconcile instead of recreating it.';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'profiles'
+      AND column_name = 'person_id'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'people'
+      AND column_name = 'minor_review_status'
+  ) THEN
+    RAISE EXCEPTION 'Expected profiles.person_id and people.minor_review_status are missing.';
+  END IF;
+END;
+$preflight$;
+
 -- Date of birth and minor review belong to the durable person record,
 -- including managed children who have no Auth profile.
 COMMENT ON COLUMN public.people.date_of_birth IS
@@ -24,7 +52,7 @@ COMMENT ON COLUMN public.people.date_of_birth IS
 COMMENT ON COLUMN public.people.minor_review_status IS
   'Under-18 safeguarding/guardian review state. A cleared marker is an administrative outcome, not proof of legal guardian authority.';
 
-CREATE TABLE IF NOT EXISTS public.privacy_consent_records (
+CREATE TABLE public.privacy_consent_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   person_id uuid NOT NULL REFERENCES public.people(id) ON DELETE RESTRICT,
   user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
