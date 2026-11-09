@@ -30,7 +30,7 @@ export const AccountSettingsPage: React.FC = () => {
     async function load() {
       if (!user) return;
       const [profileResult, consentResult] = await Promise.all([
-        supabase.from("profiles").select("secondary_email,date_of_birth").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("secondary_email,person:people!profiles_person_id_fkey(date_of_birth)").eq("id", user.id).maybeSingle(),
         supabase.from("privacy_consent_records")
           .select("consent_type,policy_version,consented,notice_language,captured_at")
           .eq("user_id", user.id)
@@ -40,7 +40,8 @@ export const AccountSettingsPage: React.FC = () => {
       if (profileResult.error) setError(profileResult.error.message);
       else {
         setSecondaryEmail(profileResult.data?.secondary_email ?? "");
-        setDateOfBirth(profileResult.data?.date_of_birth ?? null);
+        const person = profileResult.data?.person as { date_of_birth?: string | null } | null;
+        setDateOfBirth(person?.date_of_birth ?? null);
       }
       if (consentResult.error) {
         setError((current) => current ?? consentResult.error.message);
