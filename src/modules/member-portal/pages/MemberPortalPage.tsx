@@ -184,7 +184,7 @@ export const MemberPortalPage: React.FC = () => {
               )}
               <div><strong>Directory:</strong> Not configured</div>
             </div>
-            <Button variant="secondary" size="sm" onClick={() => { window.location.href = "/portal/settings"; }}>Manage Account Settings</Button>
+            <Link to="/portal/settings" style={{ display: "inline-flex", alignItems: "center", padding: "8px 12px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-default)", color: "var(--color-forest-green)", textDecoration: "none", fontSize: "var(--text-sm)", fontWeight: 600 }}>Manage Account Settings</Link>
           </CardBody>
         </Card>
       </div>
