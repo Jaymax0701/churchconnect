@@ -4,6 +4,7 @@ import { PublicLayout } from "../layouts/PublicLayout";
 import { MemberPortalLayout } from "../layouts/MemberPortalLayout";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { PublicHomePage } from "../modules/public-site/pages/PublicHomePage";
+import { PrivacyNoticePage } from "../modules/public-site/pages/PrivacyNoticePage";
 import { MemberPortalPage } from "../modules/member-portal/pages/MemberPortalPage";
 import { AdminDashboardPage } from "../modules/admin/pages/AdminDashboardPage";
 import { UserAccountsPage } from "../modules/admin/pages/UserAccountsPage";
@@ -21,6 +22,7 @@ export const AppRoutes: React.FC = () => {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<PublicHomePage />} />
+        <Route path="/privacy" element={<PrivacyNoticePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/forgot-password" element={<ResetPasswordPage mode="request" />} />
