@@ -114,7 +114,21 @@ Remains an account authorisation structure. Do not assign login roles to managed
 - Keep audit history for membership, leader, profile-change and consent decisions.
 - Service-role credentials remain server-side only.
 
-## 8. PR #26 database work and deployment gate
+## 8. Initial family workflow implementation (PR #26)
+
+The additive review migration `supabase/review/0010_family_creation_and_managed_children.review.sql` implements the first trusted write workflows:
+
+- An approved authenticated member can create one household and self-appoint as its initial primary Family Leader in a single transaction.
+- The caller identity is derived from `auth.uid()`; the caller cannot supply another actor.
+- The active primary Family Leader can add a child under 12 as a managed `people` record with no Auth user, profile, login, or password.
+- Family creation and managed-child addition are recorded in an append-only `family_audit_log`.
+- The migration does not claim guardian consent. A Family Leader may manage a child's household record without being their legal guardian; actual guardian consent must be collected through a separate verified workflow.
+
+The migration is additive because the 0008 and 0009 structures have already been applied to the current Supabase project. Do not rerun 0008 or 0009. Review and apply 0010 manually only after checking it against the live catalog.
+
+Still to implement: family workspace UI, invitation/join workflows, nomination and accepted leadership transfer, profile-change approval, guardian-consent capture/verification, managed-child Superadmin review, account linking, and cross-family negative tests.
+
+## 9. PR #26 database work and deployment gate
 
 The PR branch contains two review-only SQL files, in this order:
 
@@ -127,7 +141,7 @@ The schema foundation does not yet provide all trusted write workflows or UI nee
 
 The signup UI blocks individual account creation for under-12 registrations. It explains that a Family Leader must register the child as a managed member; that workflow must be completed before public rollout.
 
-## 9. Out of scope for first release
+## 10. Out of scope for first release
 
 - Multiple simultaneous primary Family Leaders (one primary leader initially; a secondary family administrator may follow).
 - Multiple active household affiliations for a person.
