@@ -2,7 +2,7 @@
 -- REVIEW ONLY. Apply manually only after the complete script and preflight
 -- assumptions have been checked against the intended Supabase project.
 --
--- Apply this file BEFORE 0008_pdpa_dob_consent_and_minor_review.review.sql.
+-- Apply this file BEFORE 0009_pdpa_dob_consent_and_minor_review.review.sql.
 -- It is additive: existing Auth accounts are backfilled to person records.
 -- No family registration UI or write API is enabled by this script. Trusted
 -- server-side family workflows must be implemented and reviewed separately.
