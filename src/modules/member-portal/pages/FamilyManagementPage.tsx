@@ -171,7 +171,7 @@ export const FamilyManagementPage: React.FC = () => {
     setError(null);
     setNotice(null);
 
-    const { data, error: rpcError } = await supabase.rpc("create_family_as_primary_leader", {
+    const { error: rpcError } = await supabase.rpc("create_family_as_primary_leader", {
       p_family_name: familyName.trim(),
       p_household_address: address.trim() || null,
       p_shared_contact_phone: phone.trim() || null,
