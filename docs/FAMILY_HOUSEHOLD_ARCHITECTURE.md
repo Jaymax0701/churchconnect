@@ -13,7 +13,7 @@ A person, a login account, a household, and a church membership are separate rec
 - `congregation_memberships` links a person to church membership independently of login access.
 - Never create placeholder Auth users or shared passwords for children.
 
-A family has one primary Family Leader in the first release. Church account approval, roles, congregation membership, family approval, and minor safeguarding review remain separate workflows.
+A family has one primary Family Leader in the first release. The Family Leader is an appointed household role, not automatically the parent, oldest member, creator, or legal guardian. A person may be appointed as Family Leader through a trusted appointment/transfer workflow, subject to the household's agreed appointment authority. Church account approval, roles, congregation membership, family approval, and minor safeguarding review remain separate workflows.
 
 ## 2. Age and account policy
 
@@ -41,6 +41,7 @@ Initial release: one active primary household per person. Design for future spli
 ## 4. Family permissions and approvals
 
 The Family Leader can:
+- be appointed or replaced through a trusted, audited family-leadership process; appointment must not be inferred from parent/guardian relationship;
 - create and update shared household details (family name, household address, shared contact details);
 - add managed children under 12 without creating Auth accounts;
 - invite or approve eligible members who have their own login accounts;
@@ -56,7 +57,7 @@ The Family Leader cannot:
 - approve their own change request;
 - bypass church account approval or minor safeguarding review.
 
-Family Leader approval is not a substitute for legal guardian authority, safeguarding checks, church administrator approval, or legally required consent.
+Family Leader approval is not a substitute for legal guardian authority, safeguarding checks, church administrator approval, or legally required consent. A Family Leader who is not the child's legal parent/guardian may still register/manage the child's household record, but must not provide or attest to guardian consent merely because they hold the Family Leader role. Where guardian consent is required, record the actual parent/legal guardian as the consent actor separately, including their relationship and the basis/confirmation of authority.
 
 ## 5. Data model
 
@@ -81,7 +82,7 @@ Household/person link, relationship group (immediate/extended), relationship to 
 Family and target person, requesting Auth user, proposed values in a typed/allowlisted JSON object, status (pending/approved/rejected/cancelled), reviewer, decision note and timestamps.
 
 ### Consent and minor review
-Consent records identify the person, consent type, notice version/language, choice, source, timestamp, and who recorded/provided the consent. A parent/guardian acting for a child must have their relationship and authority explicitly recorded; Family Leader status alone does not prove legal guardian authority. Minor safeguarding review is separate from consent.
+Consent records identify the person, consent type, notice version/language, choice, source, timestamp, and who recorded/provided the consent. A Family Leader may register a child even when they are not the legal parent/guardian. If parent/guardian consent is required, the actual parent/legal guardian must be separately identified as the consent actor; record their relationship and authority. The Family Leader's appointment does not confer guardian authority. Minor safeguarding review is separate from consent.
 
 ### `congregation_memberships`
 Retains the existing church-membership workflow but gains a `person_id` link. `user_id` becomes nullable for people without login accounts. Church membership remains independent of household membership and Auth approval.
@@ -106,6 +107,7 @@ Remains an account authorisation structure. Do not assign login roles to managed
 - Family writes and privileged transitions use trusted server-side functions; hiding buttons is not security.
 - Derive the actor from verified JWT/`auth.uid()`; never trust caller-supplied actor IDs.
 - Family Leader cannot approve their own change request.
+- Family Leader appointment/transfer must be performed by an explicitly authorised appointment process and recorded in audit history; do not let a normal member update `is_primary_leader` directly.
 - Protect `family_id`, `person_id`, `auth_user_id`, relationship, leader designation, DOB, and review status from direct client mutation.
 - Keep audit history for membership, leader, profile-change and consent decisions.
 - Service-role credentials remain server-side only.
@@ -125,7 +127,7 @@ The signup UI blocks individual account creation for under-12 registrations. It 
 
 ## 9. Out of scope for first release
 
-- Multiple primary Family Leaders (one primary leader initially; a secondary family administrator may follow).
+- Multiple simultaneous primary Family Leaders (one primary leader initially; a secondary family administrator may follow).
 - Multiple active household affiliations for a person.
 - Automatic account creation at age thresholds.
 - Automatic transfer of household ownership.
