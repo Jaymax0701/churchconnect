@@ -30,14 +30,9 @@ The age-13 option does not change the policy that under-12 children have no logi
 
 Immediate family is the default. Extended family is optional. In-laws are not automatically part of a household; they may be added as optional extended members when appropriate.
 
-Immediate relationships (relative to the Family Leader):
-- spouse, father, mother, son, daughter.
+Immediate relationships (relative to the Family Leader): spouse, father, mother, son, daughter.
 
-Optional extended relationships:
-- grandfather, grandmother, grandson, granddaughter;
-- brother, sister, uncle, aunt, nephew, niece, cousin;
-- father-in-law, mother-in-law, son-in-law, daughter-in-law, brother-in-law, sister-in-law;
-- guardian, ward, other relative, other household member.
+Optional extended relationships: grandfather, grandmother, grandson, granddaughter, brother, sister, uncle, aunt, nephew, niece, cousin, father-in-law, mother-in-law, son-in-law, daughter-in-law, brother-in-law, sister-in-law, guardian, ward, other relative, and other household member.
 
 A short custom description is available for the two "other" categories. Relationships are recorded relative to the Family Leader. Do not infer reciprocal relationships automatically.
 
@@ -77,24 +72,13 @@ One row per individual, regardless of login status:
 Existing Auth-linked account profile. A non-null unique `person_id` links it to `people`. Account approval remains here and is separate from the person's minor review state.
 
 ### `families`
-- `id`, `family_name`, `household_address`, optional shared contact phone;
-- creator person and Auth user;
-- timestamps.
+Household name, address, optional shared contact phone, creator person/Auth user and timestamps.
 
 ### `family_members`
-- `id`, `family_id`, `person_id`;
-- `relationship_group` (immediate/extended);
-- `relationship_to_leader`, optional custom description;
-- `is_primary_leader`;
-- `status` (pending/active/rejected/removed);
-- adding Auth user, join and audit timestamps.
+Household/person link, relationship group (immediate/extended), relationship to Family Leader, optional custom description, primary-leader flag, membership status, adding Auth user and timestamps.
 
 ### `family_change_requests`
-- family and target person;
-- requesting Auth user;
-- proposed values in a typed/allowlisted JSON object;
-- status (pending/approved/rejected/cancelled);
-- reviewer, decision note and timestamps.
+Family and target person, requesting Auth user, proposed values in a typed/allowlisted JSON object, status (pending/approved/rejected/cancelled), reviewer, decision note and timestamps.
 
 ### Consent and minor review
 Consent records identify the person, consent type, notice version/language, choice, source, timestamp, and who recorded/provided the consent. A parent/guardian acting for a child must have their relationship and authority explicitly recorded; Family Leader status alone does not prove legal guardian authority. Minor safeguarding review is separate from consent.
@@ -112,7 +96,7 @@ Remains an account authorisation structure. Do not assign login roles to managed
 3. Children under 12 are created as managed person/family-member records without Auth users.
 4. People aged 12+ and adults register using their own credentials and request to join a household or accept a secure invitation.
 5. The Family Leader approves the household link. Account approval and minor review remain separate.
-6. When a managed child later creates an account (including the future age-13 prompt), link the verified Auth identity to the existing person record. Enforce uniqueness and do not create a duplicate person.
+6. When a managed child later creates an account (including the future optional age-13 prompt), link the verified Auth identity to the existing person record. Enforce uniqueness and do not create a duplicate person.
 
 ## 7. Security requirements
 
@@ -127,11 +111,12 @@ Remains an account authorisation structure. Do not assign login roles to managed
 
 ## 8. PR #26 database work and deployment gate
 
-The PR branch contains:
-- `supabase/review/0008_family_household_foundation.review.sql`: creates person/household structures, backfills existing Auth profiles to people, links congregation memberships, and adds RLS read policies. It is review-only.
-- `supabase/review/0009_pdpa_dob_consent_and_minor_review.review.sql`: the next migration in sequence; links Auth signups and consent records to people, and stores minor review against the person. It is review-only.
+The PR branch contains two review-only SQL files, in this order:
 
-Apply in numeric order only after reviewing the complete scripts against the live Supabase catalog. No SQL has been applied by this change.
+1. `supabase/review/0008_family_household_foundation.review.sql` — creates person/household structures, backfills existing Auth profiles to people, links congregation memberships, and adds RLS read policies.
+2. `supabase/review/0009_pdpa_dob_consent_and_minor_review.review.sql` — links Auth signups and consent records to people, and stores minor review against the person.
+
+Both scripts must be reviewed against the live Supabase catalog before manual execution. No SQL has been applied by these changes.
 
 The schema foundation does not yet provide all trusted write workflows or UI needed to create families, add managed children, process join requests, approve changes, link accounts, or record guardian consent. Do not enable public family registration or deploy this PR until those server-side workflows, screens, behavioral tests and RLS checks are complete.
 
