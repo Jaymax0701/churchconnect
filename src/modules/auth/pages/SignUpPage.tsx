@@ -10,6 +10,14 @@ import { supabase } from "../../../lib/supabase";
 
 const PRIVACY_NOTICE_VERSION = "2026-11-v1";
 
+function getTodayISODate(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getAge(dateOfBirth: string): number | null {
   if (!dateOfBirth) return null;
   const [year, month, day] = dateOfBirth.split("-").map(Number);
@@ -118,7 +126,7 @@ export const SignUpPage = () => {
             {error && <Alert variant="danger" title="Registration unsuccessful">{error}</Alert>}
             <form onSubmit={(event) => void handleSubmit(event)} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)", marginTop: "var(--space-4)" }}>
               <Input id="signup-name" label="Full name" autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Enter your full name" required />
-              <Input id="signup-dob" label="Date of birth" type="date" autoComplete="bday" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} max={new Date().toISOString().slice(0, 10)} hint="Used to determine age eligibility and whether additional registration review is required." required />
+              <Input id="signup-dob" label="Date of birth" type="date" autoComplete="bday" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} max={getTodayISODate()} hint="Used to determine age eligibility and whether additional registration review is required." required />
               {under12Registration && <Alert variant="warning" title="Family Leader registration required">
                 Children under 12 do not create individual login accounts. Ask your Family Leader to register you as a managed family member. If your family has not been set up yet, contact your church administrator for assistance.
               </Alert>}
