@@ -36,7 +36,13 @@ export const PrivacyNoticePage: React.FC = () => (
       </section>
 
       <section>
-        <h2>3. Sensitive personal data / Data peribadi sensitif</h2>
+        <h2>3. Sources and technical information / Sumber dan maklumat teknikal</h2>
+        <p><strong>English:</strong> Information is collected directly from you through registration and account forms, from your use of ChurchConnect, and from authorised church administrators who maintain membership or ministry records. The service may also process basic technical information such as access logs, device/browser details, security events and cookies or similar technologies needed for authentication, security and service operation. The organisation must document any analytics or non-essential tracking before enabling it.</p>
+        <p><strong>Bahasa Malaysia:</strong> Maklumat dikumpulkan secara langsung daripada anda melalui pendaftaran dan borang akaun, daripada penggunaan ChurchConnect, serta daripada pentadbir gereja yang diberi kuasa untuk menyelenggara rekod keahlian atau pelayanan. Perkhidmatan ini juga mungkin memproses maklumat teknikal asas seperti log akses, butiran peranti/pelayar, peristiwa keselamatan dan kuki atau teknologi serupa yang diperlukan untuk pengesahan, keselamatan dan operasi perkhidmatan. Organisasi hendaklah mendokumenkan sebarang analitik atau penjejakan bukan penting sebelum mengaktifkannya.</p>
+      </section>
+
+      <section>
+        <h2>4. Sensitive personal data / Data peribadi sensitif</h2>
         <p><strong>English:</strong> A person's church, congregation or ministry affiliation may reveal religious belief. Malaysian PDPA guidance identifies religious beliefs as sensitive personal data. Access to this information must be restricted to authorised people with a legitimate church-administration need. Where the PDPA applies, express consent or another legally permitted condition must be established before processing sensitive personal data.</p>
         <p><strong>Bahasa Malaysia:</strong> Afiliasi seseorang dengan gereja, jemaah atau pelayanan boleh mendedahkan kepercayaan agama. Panduan PDPA Malaysia mengelaskan kepercayaan agama sebagai data peribadi sensitif. Akses kepada maklumat ini hendaklah dihadkan kepada individu yang diberi kuasa dan mempunyai keperluan pentadbiran gereja yang sah. Jika PDPA terpakai, persetujuan nyata atau asas lain yang dibenarkan undang-undang hendaklah diwujudkan sebelum data peribadi sensitif diproses.</p>
       </section>
