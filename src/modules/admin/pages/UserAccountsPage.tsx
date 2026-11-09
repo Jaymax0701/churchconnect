@@ -4,6 +4,7 @@ import { Alert } from "../../../components/ui/Alert";
 import { Badge } from "../../../components/ui/Badge";
 import { Button } from "../../../components/ui/Button";
 import { Icon } from "../../../components/ui/Icon";
+import { Input } from "../../../components/ui/Input";
 import { supabase } from "../../../lib/supabase";
 
 interface UserAccount {
@@ -182,7 +183,7 @@ export const UserAccountsPage: React.FC = () => {
             <div>
               <h3 style={{ fontSize: "var(--text-lg)", margin: 0 }}>Registered Accounts</h3>
               <p style={{ fontSize: "var(--text-xs)", margin: "2px 0 0" }}>
-                Read-only directory. Account approval, membership and role assignment remain separate processes.
+                Manage basic account details and password recovery. Approval, membership and role assignment remain separate processes.
               </p>
             </div>
             <Badge>{filteredAccounts.length} shown</Badge>
@@ -237,7 +238,8 @@ export const UserAccountsPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {filteredAccounts.map((account) => (
-                    <tr key={account.user_id} style={{ borderBottom: "1px solid var(--border-default)" }}>
+                    <React.Fragment key={account.user_id}>
+                    <tr style={{ borderBottom: "1px solid var(--border-default)" }}>
                       <td style={{ padding: "var(--space-4) var(--space-6)", minWidth: "220px" }}>
                         <div style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{account.full_name || "Name not provided"}</div>
                         <div style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>{account.email || "Email unavailable"}</div>
@@ -275,6 +277,7 @@ export const UserAccountsPage: React.FC = () => {
                         </td>
                       </tr>
                     )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -283,7 +286,7 @@ export const UserAccountsPage: React.FC = () => {
         </CardBody>
       </Card>
 
-      <Alert variant="info" title="Read-only administration">
+      <Alert variant="info" title="Account management boundaries">
         Account editing is limited to name and email. Password reset sends a secure email link. Approval, congregation membership and role assignments remain separate workflows.
       </Alert>
     </div>
