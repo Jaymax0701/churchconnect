@@ -17,29 +17,12 @@
 
 BEGIN;
 
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS date_of_birth date,
-  ADD COLUMN IF NOT EXISTS minor_review_status text NOT NULL DEFAULT 'not_required',
-  ADD COLUMN IF NOT EXISTS minor_reviewed_at timestamptz,
-  ADD COLUMN IF NOT EXISTS minor_reviewed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conrelid = 'public.profiles'::regclass
-      AND conname = 'profiles_minor_review_status_check'
-  ) THEN
-    ALTER TABLE public.profiles
-      ADD CONSTRAINT profiles_minor_review_status_check
-      CHECK (minor_review_status IN ('not_required', 'pending_review', 'cleared', 'rejected'));
-  END IF;
-END $$;
-
-COMMENT ON COLUMN public.profiles.date_of_birth IS
-  'Date of birth supplied by the account holder; restricted personal data. Existing accounts may be NULL until collected lawfully.';
-COMMENT ON COLUMN public.profiles.minor_review_status IS
-  'Under-18 registration review state. pending_review blocks account approval; cleared means an authorized administrator completed the required review, not proof of statutory guardian consent.';
+-- Date of birth and minor review belong to the durable person record,
+-- including managed children who have no Auth profile.
+COMMENT ON COLUMN public.people.date_of_birth IS
+  'Date of birth for the person. NULL is permitted for existing people until collected lawfully.';
+COMMENT ON COLUMN public.people.minor_review_status IS
+  'Under-18 safeguarding/guardian review state. A cleared marker is an administrative outcome, not proof of legal guardian authority.';
 
 CREATE TABLE IF NOT EXISTS public.privacy_consent_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -142,27 +125,23 @@ BEGIN
   -- Every authenticated account is linked to one durable person record.
   -- Managed children without login accounts are created by a separate trusted
   -- Family Leader workflow and never receive placeholder Auth users.
-  INSERT INTO public.people (auth_user_id, full_name, date_of_birth)
-  VALUES (NEW.id, v_full_name, v_dob)
-  ON CONFLICT (auth_user_id) DO UPDATE
-    SET auth_user_id = EXCLUDED.auth_user_id
-  RETURNING id INTO v_person_id;
-
-  INSERT INTO public.profiles (
-    id, person_id, full_name, is_approved, date_of_birth, minor_review_status
+  INSERT INTO public.people (
+    auth_user_id, full_name, date_of_birth, minor_review_status
   )
   VALUES (
-    NEW.id,
-    v_person_id,
-    v_full_name,
-    false,
-    v_dob,
+    NEW.id, v_full_name, v_dob,
     CASE
       WHEN v_dob > (CURRENT_DATE - INTERVAL '18 years')::date
         THEN 'pending_review'
       ELSE 'not_required'
     END
   )
+  ON CONFLICT (auth_user_id) DO UPDATE
+    SET auth_user_id = EXCLUDED.auth_user_id
+  RETURNING id INTO v_person_id;
+
+  INSERT INTO public.profiles (id, person_id, full_name, is_approved)
+  VALUES (NEW.id, v_person_id, v_full_name, false)
   ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.privacy_consent_records (
@@ -213,9 +192,10 @@ BEGIN
 
   RETURN QUERY
   SELECT u.id, u.email::text, p.full_name, u.created_at,
-         p.date_of_birth, p.minor_review_status
+         person.date_of_birth, person.minor_review_status
   FROM auth.users AS u
   JOIN public.profiles AS p ON p.id = u.id
+  JOIN public.people AS person ON person.id = p.person_id
   WHERE p.is_approved IS FALSE
     AND u.email_confirmed_at IS NOT NULL
   ORDER BY u.created_at ASC;
@@ -262,16 +242,19 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  UPDATE public.profiles AS p
+  UPDATE public.people AS person
   SET minor_review_status = review_decision,
       minor_reviewed_at = now(),
       minor_reviewed_by = actor_id,
       updated_at = now()
-  WHERE p.id = target_user_id
-    AND p.is_approved IS FALSE
-    AND p.minor_review_status = 'pending_review'
-    AND p.date_of_birth > (CURRENT_DATE - INTERVAL '18 years')::date
-  RETURNING p.id INTO updated_user_id;
+  WHERE person.auth_user_id = target_user_id
+    AND person.minor_review_status = 'pending_review'
+    AND person.date_of_birth > (CURRENT_DATE - INTERVAL '18 years')::date
+    AND EXISTS (
+      SELECT 1 FROM public.profiles AS p
+      WHERE p.id = target_user_id AND p.is_approved IS FALSE
+    )
+  RETURNING person.auth_user_id INTO updated_user_id;
 
   IF updated_user_id IS NULL THEN
     RAISE EXCEPTION 'No eligible under-18 account is awaiting review'
@@ -322,7 +305,12 @@ BEGIN
       updated_at = now()
   WHERE p.id = target_user_id
     AND p.is_approved IS FALSE
-    AND p.minor_review_status IN ('not_required', 'cleared')
+    AND EXISTS (
+      SELECT 1
+      FROM public.people AS person
+      WHERE person.id = p.person_id
+        AND person.minor_review_status IN ('not_required', 'cleared')
+    )
     AND EXISTS (
       SELECT 1 FROM auth.users AS u
       WHERE u.id = p.id AND u.email_confirmed_at IS NOT NULL
@@ -345,7 +333,7 @@ COMMIT;
 -- Verification: columns and constraints
 SELECT column_name, data_type, is_nullable, column_default
 FROM information_schema.columns
-WHERE table_schema = 'public' AND table_name = 'profiles'
+WHERE table_schema = 'public' AND table_name = 'people'
   AND column_name IN ('date_of_birth', 'minor_review_status', 'minor_reviewed_at', 'minor_reviewed_by')
 ORDER BY column_name;
 
