@@ -35,6 +35,12 @@ export const UserAccountsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [approvalFilter, setApprovalFilter] = useState("all");
+  const [editingAccount, setEditingAccount] = useState<UserAccount | null>(null);
+  const [editFullName, setEditFullName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [updatingAccount, setUpdatingAccount] = useState(false);
+  const [resettingUserId, setResettingUserId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
@@ -59,6 +65,47 @@ export const UserAccountsPage: React.FC = () => {
   useEffect(() => {
     void loadAccounts();
   }, [loadAccounts]);
+
+
+  const beginEdit = (account: UserAccount) => {
+    setEditingAccount(account);
+    setEditFullName(account.full_name ?? "");
+    setEditEmail(account.email ?? "");
+    setError(null);
+    setNotice(null);
+  };
+
+  const saveAccount = async () => {
+    if (!editingAccount || updatingAccount) return;
+    setUpdatingAccount(true);
+    setError(null);
+    setNotice(null);
+    const { data, error: updateError } = await supabase.functions.invoke("admin-update-user", {
+      body: { target_user_id: editingAccount.user_id, full_name: editFullName.trim(), email: editEmail.trim() },
+    });
+    setUpdatingAccount(false);
+    if (updateError || data?.error) {
+      setError(data?.error || updateError?.message || "Unable to update this account.");
+      return;
+    }
+    setNotice(data?.message || "Account updated.");
+    setEditingAccount(null);
+    await loadAccounts();
+  };
+
+  const sendPasswordReset = async (account: UserAccount) => {
+    if (!account.email || resettingUserId) return;
+    if (!window.confirm("Send a password reset email to " + account.email + "?")) return;
+    setResettingUserId(account.user_id);
+    setError(null);
+    setNotice(null);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(account.email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
+    setResettingUserId(null);
+    if (resetError) setError(resetError.message);
+    else setNotice("Password reset email requested for " + account.email + ".");
+  };
 
   const filteredAccounts = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -96,6 +143,8 @@ export const UserAccountsPage: React.FC = () => {
           <Icon name="refresh" size={16} /> Refresh
         </Button>
       </div>
+
+      {notice && <Alert variant="success" title="Account action completed">{notice}</Alert>}
 
       {error && (
         <Alert variant="danger" title="Unable to load user accounts">
@@ -182,7 +231,8 @@ export const UserAccountsPage: React.FC = () => {
                     <th scope="col" style={{ padding: "var(--space-3) var(--space-4)" }}>Approval</th>
                     <th scope="col" style={{ padding: "var(--space-3) var(--space-4)" }}>Role assignment</th>
                     <th scope="col" style={{ padding: "var(--space-3) var(--space-4)" }}>Membership</th>
-                    <th scope="col" style={{ padding: "var(--space-3) var(--space-6)" }}>Registered</th>
+                    <th scope="col" style={{ padding: "var(--space-3) var(--space-4)" }}>Registered</th>
+                    <th scope="col" style={{ padding: "var(--space-3) var(--space-6)", textAlign: "right" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -202,8 +252,29 @@ export const UserAccountsPage: React.FC = () => {
                         <div>{account.membership_status || "Not assigned"}</div>
                         {account.member_since && <div style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>Since {formatDate(account.member_since)}</div>}
                       </td>
-                      <td style={{ padding: "var(--space-4) var(--space-6)", whiteSpace: "nowrap" }}>{formatDate(account.registered_at)}</td>
+                      <td style={{ padding: "var(--space-4)", whiteSpace: "nowrap" }}>{formatDate(account.registered_at)}</td>
+                      <td style={{ padding: "var(--space-3) var(--space-6)", textAlign: "right", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "inline-flex", gap: "var(--space-2)" }}>
+                          <Button size="sm" variant="secondary" onClick={() => beginEdit(account)}>Edit</Button>
+                          <Button size="sm" variant="ghost" disabled={!account.email || Boolean(resettingUserId)} isLoading={resettingUserId === account.user_id} onClick={() => void sendPasswordReset(account)}>Reset password</Button>
+                        </div>
+                      </td>
                     </tr>
+                    {editingAccount?.user_id === account.user_id && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: "var(--space-4) var(--space-6)", background: "var(--color-ivory-subtle)" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "var(--space-3)", alignItems: "end" }}>
+                            <Input id={"edit-name-" + account.user_id} label="Full name" value={editFullName} onChange={(event) => setEditFullName(event.target.value)} required maxLength={120} />
+                            <Input id={"edit-email-" + account.user_id} label="Email address" type="email" value={editEmail} onChange={(event) => setEditEmail(event.target.value)} required />
+                            <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                              <Button size="sm" onClick={() => void saveAccount()} isLoading={updatingAccount} disabled={updatingAccount || !editFullName.trim() || !editEmail.trim()}>Save changes</Button>
+                              <Button size="sm" variant="secondary" onClick={() => setEditingAccount(null)} disabled={updatingAccount}>Cancel</Button>
+                            </div>
+                          </div>
+                          <p style={{ margin: "var(--space-2) 0 0", fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>Email changes may require confirmation through the new email address. Password reset sends a secure link; administrators never see or set the user's password.</p>
+                        </td>
+                      </tr>
+                    )}
                   ))}
                 </tbody>
               </table>
@@ -213,7 +284,7 @@ export const UserAccountsPage: React.FC = () => {
       </Card>
 
       <Alert variant="info" title="Read-only administration">
-        This directory does not change account approval, congregation membership or role assignments. Those actions will be implemented as separate, audited workflows.
+        Account editing is limited to name and email. Password reset sends a secure email link. Approval, congregation membership and role assignments remain separate workflows.
       </Alert>
     </div>
   );
