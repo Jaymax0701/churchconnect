@@ -5,18 +5,19 @@ const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://churchconnect-alpha.vercel.app";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": appOrigin,
+const getCorsHeaders = (origin: string | null) => ({
+  "Access-Control-Allow-Origin": origin && (origin === appOrigin || origin.startsWith("http://localhost:")) ? origin : appOrigin,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Vary": "Origin",
-};
+});
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
 
-  const origin = req.headers.get("origin");
   if (origin && origin !== appOrigin && !origin.startsWith("http://localhost:")) {
     return Response.json({ error: "Origin not allowed" }, { status: 403, headers: corsHeaders });
   }
@@ -96,7 +97,12 @@ Deno.serve(async (req) => {
   const { error: auditError } = await adminClient.from("admin_account_audit").insert({
     actor_user_id: actor.id, target_user_id: targetId, action: auditAction, details: auditDetails,
   });
-  if (auditError) return Response.json({ error: "Action completed, but audit logging failed. Contact the system administrator." }, { status: 500, headers: corsHeaders });
+  if (auditError) {
+    return Response.json({
+      success: true,
+      warning: "The account action succeeded, but the audit event could not be saved. Notify the system administrator.",
+    }, { headers: corsHeaders });
+  }
 
   return Response.json({ success: true }, { headers: corsHeaders });
 });
