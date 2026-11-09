@@ -248,7 +248,6 @@ export const PublicLayout: React.FC = () => {
                   type="button"
                   onClick={() => setAccountMenuOpen((open) => !open)}
                   aria-expanded={accountMenuOpen}
-                  aria-haspopup="menu"
                   aria-label={`Account menu for ${displayName}`}
                   style={{ display: "flex", alignItems: "center", gap: "10px", border: "1px solid rgba(255,255,255,.2)", borderRadius: "999px", padding: "6px 12px", color: "white", background: "rgba(255,255,255,.08)", cursor: "pointer" }}
                 >
@@ -261,15 +260,14 @@ export const PublicLayout: React.FC = () => {
                 </button>
                 {accountMenuOpen && (
                   <div
-                    role="menu"
                     aria-label="Account actions"
                     style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", minWidth: 210, padding: 8, background: "var(--color-deep-forest)", border: "1px solid rgba(255,255,255,.18)", borderRadius: "var(--radius-md)", boxShadow: "0 12px 30px rgba(0,0,0,.25)", display: "grid", gap: 4, zIndex: 120 }}
                   >
                     <div style={{ padding: "8px 10px", color: "white", fontSize: "var(--text-xs)", opacity: .75, overflowWrap: "anywhere" }}>{user.email}</div>
-                    {profile?.is_approved && <Link role="menuitem" to="/portal" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({ isActive: false }), display: "block" }}>Member Portal</Link>}
-                    {isSuperadmin && <Link role="menuitem" to="/admin" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({ isActive: false }), display: "block" }}>Admin Panel</Link>}
-                    {profile?.is_approved && <Link role="menuitem" to="/portal/settings" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({ isActive: false }), display: "block" }}>Account Settings</Link>}
-                    <button role="menuitem" type="button" onClick={handleSignOut} style={{ textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 8, background: "transparent", color: "white", cursor: "pointer" }}>Sign Out</button>
+                    {profile?.is_approved && <Link to="/portal" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({ isActive: false }), display: "block" }}>Member Portal</Link>}
+                    {isSuperadmin && <Link to="/admin" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({ isActive: false }), display: "block" }}>Admin Panel</Link>}
+                    {profile?.is_approved && <Link to="/portal/settings" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({ isActive: false }), display: "block" }}>Account Settings</Link>}
+                    <button type="button" onClick={handleSignOut} style={{ textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 8, background: "transparent", color: "white", cursor: "pointer" }}>Sign Out</button>
                   </div>
                 )}
               </div>
@@ -382,7 +380,7 @@ export const PublicLayout: React.FC = () => {
                   <li><Link to="/login" style={{ color: "var(--color-soft-sage)" }}>Member Login</Link></li>
                   <li><Link to="/signup" style={{ color: "var(--color-soft-sage)" }}>Create an Account</Link></li>
                 </>}
-                {user && !profile?.is_approved && <li><Link to="/pending" style={{ color: "var(--color-soft-sage)" }}>Account Status</Link></li>}
+                {user && profile && !profile.is_approved && <li><Link to="/pending" style={{ color: "var(--color-soft-sage)" }}>Account Status</Link></li>}
               </ul>
             </div>
           </div>
