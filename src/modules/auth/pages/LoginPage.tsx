@@ -113,8 +113,8 @@ export const LoginPage = () => {
               </Button>
             </form>
 
-            <p style={{ fontSize: "var(--text-xs)", textAlign: "center", marginTop: "var(--space-5)" }}>
-              New account registration is not open yet. Contact your church administrator for access.
+            <p style={{ fontSize: "var(--text-sm)", textAlign: "center", marginTop: "var(--space-5)" }}>
+              New to ChurchConnect? <Link to="/signup" style={{ color: "var(--color-forest-green)", fontWeight: 600, textDecoration: "none" }}>Create an account</Link>
             </p>
           </CardBody>
         </Card>
