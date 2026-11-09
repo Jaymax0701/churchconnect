@@ -98,9 +98,9 @@ export const UserAccountsPage: React.FC = () => {
       });
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);
-      setNotice(email !== editing.email
+      setNotice((email !== editing.email
         ? "Name updated. An email-change confirmation has been sent to the new address; the address changes after confirmation."
-        : "Account name updated successfully.");
+        : "Account name updated successfully.") + (data?.warning ? ` ${data.warning}` : ""));
       setEditing(null);
       await loadAccounts();
     } catch (saveError) {
@@ -122,7 +122,7 @@ export const UserAccountsPage: React.FC = () => {
       });
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);
-      setNotice(`Password-reset email sent to ${account.email}.`);
+      setNotice(`Password-reset email sent to ${account.email}.` + (data?.warning ? ` ${data.warning}` : ""));
     } catch (resetError) {
       setError(resetError instanceof Error ? resetError.message : "Unable to send the password-reset email.");
     } finally {
