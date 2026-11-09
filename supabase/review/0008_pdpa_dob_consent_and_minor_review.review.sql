@@ -1,5 +1,6 @@
--- ChurchConnect: date of birth, under-18 review, and PDPA consent records
--- REVIEW ONLY. Apply manually to the intended Supabase project after review.
+-- ChurchConnect: date of birth, under-18 review, and person-linked PDPA consent records
+-- REVIEW ONLY. Apply manually after 0008_family_household_foundation.review.sql.
+-- This file now records consent against people, not only Auth accounts.
 -- Privacy notice version in this draft: 2026-11-v1.
 --
 -- IMPORTANT BEFORE PUBLIC RELEASE:
@@ -42,7 +43,12 @@ COMMENT ON COLUMN public.profiles.minor_review_status IS
 
 CREATE TABLE IF NOT EXISTS public.privacy_consent_records (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  person_id uuid NOT NULL REFERENCES public.people(id) ON DELETE RESTRICT,
+  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  recorded_by_auth_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+  consent_actor_type text NOT NULL CHECK (consent_actor_type IN ('self', 'parent_guardian')),
+  consenter_relationship text,
+  guardian_authority_confirmed boolean NOT NULL DEFAULT false,
   consent_type text NOT NULL CHECK (consent_type IN ('privacy_processing', 'marketing')),
   policy_version text NOT NULL,
   consented boolean NOT NULL,
@@ -50,7 +56,18 @@ CREATE TABLE IF NOT EXISTS public.privacy_consent_records (
   source text NOT NULL DEFAULT 'signup',
   captured_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT privacy_consent_records_unique_version
-    UNIQUE (user_id, consent_type, policy_version)
+    UNIQUE (person_id, consent_type, policy_version),
+  CONSTRAINT privacy_consent_records_actor_consistency CHECK (
+    (consent_actor_type = 'self' AND user_id IS NOT NULL
+      AND recorded_by_auth_user_id = user_id
+      AND consenter_relationship IS NULL
+      AND guardian_authority_confirmed = false)
+    OR
+    (consent_actor_type = 'parent_guardian'
+      AND consenter_relationship IS NOT NULL
+      AND length(btrim(consenter_relationship)) > 0
+      AND guardian_authority_confirmed = true)
+  )
 );
 
 COMMENT ON TABLE public.privacy_consent_records IS
@@ -89,6 +106,8 @@ DECLARE
   v_notice_language text;
   v_privacy_consent boolean;
   v_marketing_consent boolean;
+  v_person_id uuid;
+  v_full_name text;
 BEGIN
   v_notice_version := NEW.raw_user_meta_data ->> 'privacy_notice_version';
   v_notice_language := COALESCE(NEW.raw_user_meta_data ->> 'privacy_notice_language', 'en');
@@ -118,12 +137,24 @@ BEGIN
       USING ERRCODE = '23514';
   END IF;
 
+  v_full_name := NULLIF(pg_catalog.btrim(NEW.raw_user_meta_data ->> 'full_name'), '');
+
+  -- Every authenticated account is linked to one durable person record.
+  -- Managed children without login accounts are created by a separate trusted
+  -- Family Leader workflow and never receive placeholder Auth users.
+  INSERT INTO public.people (auth_user_id, full_name, date_of_birth)
+  VALUES (NEW.id, v_full_name, v_dob)
+  ON CONFLICT (auth_user_id) DO UPDATE
+    SET auth_user_id = EXCLUDED.auth_user_id
+  RETURNING id INTO v_person_id;
+
   INSERT INTO public.profiles (
-    id, full_name, is_approved, date_of_birth, minor_review_status
+    id, person_id, full_name, is_approved, date_of_birth, minor_review_status
   )
   VALUES (
     NEW.id,
-    NULLIF(pg_catalog.btrim(NEW.raw_user_meta_data ->> 'full_name'), ''),
+    v_person_id,
+    v_full_name,
     false,
     v_dob,
     CASE
@@ -135,11 +166,12 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.privacy_consent_records (
-    user_id, consent_type, policy_version, consented, notice_language, source
+    person_id, user_id, recorded_by_auth_user_id, consent_actor_type,
+    consent_type, policy_version, consented, notice_language, source
   )
   VALUES
-    (NEW.id, 'privacy_processing', v_notice_version, true, v_notice_language, 'signup'),
-    (NEW.id, 'marketing', v_notice_version, v_marketing_consent, v_notice_language, 'signup');
+    (v_person_id, NEW.id, NEW.id, 'self', 'privacy_processing', v_notice_version, true, v_notice_language, 'signup'),
+    (v_person_id, NEW.id, NEW.id, 'self', 'marketing', v_notice_version, v_marketing_consent, v_notice_language, 'signup');
 
   RETURN NEW;
 END;
@@ -341,7 +373,7 @@ WHERE c.oid = 'public.privacy_consent_records'::regclass;
 -- * RLS enabled; anon SELECT false; authenticated SELECT true but own rows only;
 -- * authenticated INSERT false;
 -- * new adult profile status not_required; new under-18 profile pending_review;
--- * every new signup has one privacy_processing=true and one marketing choice
+-- * every new signup has one person-linked privacy_processing=true and one marketing choice
 --   record, both with the exact notice version/language/time;
 -- * approve_account fails for pending/rejected minor review and succeeds only
 --   after a cleared review plus verified email.
