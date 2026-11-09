@@ -77,9 +77,9 @@ export const AdminLayout: React.FC = () => {
           <NavLink to="/admin" style={getAdminNavLinkStyle} end>
             <Icon name="dashboard" size={18} /> Dashboard
           </NavLink>
-          <a href="#users" style={{ ...getAdminNavLinkStyle({ isActive: false }), opacity: 0.9 }}>
+          <NavLink to="/admin/users" style={getAdminNavLinkStyle}>
             <Icon name="group" size={18} /> User Accounts
-          </a>
+          </NavLink>
           <a href="#ministries" style={{ ...getAdminNavLinkStyle({ isActive: false }), opacity: 0.9 }}>
             <Icon name="church" size={18} /> Ministries
           </a>
@@ -184,6 +184,9 @@ export const AdminLayout: React.FC = () => {
           >
             <NavLink to="/admin" style={getAdminNavLinkStyle} onClick={() => setSidebarOpen(false)} end>
               <Icon name="dashboard" size={18} /> Dashboard
+            </NavLink>
+            <NavLink to="/admin/users" style={getAdminNavLinkStyle} onClick={() => setSidebarOpen(false)}>
+              <Icon name="group" size={18} /> User Accounts
             </NavLink>
             <Link to="/portal" style={getAdminNavLinkStyle({ isActive: false })} onClick={() => setSidebarOpen(false)}>
               <Icon name="account_circle" size={18} /> Switch to Member Portal
