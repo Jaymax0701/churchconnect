@@ -13,7 +13,7 @@ A person, a login account, a household, and a church membership are separate rec
 - `congregation_memberships` links a person to church membership independently of login access.
 - Never create placeholder Auth users or shared passwords for children.
 
-A family has one primary Family Leader in the first release. The Family Leader is an appointed household role, not automatically the parent, oldest member, creator, or legal guardian. A person may be appointed as Family Leader through a trusted appointment/transfer workflow, subject to the household's agreed appointment authority. Church account approval, roles, congregation membership, family approval, and minor safeguarding review remain separate workflows.
+A family has one primary Family Leader in the first release. The Family Leader is an appointed household role, not automatically the parent, oldest member, or legal guardian. When creating a family, the creator may appoint themselves as the initial Family Leader or nominate another eligible household member; a nominee must accept. Leadership transfer requires acceptance by the successor and is recorded in audit history. Superadmin may intervene in exceptional cases through an audited trusted workflow. Church account approval, roles, congregation membership, family approval, and minor safeguarding review remain separate workflows.
 
 ## 2. Age and account policy
 
@@ -41,7 +41,8 @@ Initial release: one active primary household per person. Design for future spli
 ## 4. Family permissions and approvals
 
 The Family Leader can:
-- be appointed or replaced through a trusted, audited family-leadership process; appointment must not be inferred from parent/guardian relationship;
+- self-appoint as initial leader when creating the household, or accept an appointment from the creator;
+- accept a leadership transfer from the current leader; a nominee must accept before the transfer takes effect;
 - create and update shared household details (family name, household address, shared contact details);
 - add managed children under 12 without creating Auth accounts;
 - invite or approve eligible members who have their own login accounts;
@@ -92,12 +93,13 @@ Remains an account authorisation structure. Do not assign login roles to managed
 
 ## 6. Registration and account linking
 
-1. An eligible Family Leader registers their own Auth account, verifies email, and passes normal ChurchConnect approval.
-2. The Family Leader creates a household and adds immediate-family person records.
-3. Children under 12 are created as managed person/family-member records without Auth users.
-4. People aged 12+ and adults register using their own credentials and request to join a household or accept a secure invitation.
-5. The Family Leader approves the household link. Account approval and minor review remain separate.
-6. When a managed child later creates an account (including the future optional age-13 prompt), link the verified Auth identity to the existing person record. Enforce uniqueness and do not create a duplicate person.
+1. An eligible person registers their own Auth account, verifies email, and passes normal ChurchConnect approval.
+2. The person creates a household and either self-appoints as its initial Family Leader or nominates another eligible member, who must accept.
+3. The Family Leader adds immediate-family person records.
+4. Children under 12 are created as managed person/family-member records without Auth users.
+5. People aged 12+ and adults register using their own credentials and request to join a household or accept a secure invitation.
+6. The Family Leader approves the household link. Account approval and minor review remain separate.
+7. When a managed child later creates an account (including the future optional age-13 prompt), link the verified Auth identity to the existing person record. Enforce uniqueness and do not create a duplicate person.
 
 ## 7. Security requirements
 
@@ -107,7 +109,7 @@ Remains an account authorisation structure. Do not assign login roles to managed
 - Family writes and privileged transitions use trusted server-side functions; hiding buttons is not security.
 - Derive the actor from verified JWT/`auth.uid()`; never trust caller-supplied actor IDs.
 - Family Leader cannot approve their own change request.
-- Family Leader appointment/transfer must be performed by an explicitly authorised appointment process and recorded in audit history; do not let a normal member update `is_primary_leader` directly.
+- Family Leader appointment/transfer must be performed by an explicitly authorised appointment process and recorded in audit history; do not let a normal member update `is_primary_leader` directly. The family creator may self-appoint during initial creation. A nominee or transfer successor must accept.
 - Protect `family_id`, `person_id`, `auth_user_id`, relationship, leader designation, DOB, and review status from direct client mutation.
 - Keep audit history for membership, leader, profile-change and consent decisions.
 - Service-role credentials remain server-side only.
