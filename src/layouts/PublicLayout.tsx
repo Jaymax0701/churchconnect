@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
+import { useAuth } from "../modules/auth/AuthContext";
+import { supabase } from "../lib/supabase";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -13,6 +15,28 @@ interface BeforeInstallPromptEvent extends Event {
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const { user, profile, signOut, loading } = useAuth();
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    async function checkAdminAccess() {
+      if (!user) {
+        setIsSuperadmin(false);
+        return;
+      }
+      const { data, error } = await supabase.rpc("current_user_has_role", {
+        required_role: "superadmin",
+      });
+      if (active) setIsSuperadmin(!error && data === true);
+    }
+    void checkAdminAccess();
+    return () => { active = false; };
+  }, [user?.id]);
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email || "Member";
+  const initials = displayName.split(/\\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
 
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -164,15 +188,29 @@ export const PublicLayout: React.FC = () => {
             className="desktop-nav"
           >
             <NavLink to="/" style={getNavLinkStyle} end>Home</NavLink>
-            <NavLink to="/portal" style={getNavLinkStyle}>Member Portal</NavLink>
-            <NavLink to="/admin" style={getNavLinkStyle}>Admin Panel</NavLink>
-            <div style={{ width: "1px", height: "24px", backgroundColor: "rgba(255, 255, 255, 0.15)", margin: "0 var(--space-2)" }} />
-            <Link to="/signup" style={{ textDecoration: "none" }}>
-              <Button variant="primary" size="sm">Sign Up</Button>
-            </Link>
-            <Link to="/login" style={{ textDecoration: "none" }}>
-              <Button variant="secondary" size="sm">Member Sign In</Button>
-            </Link>
+            {!user && !loading ? (
+              <>
+                <div style={{ width: "1px", height: "24px", backgroundColor: "rgba(255, 255, 255, 0.15)", margin: "0 var(--space-2)" }} />
+                <Link to="/signup" style={{ textDecoration: "none" }}><Button variant="primary" size="sm">Sign Up</Button></Link>
+                <Link to="/login" style={{ textDecoration: "none" }}><Button variant="secondary" size="sm">Member Sign In</Button></Link>
+              </>
+            ) : user ? (
+              <div style={{ position: "relative" }}>
+                <button type="button" onClick={() => setAccountMenuOpen(!accountMenuOpen)} aria-expanded={accountMenuOpen}
+                  style={{ display: "flex", alignItems: "center", gap: "10px", border: "1px solid rgba(255,255,255,.2)", borderRadius: "999px", padding: "6px 12px", color: "white", background: "rgba(255,255,255,.08)", cursor: "pointer" }}>
+                  <span style={{ width: 30, height: 30, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--color-soft-sage)", color: "var(--color-deep-forest)", fontWeight: 700 }}>{initials || "M"}</span>
+                  <span style={{ textAlign: "left" }}><strong style={{ display: "block", fontSize: "var(--text-sm)" }}>{displayName}</strong><small style={{ opacity: .8 }}>{profile?.is_approved ? "Signed in" : "Awaiting approval"}</small></span>
+                  <Icon name="expand_more" size={18} />
+                </button>
+                {accountMenuOpen && <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", minWidth: 210, padding: 8, background: "var(--color-deep-forest)", border: "1px solid rgba(255,255,255,.18)", borderRadius: "var(--radius-md)", boxShadow: "0 12px 30px rgba(0,0,0,.25)", display: "grid", gap: 4, zIndex: 120 }}>
+                  <div style={{ padding: "8px 10px", color: "white", fontSize: "var(--text-xs)", opacity: .75, overflowWrap: "anywhere" }}>{user.email}</div>
+                  {profile?.is_approved && <Link to="/portal" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({isActive:false}), display:"block" }}>Member Portal</Link>}
+                  {isSuperadmin && <Link to="/admin" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({isActive:false}), display:"block" }}>Admin Panel</Link>}
+                  <Link to="/portal/settings" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({isActive:false}), display:"block" }}>Account Settings</Link>
+                  <button type="button" onClick={() => void signOut()} style={{ textAlign:"left", padding:"10px 12px", border:0, borderRadius:8, background:"transparent", color:"white", cursor:"pointer" }}>Sign Out</button>
+                </div>}
+              </div>
+            ) : null}
 
           </nav>
 
@@ -208,15 +246,19 @@ export const PublicLayout: React.FC = () => {
             className="mobile-dropdown"
           >
             <NavLink to="/" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)} end>Home</NavLink>
-            <NavLink to="/portal" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Member Portal</NavLink>
-            <NavLink to="/admin" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Admin Panel</NavLink>
-            <div style={{ height: "1px", backgroundColor: "rgba(255, 255, 255, 0.15)", margin: "var(--space-2) 0" }} />
-            <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="primary" size="md" style={{ width: "100%" }}>Sign Up</Button>
-            </Link>
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant="secondary" size="md" style={{ width: "100%" }}>Member Sign In</Button>
-            </Link>
+            {!user && !loading ? <>
+              <Link to="/signup" onClick={() => setMobileMenuOpen(false)}><Button variant="primary" size="md" style={{ width: "100%" }}>Sign Up</Button></Link>
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)}><Button variant="secondary" size="md" style={{ width: "100%" }}>Member Sign In</Button></Link>
+            </> : user ? <>
+              <div style={{ padding: "12px", color: "white", borderBottom: "1px solid rgba(255,255,255,.15)" }}>
+                <strong>{displayName}</strong><div style={{ fontSize: "var(--text-xs)", opacity: .75 }}>{user.email}</div>
+                <div style={{ fontSize: "var(--text-xs)", marginTop: 4 }}>{profile?.is_approved ? "Signed in" : "Account awaiting approval"}</div>
+              </div>
+              {profile?.is_approved && <NavLink to="/portal" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Member Portal</NavLink>}
+              {isSuperadmin && <NavLink to="/admin" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Admin Panel</NavLink>}
+              <NavLink to="/portal/settings" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>Account Settings</NavLink>
+              <button type="button" onClick={() => void signOut()} style={{ textAlign:"left", padding:"12px", border:0, borderRadius:8, background:"rgba(255,255,255,.08)", color:"white" }}>Sign Out</button>
+            </> : null}
           </div>
         )}
       </header>
