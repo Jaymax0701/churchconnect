@@ -113,9 +113,11 @@ export const LoginPage = () => {
               </Button>
             </form>
 
-            <p style={{ fontSize: "var(--text-sm)", textAlign: "center", marginTop: "var(--space-5)" }}>
-              New to ChurchConnect? <Link to="/signup" style={{ color: "var(--color-forest-green)", fontWeight: 600, textDecoration: "none" }}>Create an account</Link>
-            </p>
+            <div style={{ marginTop: "var(--space-4)" }}>
+              <Link to="/signup" style={{ textDecoration: "none" }}>
+                <Button type="button" variant="secondary" size="lg" style={{ width: "100%" }}>Create an account</Button>
+              </Link>
+            </div>
           </CardBody>
         </Card>
 
