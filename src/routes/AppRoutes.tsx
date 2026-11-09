@@ -6,6 +6,7 @@ import { AdminLayout } from "../layouts/AdminLayout";
 import { PublicHomePage } from "../modules/public-site/pages/PublicHomePage";
 import { MemberPortalPage } from "../modules/member-portal/pages/MemberPortalPage";
 import { AdminDashboardPage } from "../modules/admin/pages/AdminDashboardPage";
+import { UserAccountsPage } from "../modules/admin/pages/UserAccountsPage";
 import { LoginPage } from "../modules/auth/pages/LoginPage";
 import { PendingApprovalPage } from "../modules/auth/pages/PendingApprovalPage";
 import { RequireApprovedUser } from "../modules/auth/RequireApprovedUser";
@@ -30,6 +31,7 @@ export const AppRoutes: React.FC = () => {
         <Route element={<RequireSuperadmin />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboardPage />} />
+            <Route path="users" element={<UserAccountsPage />} />
           </Route>
         </Route>
       </Route>
