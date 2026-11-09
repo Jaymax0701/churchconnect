@@ -100,10 +100,22 @@ Deno.serve(async (req) => {
       if (authUpdateError) return Response.json({ error: authUpdateError.message }, { status: 400, headers: corsHeaders });
     }
 
-    const { error: nameError } = await adminClient.from("profiles").update({ full_name: fullName }).eq("id", targetId);
+    const { error: nameError } = await adminClient.rpc("admin_update_person_name", {
+      actor_user_id: actor.id,
+      target_user_id: targetId,
+      new_full_name: fullName,
+    });
     if (nameError) return Response.json({ error: nameError.message }, { status: 500, headers: corsHeaders });
 
-    await adminClient.auth.admin.updateUserById(targetId, { user_metadata: { ...existingUser.user.user_metadata, full_name: fullName } });
+    const { error: metadataError } = await adminClient.auth.admin.updateUserById(targetId, {
+      user_metadata: { ...existingUser.user.user_metadata, full_name: fullName },
+    });
+    if (metadataError) {
+      return Response.json({
+        success: true,
+        warning: "The profile name was updated, but Auth display metadata could not be synchronized.",
+      }, { headers: corsHeaders });
+    }
     auditAction = "update_account";
     auditDetails = { name_updated: true, primary_email_changed: emailChanged };
   } else if (body.action === "send_password_reset") {
