@@ -226,7 +226,9 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  IF p_relationship_group NOT IN ('immediate', 'extended')
+  IF p_relationship_group IS NULL
+     OR p_relationship_to_leader IS NULL
+     OR p_relationship_group NOT IN ('immediate', 'extended')
      OR p_relationship_to_leader NOT IN (
        'son', 'daughter', 'grandson', 'granddaughter', 'ward'
      ) THEN
