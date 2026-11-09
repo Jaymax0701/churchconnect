@@ -107,6 +107,9 @@ export const MemberPortalLayout: React.FC = () => {
             <NavLink to="/portal" style={getNavLinkStyle} end>
               <Icon name="dashboard" size={18} /> Dashboard
             </NavLink>
+            <NavLink to="/portal/family" style={getNavLinkStyle}>
+              <Icon name="family_restroom" size={18} /> Family Management
+            </NavLink>
             <NavLink to="/portal/settings" style={getNavLinkStyle}>
               <Icon name="settings" size={18} /> Account Settings
             </NavLink>
@@ -193,6 +196,9 @@ export const MemberPortalLayout: React.FC = () => {
             </div>
             <NavLink to="/portal" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)} end>
               <Icon name="dashboard" size={18} /> Dashboard
+            </NavLink>
+            <NavLink to="/portal/family" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
+              <Icon name="family_restroom" size={18} /> Family Management
             </NavLink>
             <NavLink to="/portal/settings" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
               <Icon name="settings" size={18} /> Account Settings
