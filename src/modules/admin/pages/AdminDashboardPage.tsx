@@ -155,7 +155,7 @@ export const AdminDashboardPage: React.FC = () => {
                         <td style={{ padding: "var(--space-4)", whiteSpace: "nowrap" }}>{account.date_of_birth ? formatDate(account.date_of_birth) : "Not recorded"}</td>
                         <td style={{ padding: "var(--space-4)", minWidth: 150 }}>
                           {requiresMinorReview ? <Badge variant="pending">Under 18 · Review required</Badge>
-                            : rejected ? <Badge variant="danger">Review rejected</Badge>
+                            : rejected ? <Badge variant="pending">Review rejected</Badge>
                             : reviewStatus === "cleared" ? <Badge variant="approved">Review complete</Badge>
                             : <Badge variant="neutral">Standard</Badge>}
                         </td>
