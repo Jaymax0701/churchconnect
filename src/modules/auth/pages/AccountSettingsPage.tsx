@@ -33,7 +33,7 @@ export const AccountSettingsPage: React.FC = () => {
     event.preventDefault();
     if (!user || saving) return;
     const value = secondaryEmail.trim().toLowerCase();
-    if (value && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value)) {
+    if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setError("Enter a valid secondary email address, or leave it blank to remove it.");
       return;
     }
