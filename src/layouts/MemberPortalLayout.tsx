@@ -1,13 +1,38 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { Badge } from "../components/ui/Badge";
 import { Icon } from "../components/ui/Icon";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../modules/auth/AuthContext";
+import { supabase } from "../lib/supabase";
 
 export const MemberPortalLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkAdminAccess() {
+      if (!user) {
+        setIsSuperadmin(false);
+        return;
+      }
+
+      const { data, error } = await supabase.rpc("current_user_has_role", {
+        required_role: "superadmin",
+      });
+
+      if (active) setIsSuperadmin(!error && data === true);
+    }
+
+    void checkAdminAccess();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
   const displayName = profile?.full_name || user?.email || "Member";
   const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
 
@@ -85,9 +110,11 @@ export const MemberPortalLayout: React.FC = () => {
             <NavLink to="/portal/settings" style={getNavLinkStyle}>
               <Icon name="settings" size={18} /> Account Settings
             </NavLink>
-            <NavLink to="/admin" style={getNavLinkStyle}>
-              <Icon name="admin_panel_settings" size={18} /> Admin View
-            </NavLink>
+            {isSuperadmin && (
+              <NavLink to="/admin" style={getNavLinkStyle}>
+                <Icon name="admin_panel_settings" size={18} /> Admin View
+              </NavLink>
+            )}
             <div style={{ width: "1px", height: "20px", backgroundColor: "var(--color-border)", margin: "0 var(--space-2)" }} />
             <Link
               to="/"
@@ -170,9 +197,11 @@ export const MemberPortalLayout: React.FC = () => {
             <NavLink to="/portal/settings" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
               <Icon name="settings" size={18} /> Account Settings
             </NavLink>
-            <NavLink to="/admin" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
-              <Icon name="admin_panel_settings" size={18} /> Admin View
-            </NavLink>
+            {isSuperadmin && (
+              <NavLink to="/admin" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
+                <Icon name="admin_panel_settings" size={18} /> Admin View
+              </NavLink>
+            )}
             <Link to="/" style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", color: "var(--color-forest-green)", display: "inline-flex", alignItems: "center", gap: "6px" }}>
               <Icon name="arrow_back" size={16} /> Return to Public Website
             </Link>
