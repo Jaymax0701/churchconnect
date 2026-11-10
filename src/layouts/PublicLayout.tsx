@@ -459,7 +459,7 @@ export const PublicLayout: React.FC = () => {
           className={`public-mobile-nav-item${mobileMoreOpen ? " is-active" : ""}`}
           aria-expanded={mobileMoreOpen}
           aria-controls="public-mobile-more"
-          onClick={() => setMobileMenuOpen((open) => !open)}
+          onClick={() => setMobileMoreOpen((open) => !open)}
         >
           <Icon name={mobileMoreOpen ? "close" : "grid_view"} size={21} />
           <span>More</span>
@@ -467,7 +467,7 @@ export const PublicLayout: React.FC = () => {
       </nav>
 
       {mobileMoreOpen && (
-        <div className="public-mobile-more-backdrop" onClick={() => setMobileMenuOpen(false)}>
+        <div className="public-mobile-more-backdrop" onClick={() => setMobileMoreOpen(false)}>
           <section
             id="public-mobile-more"
             className="public-mobile-more-sheet"
@@ -482,15 +482,15 @@ export const PublicLayout: React.FC = () => {
                 <div className="public-mobile-more-heading">
                   <div><strong>{displayName}</strong><span>{accountStatus}</span></div>
                 </div>
-                {profile?.is_approved && <Link to="/portal" className="public-mobile-more-link" onClick={() => setMobileMenuOpen(false)}><Icon name="dashboard" size={19} /><span>Member Portal</span><Icon name="chevron_right" size={18} /></Link>}
-                {isSuperadmin && <Link to="/admin" className="public-mobile-more-link" onClick={() => setMobileMenuOpen(false)}><Icon name="admin_panel_settings" size={19} /><span>Admin Panel</span><Icon name="chevron_right" size={18} /></Link>}
-                {profile?.is_approved && <Link to="/portal/settings" className="public-mobile-more-link" onClick={() => setMobileMenuOpen(false)}><Icon name="settings" size={19} /><span>Account Settings</span><Icon name="chevron_right" size={18} /></Link>}
+                {profile?.is_approved && <Link to="/portal" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="dashboard" size={19} /><span>Member Portal</span><Icon name="chevron_right" size={18} /></Link>}
+                {isSuperadmin && <Link to="/admin" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="admin_panel_settings" size={19} /><span>Admin Panel</span><Icon name="chevron_right" size={18} /></Link>}
+                {profile?.is_approved && <Link to="/portal/settings" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="settings" size={19} /><span>Account Settings</span><Icon name="chevron_right" size={18} /></Link>}
                 <button type="button" className="public-mobile-more-link public-mobile-more-signout" onClick={handleSignOut}><Icon name="logout" size={19} /><span>Sign out</span><Icon name="chevron_right" size={18} /></button>
               </>
             ) : (
               <>
-                <Link to="/signup" className="public-mobile-more-link" onClick={() => setMobileMenuOpen(false)}><Icon name="person_add" size={19} /><span>Create an account</span><Icon name="chevron_right" size={18} /></Link>
-                <Link to="/login" className="public-mobile-more-link" onClick={() => setMobileMenuOpen(false)}><Icon name="login" size={19} /><span>Member sign in</span><Icon name="chevron_right" size={18} /></Link>
+                <Link to="/signup" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="person_add" size={19} /><span>Create an account</span><Icon name="chevron_right" size={18} /></Link>
+                <Link to="/login" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="login" size={19} /><span>Member sign in</span><Icon name="chevron_right" size={18} /></Link>
               </>
             )}
           </section>
