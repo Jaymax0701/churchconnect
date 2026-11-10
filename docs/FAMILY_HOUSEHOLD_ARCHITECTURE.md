@@ -126,7 +126,7 @@ The additive review migration `supabase/review/0010_family_creation_and_managed_
 
 The migration is additive because the 0008 and 0009 structures have already been applied to the current Supabase project. Do not rerun 0008 or 0009. Review and apply 0010 manually only after checking it against the live catalog.
 
-Still to implement: family workspace UI, invitation/join workflows, nomination and accepted leadership transfer, profile-change approval, guardian-consent capture/verification, managed-child Superadmin review, account linking, and cross-family negative tests.
+PR #34 adds the first family workspace increment: an all-member household roster, with DOB exposed only to the active primary Family Leader, and trusted household-detail updates with audit logging. Its review-only migration is `supabase/review/0012_family_workspace_roster_and_household_updates.review.sql`; apply it manually only after reviewing and confirming the target Supabase project. The UI degrades gracefully until the migration is applied.\n\nStill to implement: invitation/join workflows, nomination and accepted leadership transfer, profile-change approval, guardian-consent capture/verification, managed-child Superadmin review, account linking, and cross-family negative tests.
 
 ## 9. PR #26 database work and deployment gate
 
@@ -141,7 +141,7 @@ The schema foundation does not yet provide all trusted write workflows or UI nee
 
 The signup UI blocks individual account creation for under-12 registrations. It explains that a Family Leader must register the child as a managed member; that workflow must be completed before public rollout.
 
-The follow-up review migration `supabase/review/0011_enforce_under_12_no_login.review.sql` adds the same restriction to the trusted Auth user-creation trigger. This closes the direct-API bypass that the browser-only check cannot prevent. It also keeps signup and managed-child DOB calculations aligned to `Asia/Kuching`. The migration is review-only and must be manually inspected and applied to the verified Supabase project; it has not been applied automatically.
+The follow-up review migration `supabase/review/0011_enforce_under_12_no_login.review.sql` adds the same restriction to the trusted Auth user-creation trigger. This closes the direct-API bypass that the browser-only check cannot prevent. It also keeps signup and managed-child DOB calculations aligned to `Asia/Kuching`. PR #33 was merged into `main`; the migration itself remains review-only and must be manually inspected and applied to the verified Supabase project. Its application to Supabase has not been confirmed.
 
 ## 10. Out of scope for first release
 
