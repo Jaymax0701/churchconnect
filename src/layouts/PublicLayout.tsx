@@ -15,6 +15,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const { user, profile, signOut, loading, profileError } = useAuth();
@@ -430,6 +431,71 @@ export const PublicLayout: React.FC = () => {
       <main style={{ flex: 1, backgroundColor: "var(--bg-page)" }}>
         <Outlet />
       </main>
+
+
+      {/* Mobile public bottom navigation */}
+      <nav className="public-mobile-bottom-nav" aria-label="Public site navigation">
+        <NavLink to="/" end className={({ isActive }) => `public-mobile-nav-item${isActive ? " is-active" : ""}`}>
+          <Icon name="home" size={21} />
+          <span>Home</span>
+        </NavLink>
+        <a href="/#services" className="public-mobile-nav-item">
+          <Icon name="calendar_month" size={21} />
+          <span>Services</span>
+        </a>
+        {user ? (
+          <Link to={profile?.is_approved ? "/portal" : "/login"} className="public-mobile-nav-item">
+            <Icon name="account_circle" size={21} />
+            <span>Member</span>
+          </Link>
+        ) : (
+          <Link to="/login" className="public-mobile-nav-item">
+            <Icon name="login" size={21} />
+            <span>Sign in</span>
+          </Link>
+        )}
+        <button
+          type="button"
+          className={`public-mobile-nav-item${mobileMoreOpen ? " is-active" : ""}`}
+          aria-expanded={mobileMoreOpen}
+          aria-controls="public-mobile-more"
+          onClick={() => setMobileMoreOpen((open) => !open)}
+        >
+          <Icon name={mobileMoreOpen ? "close" : "grid_view"} size={21} />
+          <span>More</span>
+        </button>
+      </nav>
+
+      {mobileMoreOpen && (
+        <div className="public-mobile-more-backdrop" onClick={() => setMobileMoreOpen(false)}>
+          <section
+            id="public-mobile-more"
+            className="public-mobile-more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More website options"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="public-mobile-more-handle" />
+            {user ? (
+              <>
+                <div className="public-mobile-more-heading">
+                  <div><strong>{displayName}</strong><span>{accountStatus}</span></div>
+                </div>
+                {profile?.is_approved && <Link to="/portal" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="dashboard" size={19} /><span>Member Portal</span><Icon name="chevron_right" size={18} /></Link>}
+                {isSuperadmin && <Link to="/admin" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="admin_panel_settings" size={19} /><span>Admin Panel</span><Icon name="chevron_right" size={18} /></Link>}
+                {profile?.is_approved && <Link to="/portal/settings" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="settings" size={19} /><span>Account Settings</span><Icon name="chevron_right" size={18} /></Link>}
+                <button type="button" className="public-mobile-more-link public-mobile-more-signout" onClick={handleSignOut}><Icon name="logout" size={19} /><span>Sign out</span><Icon name="chevron_right" size={18} /></button>
+              </>
+            ) : (
+              <>
+                <Link to="/signup" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="person_add" size={19} /><span>Create an account</span><Icon name="chevron_right" size={18} /></Link>
+                <Link to="/login" className="public-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="login" size={19} /><span>Member sign in</span><Icon name="chevron_right" size={18} /></Link>
+              </>
+            )}
+          </section>
+        </div>
+      )}
 
       {/* Deep Forest Footer */}
       <footer
