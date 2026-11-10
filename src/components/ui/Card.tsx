@@ -14,7 +14,7 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   return (
     <div
-      className={`${interactive ? "card-interactive" : ""} ${className}`.trim()}
+      className={`cc-card ${interactive ? "card-interactive" : ""} ${className}`.trim()}
       style={{
         backgroundColor: "var(--bg-surface)",
         border: "1px solid rgba(20, 45, 37, 0.08)",
@@ -45,13 +45,14 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ chi
 );
 
 export const CardBody: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, style, ...props }) => (
-  <div style={{ padding: "var(--space-6)", ...style }} {...props}>
+  <div className="cc-card-body" style={{ padding: "var(--space-6)", ...style }} {...props}>
     {children}
   </div>
 );
 
 export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, style, ...props }) => (
   <div
+    className="cc-card-footer"
     style={{
       padding: "var(--space-4) var(--space-6)",
       borderTop: "1px solid var(--border-default)",
