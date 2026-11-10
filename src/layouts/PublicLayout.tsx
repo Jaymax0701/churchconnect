@@ -213,7 +213,7 @@ export const PublicLayout: React.FC = () => {
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div className="public-layout" style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       {/* Top Deep Forest Navigation Header with Modern Frosted Glass */}
       <header
         className="glass-header public-glass-header"
