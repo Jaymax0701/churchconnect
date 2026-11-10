@@ -1024,3 +1024,63 @@ textarea {
     animation: none !important;
   }
 }
+
+
+/* Glass card treatment for public content and administration surfaces */
+.public-layout main .cc-card,
+.admin-content .cc-card {
+  background: rgba(255, 255, 255, 0.80) !important;
+  border: 1px solid rgba(255, 255, 255, 0.88) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--cc-glass-shadow) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.public-layout main .cc-card-header,
+.admin-content .cc-card-header {
+  background: rgba(255, 255, 255, 0.58) !important;
+  border-bottom-color: rgba(114, 153, 133, 0.18) !important;
+}
+
+.public-layout main .cc-card-body,
+.admin-content .cc-card-body {
+  background: transparent !important;
+}
+
+.public-layout main .cc-card-footer,
+.admin-content .cc-card-footer {
+  background: rgba(243, 241, 233, 0.54) !important;
+  border-top-color: rgba(114, 153, 133, 0.18) !important;
+}
+
+.admin-content .cc-card {
+  margin-bottom: 2px;
+}
+
+.public-layout main > section:not(.hero-gradient) {
+  background-color: rgba(250, 249, 244, 0.72) !important;
+}
+
+.public-layout main #services {
+  background: rgba(255, 255, 255, 0.68) !important;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+@media (max-width: 767px) {
+  .public-layout main .cc-card,
+  .admin-content .cc-card {
+    border-radius: 16px !important;
+  }
+
+  .public-layout main .cc-card-header,
+  .admin-content .cc-card-header {
+    padding: 16px !important;
+  }
+
+  .public-layout main .cc-card-body,
+  .admin-content .cc-card-body {
+    padding: 16px !important;
+  }
+}
