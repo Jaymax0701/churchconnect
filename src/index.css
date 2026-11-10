@@ -803,3 +803,224 @@ textarea {
     animation: none;
   }
 }
+
+
+/* =========================================================================
+   11. Public + admin glass refinement and tactile interactions
+   ========================================================================= */
+:root {
+  --cc-glass-light: rgba(255, 255, 255, 0.76);
+  --cc-glass-border: rgba(255, 255, 255, 0.72);
+  --cc-glass-shadow: 0 14px 38px rgba(20, 45, 37, 0.10), 0 3px 10px rgba(20, 45, 37, 0.05);
+  --cc-motion-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cc-btn {
+  transform: translateY(0);
+  transition:
+    transform 260ms var(--cc-motion-spring),
+    box-shadow 260ms var(--cc-motion-spring),
+    background 220ms ease,
+    border-color 220ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    filter 220ms ease;
+  will-change: transform;
+}
+
+.cc-btn:active:not(:disabled):not(.is-disabled) {
+  transform: translateY(1px) scale(0.975);
+  filter: saturate(1.08);
+}
+
+.cc-btn-primary {
+  box-shadow:
+    0 5px 14px rgba(36, 87, 71, 0.20),
+    0 1px 2px rgba(20, 45, 37, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.cc-btn-secondary,
+.cc-btn-ghost {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.public-glass-header {
+  background: rgba(20, 45, 37, 0.78) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 8px 28px rgba(10, 25, 19, 0.12);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  backdrop-filter: blur(22px) saturate(1.35);
+}
+
+.public-account-trigger {
+  transition: transform 240ms var(--cc-motion-spring), background 200ms ease, border-color 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.public-account-trigger:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.34) !important;
+}
+
+.public-account-trigger:active {
+  transform: scale(0.975);
+}
+
+.public-account-menu {
+  background: rgba(20, 45, 37, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  backdrop-filter: blur(24px) saturate(1.25);
+  animation: cc-glass-pop 180ms var(--cc-motion-spring);
+}
+
+.public-mobile-menu-panel {
+  background: rgba(20, 45, 37, 0.90) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.16);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  backdrop-filter: blur(24px) saturate(1.25);
+  animation: cc-glass-drop 220ms var(--cc-motion-spring);
+}
+
+.public-mobile-menu-panel a,
+.public-mobile-menu-panel button {
+  transition: transform 220ms var(--cc-motion-spring), background 180ms ease, color 180ms ease;
+}
+
+.public-mobile-menu-panel a:active,
+.public-mobile-menu-panel button:active {
+  transform: scale(0.985);
+}
+
+.admin-shell {
+  background:
+    radial-gradient(ellipse at 82% 0%, rgba(114, 153, 133, 0.11), transparent 42%),
+    var(--bg-page) !important;
+}
+
+.admin-glass-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(114, 153, 133, 0.18), transparent 45%),
+    linear-gradient(160deg, rgba(20, 45, 37, 0.98), rgba(15, 34, 28, 0.98)) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 10px 0 36px rgba(20, 45, 37, 0.08);
+}
+
+.admin-glass-sidebar nav a {
+  transition: transform 240ms var(--cc-motion-spring), background 200ms ease, color 180ms ease, box-shadow 200ms ease !important;
+}
+
+.admin-glass-sidebar nav a:hover {
+  transform: translateX(3px);
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+.admin-glass-sidebar nav a:active {
+  transform: translateX(1px) scale(0.985);
+}
+
+.admin-glass-header {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.86) !important;
+  box-shadow: 0 8px 28px rgba(20, 45, 37, 0.06);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+}
+
+.admin-glass-mobile-nav {
+  background: rgba(20, 45, 37, 0.91) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 18px 42px rgba(8, 24, 17, 0.24);
+  -webkit-backdrop-filter: blur(24px) saturate(1.25);
+  backdrop-filter: blur(24px) saturate(1.25);
+  animation: cc-glass-drop 220ms var(--cc-motion-spring);
+}
+
+.admin-glass-mobile-nav a {
+  min-height: 46px;
+  transition: transform 220ms var(--cc-motion-spring), background 180ms ease !important;
+}
+
+.admin-glass-mobile-nav a:active {
+  transform: scale(0.985);
+}
+
+.admin-content {
+  background:
+    radial-gradient(ellipse at 95% 0%, rgba(114, 153, 133, 0.07), transparent 36%);
+}
+
+.admin-content .card,
+.admin-content .card-interactive {
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 18px;
+  box-shadow: var(--cc-glass-shadow);
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.admin-content .card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(20, 45, 37, 0.12);
+}
+
+.public-page-card,
+.public-content-card {
+  background: var(--cc-glass-light);
+  border: 1px solid var(--cc-glass-border);
+  box-shadow: var(--cc-glass-shadow);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+@keyframes cc-glass-pop {
+  from { opacity: 0; transform: translateY(-5px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cc-glass-drop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 991px) {
+  .admin-glass-sidebar {
+    display: none !important;
+  }
+
+  .admin-glass-mobile-nav {
+    margin: 8px 12px 0;
+    border-radius: 18px;
+  }
+
+  .admin-header-actions .cc-btn {
+    min-height: 40px;
+    padding-inline: 10px;
+  }
+}
+
+@media (hover: none) {
+  .cc-btn:hover:not(:disabled):not(.is-disabled) {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-btn,
+  .public-account-trigger,
+  .admin-glass-sidebar nav a,
+  .public-mobile-menu-panel a,
+  .public-mobile-menu-panel button {
+    transition: none !important;
+    animation: none !important;
+  }
+}
