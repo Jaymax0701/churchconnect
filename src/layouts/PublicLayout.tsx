@@ -131,20 +131,65 @@ export const PublicLayout: React.FC = () => {
     };
   }, []);
 
+  const [installHelpOpen, setInstallHelpOpen] = useState(false);
+
   const handleInstallClick = async () => {
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      setInstallHelpOpen(true);
+      return;
+    }
 
-    await installPrompt.prompt();
-
-    const choice = await installPrompt.userChoice;
-
-    if (choice.outcome === "accepted") {
+    try {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
       setInstallPrompt(null);
-    } else {
-      // The user can try again if the browser permits it.
+    } catch {
+      // Keep installation available through the browser's manual instructions.
       setInstallPrompt(null);
+      setInstallHelpOpen(true);
     }
   };
+
+  const installInstructions = (() => {
+    const userAgent = window.navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+    const isAndroid = /Android/i.test(userAgent);
+    const isEdge = /Edg\//i.test(userAgent);
+
+    if (isIOS) {
+      return {
+        title: "Install on iPhone or iPad",
+        steps: [
+          "Open ChurchConnect in Safari.",
+          "Tap the Share button.",
+          'Choose "Add to Home Screen", then tap Add.',
+        ],
+        note: "If you are using Chrome or another browser on iPhone, open this page in Safari first.",
+      };
+    }
+
+    if (isAndroid) {
+      return {
+        title: "Install on Android",
+        steps: [
+          "Open ChurchConnect in Chrome.",
+          "Tap the three-dot menu.",
+          'Choose "Install app" or "Add to Home screen".',
+        ],
+        note: "The wording may vary slightly by Android browser.",
+      };
+    }
+
+    return {
+      title: `Install on this computer`,
+      steps: [
+        `Open ChurchConnect in ${isEdge ? "Microsoft Edge" : "Google Chrome"}.`,
+        "Look for the install icon in the address bar, or open the browser menu.",
+        'Choose "Install ChurchConnect" or "Install this site as an app".',
+      ],
+      note: "If the install option is unavailable, update your browser and reload ChurchConnect.",
+    };
+  })();
 
   const handleSignOut = () => {
     setAccountMenuOpen(false);
@@ -219,14 +264,15 @@ export const PublicLayout: React.FC = () => {
             </div>
           </Link>
           {/* PWA Install Button — visible on desktop and mobile */}
-          {!isInstalled && installPrompt && (
+          {!isInstalled && (
             <Button
               variant="secondary"
               size="sm"
               onClick={handleInstallClick}
+              aria-label="Install ChurchConnect"
             >
               <Icon name="download" size={16} />
-              Install
+              Install App
             </Button>
           )}
           {/* Desktop Navigation */}
@@ -322,6 +368,57 @@ export const PublicLayout: React.FC = () => {
           </div>
         )}
       </header>
+
+      {installHelpOpen && !isInstalled && (
+        <div
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setInstallHelpOpen(false);
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 300,
+            display: "grid",
+            placeItems: "center",
+            padding: 20,
+            background: "rgba(0, 0, 0, .62)",
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="install-help-title"
+            style={{
+              width: "min(100%, 420px)",
+              padding: 24,
+              borderRadius: 16,
+              background: "var(--bg-page, #fff)",
+              color: "var(--color-deep-forest, #18382d)",
+              boxShadow: "0 20px 60px rgba(0,0,0,.3)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <h2 id="install-help-title" style={{ margin: 0, fontSize: 20 }}>{installInstructions.title}</h2>
+              <button
+                type="button"
+                onClick={() => setInstallHelpOpen(false)}
+                aria-label="Close installation instructions"
+                style={{ border: 0, background: "transparent", color: "inherit", fontSize: 24, cursor: "pointer" }}
+              >
+                ×
+              </button>
+            </div>
+            <ol style={{ paddingLeft: 22, lineHeight: 1.7 }}>
+              {installInstructions.steps.map((step) => <li key={step}>{step}</li>)}
+            </ol>
+            <p style={{ fontSize: 13, lineHeight: 1.6, opacity: .8 }}>{installInstructions.note}</p>
+            <Button variant="primary" size="md" onClick={() => setInstallHelpOpen(false)}>
+              Got it
+            </Button>
+          </section>
+        </div>
+      )}
 
       {/* Main Public Page Content */}
       <main style={{ flex: 1, backgroundColor: "var(--bg-page)" }}>
