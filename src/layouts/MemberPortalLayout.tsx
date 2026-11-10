@@ -7,7 +7,7 @@ import { useAuth } from "../modules/auth/AuthContext";
 import { supabase } from "../lib/supabase";
 
 export const MemberPortalLayout: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const [isSuperadmin, setIsSuperadmin] = useState(false);
 
@@ -162,72 +162,96 @@ export const MemberPortalLayout: React.FC = () => {
               {initials}
             </div>
 
-            <Button variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
-
-            {/* Mobile Hamburger */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="portal-mobile-btn"
-              aria-label="Toggle portal menu"
-              style={{ padding: "var(--space-2)", color: "var(--color-text-primary)", display: "flex", alignItems: "center" }}
-            >
-              <Icon name={mobileMenuOpen ? "close" : "menu"} size={24} />
-            </button>
+            <Button className="portal-desktop-signout" variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
           </div>
         </div>
-
-        {/* Mobile Dropdown */}
-        {mobileMenuOpen && (
-          <div
-            style={{
-              padding: "var(--space-4)",
-              backgroundColor: "var(--color-white)",
-              borderTop: "1px solid var(--border-default)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "var(--space-2)",
-            }}
-            className="portal-mobile-dropdown"
-          >
-            <div style={{ paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border-default)" }}>
-              <div style={{ fontWeight: 600 }}>{displayName}</div>
-              <Badge variant="approved">Approved Member</Badge>
-            </div>
-            <NavLink to="/portal" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)} end>
-              <Icon name="dashboard" size={18} /> Dashboard
-            </NavLink>
-            <NavLink to="/portal/family" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
-              <Icon name="family_restroom" size={18} /> Family Management
-            </NavLink>
-            <NavLink to="/portal/settings" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
-              <Icon name="settings" size={18} /> Account Settings
-            </NavLink>
-            {isSuperadmin && (
-              <NavLink to="/admin" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)}>
-                <Icon name="admin_panel_settings" size={18} /> Admin View
-              </NavLink>
-            )}
-            <Link to="/" style={{ padding: "var(--space-2)", fontSize: "var(--text-sm)", color: "var(--color-forest-green)", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <Icon name="arrow_back" size={16} /> Return to Public Website
-            </Link>
-          </div>
-        )}
       </header>
 
       {/* Main Content View */}
-      <main style={{ flex: 1, padding: "var(--space-6) 0 var(--space-12)" }}>
+      <main className="portal-main-content" style={{ flex: 1, padding: "var(--space-6) 0 var(--space-12)" }}>
         <div className="container">
           <Outlet />
         </div>
       </main>
 
+      {/* Mobile bottom navigation */}
+      <nav className="portal-mobile-nav" aria-label="Member portal navigation">
+        <NavLink to="/portal" end className={({ isActive }) => `portal-mobile-nav-item${isActive ? " is-active" : ""}`}>
+          <Icon name="dashboard" size={21} />
+          <span>Home</span>
+        </NavLink>
+        <NavLink to="/portal/family" className={({ isActive }) => `portal-mobile-nav-item${isActive ? " is-active" : ""}`}>
+          <Icon name="family_restroom" size={21} />
+          <span>Family</span>
+        </NavLink>
+        <NavLink to="/portal/settings" className={({ isActive }) => `portal-mobile-nav-item${isActive ? " is-active" : ""}`}>
+          <Icon name="account_circle" size={21} />
+          <span>Profile</span>
+        </NavLink>
+        <button
+          type="button"
+          className={`portal-mobile-nav-item${mobileMoreOpen ? " is-active" : ""}`}
+          aria-expanded={mobileMoreOpen}
+          aria-controls="portal-mobile-more"
+          onClick={() => setMobileMoreOpen((open) => !open)}
+        >
+          <Icon name={mobileMoreOpen ? "close" : "grid_view"} size={21} />
+          <span>More</span>
+        </button>
+      </nav>
+
+      {mobileMoreOpen && (
+        <div className="portal-mobile-more-backdrop" onClick={() => setMobileMoreOpen(false)}>
+          <section
+            id="portal-mobile-more"
+            className="portal-mobile-more-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More member portal options"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="portal-mobile-more-handle" />
+            <div className="portal-mobile-more-heading">
+              <div>
+                <strong>{displayName}</strong>
+                <span>Member account</span>
+              </div>
+              <Badge variant="approved">Approved</Badge>
+            </div>
+            {isSuperadmin && (
+              <Link to="/admin" className="portal-mobile-more-link" onClick={() => setMobileMoreOpen(false)}>
+                <Icon name="admin_panel_settings" size={19} />
+                <span>Admin View</span>
+                <Icon name="chevron_right" size={18} />
+              </Link>
+            )}
+            <Link to="/" className="portal-mobile-more-link" onClick={() => setMobileMoreOpen(false)}>
+              <Icon name="language" size={19} />
+              <span>Public Website</span>
+              <Icon name="chevron_right" size={18} />
+            </Link>
+            <button
+              type="button"
+              className="portal-mobile-more-link portal-mobile-more-signout"
+              onClick={() => {
+                setMobileMoreOpen(false);
+                void signOut();
+              }}
+            >
+              <Icon name="logout" size={19} />
+              <span>Sign out</span>
+              <Icon name="chevron_right" size={18} />
+            </button>
+          </section>
+        </div>
+      )}
+
       <style>{`
         @media (min-width: 768px) {
           .portal-desktop-nav { display: flex !important; }
           .portal-user-meta { display: block !important; }
-          .portal-mobile-btn { display: none !important; }
-          .portal-mobile-dropdown { display: none !important; }
+          .portal-mobile-nav,
+          .portal-mobile-more-backdrop { display: none !important; }
         }
       `}</style>
     </div>
