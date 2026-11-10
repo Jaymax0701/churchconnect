@@ -15,6 +15,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const { user, profile, signOut, loading, profileError } = useAuth();
@@ -455,17 +456,17 @@ export const PublicLayout: React.FC = () => {
         )}
         <button
           type="button"
-          className={`public-mobile-nav-item${mobileMenuOpen ? " is-active" : ""}`}
-          aria-expanded={mobileMenuOpen}
+          className={`public-mobile-nav-item${mobileMoreOpen ? " is-active" : ""}`}
+          aria-expanded={mobileMoreOpen}
           aria-controls="public-mobile-more"
           onClick={() => setMobileMenuOpen((open) => !open)}
         >
-          <Icon name={mobileMenuOpen ? "close" : "grid_view"} size={21} />
+          <Icon name={mobileMoreOpen ? "close" : "grid_view"} size={21} />
           <span>More</span>
         </button>
       </nav>
 
-      {mobileMenuOpen && (
+      {mobileMoreOpen && (
         <div className="public-mobile-more-backdrop" onClick={() => setMobileMenuOpen(false)}>
           <section
             id="public-mobile-more"
