@@ -28,11 +28,11 @@ The age-13 option does not change the policy that under-12 children have no logi
 
 ## 3. Household membership and relationships
 
-Immediate family is the default. Extended family is optional. In-laws are not automatically part of a household; they may be added as optional extended members when appropriate.
+Immediate family is the default. Extended family is optional. In-law relationship categories are excluded from the initial release; do not add them automatically or offer them in the registration interface.
 
 Immediate relationships (relative to the Family Leader): spouse, father, mother, son, daughter.
 
-Optional extended relationships: grandfather, grandmother, grandson, granddaughter, brother, sister, uncle, aunt, nephew, niece, cousin, father-in-law, mother-in-law, son-in-law, daughter-in-law, brother-in-law, sister-in-law, guardian, ward, other relative, and other household member.
+Optional extended relationships: grandfather, grandmother, grandson, granddaughter, brother, sister, uncle, aunt, nephew, niece, cousin, guardian, ward, other relative, and other household member. In-law relationship categories are excluded from the initial release.
 
 A short custom description is available for the two "other" categories. Relationships are recorded relative to the Family Leader. Do not infer reciprocal relationships automatically.
 
