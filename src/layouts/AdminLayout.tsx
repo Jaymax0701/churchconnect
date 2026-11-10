@@ -26,7 +26,7 @@ export const AdminLayout: React.FC = () => {
   });
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-page)" }}>
+    <div className="admin-shell" style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-page)" }}>
       {/* Admin Sidebar (Deep Forest Desktop) */}
       <aside
         style={{
@@ -37,7 +37,7 @@ export const AdminLayout: React.FC = () => {
           flexDirection: "column",
           flexShrink: 0,
         }}
-        className="admin-sidebar"
+        className="admin-sidebar admin-glass-sidebar"
       >
         {/* Sidebar Brand Header */}
         <div
@@ -143,12 +143,12 @@ export const AdminLayout: React.FC = () => {
             top: 0,
             zIndex: 80,
           }}
-          className="admin-header"
+          className="admin-header admin-glass-header"
         >
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", minWidth: 0 }}>
             <button
               type="button"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={() => setSidebarOpen((open) => !open)}
               className="admin-mobile-toggle"
               aria-label="Toggle admin sidebar"
               style={{ padding: "var(--space-2)", color: "var(--color-text-primary)", display: "flex", alignItems: "center" }}
@@ -181,7 +181,7 @@ export const AdminLayout: React.FC = () => {
               flexDirection: "column",
               gap: "var(--space-2)",
             }}
-            className="admin-mobile-nav"
+            className="admin-mobile-nav admin-glass-mobile-nav"
           >
             <NavLink to="/admin" style={getAdminNavLinkStyle} onClick={() => setSidebarOpen(false)} end>
               <Icon name="dashboard" size={18} /> Dashboard
