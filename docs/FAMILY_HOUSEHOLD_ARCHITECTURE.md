@@ -141,6 +141,8 @@ The schema foundation does not yet provide all trusted write workflows or UI nee
 
 The signup UI blocks individual account creation for under-12 registrations. It explains that a Family Leader must register the child as a managed member; that workflow must be completed before public rollout.
 
+The follow-up review migration `supabase/review/0011_enforce_under_12_no_login.review.sql` adds the same restriction to the trusted Auth user-creation trigger. This closes the direct-API bypass that the browser-only check cannot prevent. It also keeps signup and managed-child DOB calculations aligned to `Asia/Kuching`. The migration is review-only and must be manually inspected and applied to the verified Supabase project; it has not been applied automatically.
+
 ## 10. Out of scope for first release
 
 - Multiple simultaneous primary Family Leaders (one primary leader initially; a secondary family administrator may follow).
