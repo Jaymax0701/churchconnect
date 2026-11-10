@@ -163,8 +163,8 @@ export const MemberPortalLayout: React.FC = () => {
             </div>
 
             <Button className="portal-desktop-signout" variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
-
-        )}
+          </div>
+        </div>
       </header>
 
       {/* Main Content View */}
