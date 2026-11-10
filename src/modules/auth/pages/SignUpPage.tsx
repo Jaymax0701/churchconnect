@@ -11,21 +11,24 @@ import { supabase } from "../../../lib/supabase";
 const PRIVACY_NOTICE_VERSION = "2026-11-v1";
 
 function getTodayISODate(): string {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kuching",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
 function getAge(dateOfBirth: string): number | null {
   if (!dateOfBirth) return null;
   const [year, month, day] = dateOfBirth.split("-").map(Number);
-  const today = new Date();
-  let age = today.getFullYear() - year;
+  const [todayYear, todayMonth, todayDay] = getTodayISODate().split("-").map(Number);
+  let age = todayYear - year;
   const birthdayHasPassed =
-    today.getMonth() + 1 > month ||
-    (today.getMonth() + 1 === month && today.getDate() >= day);
+    todayMonth > month ||
+    (todayMonth === month && todayDay >= day);
   if (!birthdayHasPassed) age -= 1;
   return age;
 }
@@ -62,7 +65,7 @@ export const SignUpPage = () => {
       setError("Children under 12 must be registered as a managed family member by their Family Leader. They cannot create an individual login account.");
       return;
     }
-    if (new Date(dateOfBirth + "T00:00:00") > new Date()) {
+    if (dateOfBirth > getTodayISODate()) {
       setError("Date of birth cannot be in the future.");
       return;
     }
