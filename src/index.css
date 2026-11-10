@@ -1244,8 +1244,8 @@ textarea {
     flex: 1;
   }
 
-  .public-mobile-more-link > svg:first-child,
-  .admin-mobile-more-link > svg:first-child {
+  .public-mobile-more-link > span.material-symbols-outlined:first-child,
+  .admin-mobile-more-link > span.material-symbols-outlined:first-child {
     color: var(--color-forest-green);
   }
 
@@ -1255,8 +1255,8 @@ textarea {
     border-bottom: 0;
   }
 
-  .public-mobile-more-signout > svg:first-child,
-  .admin-mobile-more-signout > svg:first-child {
+  .public-mobile-more-signout > span.material-symbols-outlined:first-child,
+  .admin-mobile-more-signout > span.material-symbols-outlined:first-child {
     color: var(--color-danger-text);
   }
 }
