@@ -28,11 +28,11 @@ The age-13 option does not change the policy that under-12 children have no logi
 
 ## 3. Household membership and relationships
 
-Immediate family is the default. Extended family is optional. In-laws are not automatically part of a household; they may be added as optional extended members when appropriate.
+Immediate family is the default. Extended family is optional. In-law relationship categories are excluded from the initial release; do not add them automatically or offer them in the registration interface.
 
 Immediate relationships (relative to the Family Leader): spouse, father, mother, son, daughter.
 
-Optional extended relationships: grandfather, grandmother, grandson, granddaughter, brother, sister, uncle, aunt, nephew, niece, cousin, father-in-law, mother-in-law, son-in-law, daughter-in-law, brother-in-law, sister-in-law, guardian, ward, other relative, and other household member.
+Optional extended relationships: grandfather, grandmother, grandson, granddaughter, brother, sister, uncle, aunt, nephew, niece, cousin, guardian, ward, other relative, and other household member. In-law relationship categories are excluded from the initial release.
 
 A short custom description is available for the two "other" categories. Relationships are recorded relative to the Family Leader. Do not infer reciprocal relationships automatically.
 
@@ -140,6 +140,8 @@ Both scripts must be reviewed against the live Supabase catalog before manual ex
 The schema foundation does not yet provide all trusted write workflows or UI needed to create families, add managed children, process join requests, approve changes, link accounts, or record guardian consent. Do not enable public family registration or deploy this PR until those server-side workflows, screens, behavioral tests and RLS checks are complete.
 
 The signup UI blocks individual account creation for under-12 registrations. It explains that a Family Leader must register the child as a managed member; that workflow must be completed before public rollout.
+
+The follow-up review migration `supabase/review/0011_enforce_under_12_no_login.review.sql` adds the same restriction to the trusted Auth user-creation trigger. This closes the direct-API bypass that the browser-only check cannot prevent. It also keeps signup and managed-child DOB calculations aligned to `Asia/Kuching`. The migration is review-only and must be manually inspected and applied to the verified Supabase project; it has not been applied automatically.
 
 ## 10. Out of scope for first release
 

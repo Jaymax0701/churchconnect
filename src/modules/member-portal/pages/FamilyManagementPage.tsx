@@ -217,16 +217,22 @@ export const FamilyManagementPage: React.FC = () => {
     setSaving(false);
   };
 
-  const today = new Date();
-  const toLocalDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-  const maxDob = toLocalDate(today);
-  const minDobDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate() + 1);
-  const minDob = toLocalDate(minDobDate);
+  const malaysiaDateParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kuching",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const malaysiaDatePart = (type: string) =>
+    malaysiaDateParts.find((part) => part.type === type)?.value ?? "";
+  const [todayYear, todayMonth, todayDay] = [
+    Number(malaysiaDatePart("year")),
+    Number(malaysiaDatePart("month")),
+    Number(malaysiaDatePart("day")),
+  ];
+  const maxDob = `${todayYear}-${String(todayMonth).padStart(2, "0")}-${String(todayDay).padStart(2, "0")}`;
+  const earliestManagedChildDate = new Date(Date.UTC(todayYear - 12, todayMonth - 1, todayDay + 1));
+  const minDob = earliestManagedChildDate.toISOString().slice(0, 10);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
