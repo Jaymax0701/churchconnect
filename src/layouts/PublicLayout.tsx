@@ -220,7 +220,7 @@ export const PublicLayout: React.FC = () => {
         }}
       >
         <div
-          className="container"
+          className="container public-header-inner"
           style={{
             display: "flex",
             alignItems: "center",
@@ -255,10 +255,10 @@ export const PublicLayout: React.FC = () => {
               <Icon name="church" size={22} color="var(--color-white)" />
             </div>
             <div>
-              <div style={{ fontSize: "var(--text-lg)", fontWeight: 700, letterSpacing: "-0.01em", color: "var(--color-white)" }}>
+              <div className="public-brand-title" style={{ fontSize: "var(--text-lg)", fontWeight: 700, letterSpacing: "-0.01em", color: "var(--color-white)" }}>
                 ChurchConnect
               </div>
-              <div style={{ fontSize: "10px", color: "var(--color-soft-sage)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <div className="public-brand-subtitle" style={{ fontSize: "10px", color: "var(--color-soft-sage)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 Faith & Community
               </div>
             </div>
@@ -270,9 +270,10 @@ export const PublicLayout: React.FC = () => {
               size="sm"
               onClick={handleInstallClick}
               aria-label="Install ChurchConnect"
+              className="public-install-button"
             >
               <Icon name="download" size={16} />
-              Install App
+              <span className="install-label">Install App</span>
             </Button>
           )}
           {/* Desktop Navigation */}

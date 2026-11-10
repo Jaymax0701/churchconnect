@@ -103,7 +103,7 @@ export const AdminLayout: React.FC = () => {
 
         {/* Sidebar Footer User Info */}
         <div style={{ padding: "var(--space-4)", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+          <div className="admin-header-actions" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexShrink: 0 }}>
             <div
               style={{
                 width: "36px",
@@ -143,8 +143,9 @@ export const AdminLayout: React.FC = () => {
             top: 0,
             zIndex: 80,
           }}
+          className="admin-header"
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-4)", minWidth: 0 }}>
             <button
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -158,7 +159,7 @@ export const AdminLayout: React.FC = () => {
               <h1 style={{ fontSize: "var(--text-lg)", fontWeight: 700, margin: 0 }}>
                 Church Administration Console
               </h1>
-              <div style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
+              <div className="admin-header-subtitle" style={{ fontSize: "var(--text-xs)", color: "var(--color-text-secondary)" }}>
                 ChurchConnect System Control Center
               </div>
             </div>
@@ -198,7 +199,7 @@ export const AdminLayout: React.FC = () => {
         )}
 
         {/* Content Outlet */}
-        <main style={{ flex: 1, padding: "var(--space-6)" }}>
+        <main className="admin-content" style={{ flex: 1, padding: "var(--space-6)", minWidth: 0 }}>
           <Outlet />
         </main>
       </div>
