@@ -7,6 +7,7 @@ import { useAuth } from "../modules/auth/AuthContext";
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const displayName = profile?.full_name || user?.email || "Administrator";
   const initials = displayName.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("");
@@ -203,6 +204,35 @@ export const AdminLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+
+      {/* Mobile admin bottom navigation */}
+      <nav className="admin-mobile-bottom-nav" aria-label="Administration navigation">
+        <NavLink to="/admin" end className={({ isActive }) => `admin-mobile-nav-item${isActive ? " is-active" : ""}`}>
+          <Icon name="dashboard" size={21} /><span>Dashboard</span>
+        </NavLink>
+        <NavLink to="/admin/users" className={({ isActive }) => `admin-mobile-nav-item${isActive ? " is-active" : ""}`}>
+          <Icon name="group" size={21} /><span>Users</span>
+        </NavLink>
+        <button type="button" className={`admin-mobile-nav-item${mobileMoreOpen ? " is-active" : ""}`} aria-expanded={mobileMoreOpen} aria-controls="admin-mobile-more" onClick={() => setMobileMoreOpen((open) => !open)}>
+          <Icon name={mobileMoreOpen ? "close" : "grid_view"} size={21} /><span>More</span>
+        </button>
+      </nav>
+
+      {mobileMoreOpen && (
+        <div className="admin-mobile-more-backdrop" onClick={() => setMobileMoreOpen(false)}>
+          <section id="admin-mobile-more" className="admin-mobile-more-sheet" role="dialog" aria-modal="true" aria-label="More administration options" onClick={(event) => event.stopPropagation()}>
+            <div className="admin-mobile-more-handle" />
+            <div className="admin-mobile-more-heading"><strong>Administration</strong><span>Manage ChurchConnect</span></div>
+            <a href="#ministries" className="admin-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="church" size={19} /><span>Ministries</span><Icon name="chevron_right" size={18} /></a>
+            <a href="#events" className="admin-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="event" size={19} /><span>Events & Services</span><Icon name="chevron_right" size={18} /></a>
+            <a href="#permissions" className="admin-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="shield_person" size={19} /><span>Permission Matrix</span><Icon name="chevron_right" size={18} /></a>
+            <Link to="/portal" className="admin-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="account_circle" size={19} /><span>Member Portal</span><Icon name="chevron_right" size={18} /></Link>
+            <Link to="/" className="admin-mobile-more-link" onClick={() => setMobileMoreOpen(false)}><Icon name="language" size={19} /><span>Public Website</span><Icon name="chevron_right" size={18} /></Link>
+            <button type="button" className="admin-mobile-more-link admin-mobile-more-signout" onClick={() => { setMobileMoreOpen(false); void signOut(); }}><Icon name="logout" size={19} /><span>Sign out</span><Icon name="chevron_right" size={18} /></button>
+          </section>
+        </div>
+      )}
 
       <style>{`
         @media (min-width: 992px) {
