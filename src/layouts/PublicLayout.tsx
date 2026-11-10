@@ -216,7 +216,7 @@ export const PublicLayout: React.FC = () => {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       {/* Top Deep Forest Navigation Header with Modern Frosted Glass */}
       <header
-        className="glass-header"
+        className="glass-header public-glass-header"
         style={{
           position: "sticky",
           top: 0,
@@ -300,6 +300,7 @@ export const PublicLayout: React.FC = () => {
                   onClick={() => setAccountMenuOpen((open) => !open)}
                   aria-expanded={accountMenuOpen}
                   aria-label={`Account menu for ${displayName}`}
+                  className="public-account-trigger"
                   style={{ display: "flex", alignItems: "center", gap: "10px", border: "1px solid rgba(255,255,255,.2)", borderRadius: "999px", padding: "6px 12px", color: "white", background: "rgba(255,255,255,.08)", cursor: "pointer" }}
                 >
                   <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: "50%", display: "grid", placeItems: "center", background: "var(--color-soft-sage)", color: "var(--color-deep-forest)", fontWeight: 700 }}>{initials || "M"}</span>
@@ -311,7 +312,7 @@ export const PublicLayout: React.FC = () => {
                 </button>
                 {accountMenuOpen && (
                   <div
-                    style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", minWidth: 210, padding: 8, background: "var(--color-deep-forest)", border: "1px solid rgba(255,255,255,.18)", borderRadius: "var(--radius-md)", boxShadow: "0 12px 30px rgba(0,0,0,.25)", display: "grid", gap: 4, zIndex: 120 }}
+                    className="public-account-menu" style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", minWidth: 210, padding: 8, background: "var(--color-deep-forest)", border: "1px solid rgba(255,255,255,.18)", borderRadius: "var(--radius-md)", boxShadow: "0 12px 30px rgba(0,0,0,.25)", display: "grid", gap: 4, zIndex: 120 }}
                   >
                     <div style={{ padding: "8px 10px", color: "white", fontSize: "var(--text-xs)", opacity: .75, overflowWrap: "anywhere" }}>{user.email}</div>
                     {profile?.is_approved && <Link to="/portal" onClick={() => setAccountMenuOpen(false)} style={{ ...getNavLinkStyle({ isActive: false }), display: "block" }}>Member Portal</Link>}
@@ -353,7 +354,7 @@ export const PublicLayout: React.FC = () => {
               flexDirection: "column",
               gap: "var(--space-2)",
             }}
-            className="mobile-dropdown"
+            className="mobile-dropdown public-mobile-menu-panel"
           >
             <NavLink to="/" style={getNavLinkStyle} onClick={() => setMobileMenuOpen(false)} end>Home</NavLink>
             {!user && !loading ? <>
