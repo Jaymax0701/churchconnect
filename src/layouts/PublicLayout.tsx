@@ -152,7 +152,11 @@ export const PublicLayout: React.FC = () => {
 
   const installInstructions = (() => {
     const userAgent = window.navigator.userAgent;
-    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+    // iPadOS may identify itself as macOS when "Request Desktop Website" is enabled.
+    const isIPadOS =
+      window.navigator.platform === "MacIntel" &&
+      window.navigator.maxTouchPoints > 1;
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent) || isIPadOS;
     const isAndroid = /Android/i.test(userAgent);
     const isEdge = /Edg\//i.test(userAgent);
 
