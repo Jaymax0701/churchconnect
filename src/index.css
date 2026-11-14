@@ -1283,3 +1283,231 @@ textarea {
     transition: none;
   }
 }
+
+
+/* =========================================================================
+   13. Member Portal visual parity + persistent light/dark themes
+   ========================================================================= */
+.portal-shell {
+  --bg-page: #f4f6f8;
+  --bg-surface: #ffffff;
+  --bg-surface-subtle: #e9edf2;
+  --text-primary: #1b2a4a;
+  --text-secondary: #64748b;
+  --border-default: #dce2e8;
+  --primary: #1b2a4a;
+  --accent-gold: #d4a359;
+  background:
+    radial-gradient(ellipse at 88% 0%, rgba(212,163,89,.10), transparent 40%),
+    var(--bg-page) !important;
+  color: var(--text-primary);
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.portal-shell .portal-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(212,163,89,.18), transparent 45%),
+    linear-gradient(160deg, #1b2a4a, #14213a);
+  border-right: 1px solid rgba(255,255,255,.10);
+  box-shadow: 10px 0 36px rgba(27,42,74,.08);
+}
+.portal-shell .portal-sidebar-nav a {
+  transition: transform 240ms cubic-bezier(.2,.8,.2,1), background 200ms ease, color 180ms ease, box-shadow 200ms ease !important;
+}
+.portal-shell .portal-sidebar-nav a:hover {
+  transform: translateX(3px);
+  background: rgba(255,255,255,.09) !important;
+}
+.portal-shell .portal-sidebar-nav a[aria-current="page"] {
+  background: rgba(212,163,89,.22) !important;
+  color: #ffffff !important;
+  box-shadow: inset 3px 0 0 #d4a359;
+}
+.portal-shell .portal-brand-icon,
+.portal-shell .portal-avatar {
+  background: #d4a359;
+  color: #1b2a4a;
+}
+.portal-shell .portal-topbar {
+  background: rgba(255,255,255,.80);
+  border-bottom-color: rgba(255,255,255,.88);
+  box-shadow: 0 8px 28px rgba(27,42,74,.06);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+}
+.portal-shell .portal-main-content {
+  background: radial-gradient(ellipse at 95% 0%, rgba(212,163,89,.07), transparent 36%);
+}
+.portal-shell .portal-main-content .card,
+.portal-shell .portal-main-content .card-interactive,
+.portal-shell .portal-main-content .cc-card {
+  border: 1px solid rgba(255,255,255,.86) !important;
+  border-radius: 18px !important;
+  background: rgba(255,255,255,.84) !important;
+  box-shadow: 0 14px 38px rgba(27,42,74,.10), 0 3px 10px rgba(27,42,74,.05) !important;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.portal-shell .portal-main-content .cc-card-header {
+  background: rgba(255,255,255,.58) !important;
+  border-bottom-color: rgba(212,163,89,.18) !important;
+}
+.portal-shell .portal-main-content .cc-card-body { background: transparent !important; }
+.portal-shell .portal-main-content .cc-card-footer {
+  background: rgba(233,237,242,.62) !important;
+  border-top-color: rgba(212,163,89,.18) !important;
+}
+.portal-shell .portal-desktop-sidebar-toggle {
+  background: rgba(255,255,255,.76);
+  border-color: rgba(27,42,74,.12);
+  box-shadow: 0 3px 10px rgba(27,42,74,.05);
+}
+.portal-shell .portal-mobile-nav {
+  border-color: rgba(255,255,255,.76);
+  background: rgba(255,255,255,.86);
+}
+.portal-shell .portal-mobile-nav-item.is-active {
+  color: #1b2a4a;
+  background: rgba(212,163,89,.86);
+}
+.portal-shell .portal-mobile-more-sheet {
+  background: rgba(255,255,255,.98);
+  border-color: rgba(255,255,255,.86);
+}
+.portal-shell .portal-mobile-more-link {
+  border-bottom-color: rgba(220,226,232,.85);
+}
+
+.portal-shell[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-page: #101827;
+  --bg-surface: #182438;
+  --bg-surface-subtle: #202f45;
+  --text-primary: #edf2f8;
+  --text-secondary: #a9b7c9;
+  --border-default: #34445b;
+  --primary: #d4a359;
+  --accent-gold: #e2b873;
+  background:
+    radial-gradient(ellipse at 88% 0%, rgba(212,163,89,.10), transparent 40%),
+    #101827 !important;
+}
+.portal-shell[data-theme="dark"] .portal-main-content,
+.portal-shell[data-theme="dark"] .portal-main-content .container {
+  color: #edf2f8;
+}
+.portal-shell[data-theme="dark"] .portal-topbar {
+  background: rgba(24,36,56,.90);
+  border-bottom-color: rgba(255,255,255,.08);
+  box-shadow: 0 8px 28px rgba(0,0,0,.20);
+}
+.portal-shell[data-theme="dark"] .portal-topbar-title,
+.portal-shell[data-theme="dark"] .portal-topbar-name {
+  color: #edf2f8;
+}
+.portal-shell[data-theme="dark"] .portal-topbar-subtitle {
+  color: #a9b7c9;
+}
+.portal-shell[data-theme="dark"] .portal-theme-toggle,
+.portal-shell[data-theme="dark"] .portal-desktop-sidebar-toggle {
+  background: #202f45;
+  color: #edf2f8;
+  border-color: #3a4c65;
+}
+.portal-shell[data-theme="dark"] .portal-main-content .card,
+.portal-shell[data-theme="dark"] .portal-main-content .card-interactive,
+.portal-shell[data-theme="dark"] .portal-main-content .cc-card {
+  background: rgba(24,36,56,.94) !important;
+  border-color: #34445b !important;
+  color: #edf2f8;
+  box-shadow: 0 16px 42px rgba(0,0,0,.22) !important;
+}
+.portal-shell[data-theme="dark"] .portal-main-content .cc-card-header {
+  background: rgba(32,47,69,.78) !important;
+  border-bottom-color: rgba(212,163,89,.20) !important;
+}
+.portal-shell[data-theme="dark"] .portal-main-content .cc-card-footer {
+  background: rgba(32,47,69,.70) !important;
+  border-top-color: rgba(212,163,89,.20) !important;
+}
+.portal-shell[data-theme="dark"] .portal-main-content h1,
+.portal-shell[data-theme="dark"] .portal-main-content h2,
+.portal-shell[data-theme="dark"] .portal-main-content h3,
+.portal-shell[data-theme="dark"] .portal-main-content h4,
+.portal-shell[data-theme="dark"] .portal-main-content strong,
+.portal-shell[data-theme="dark"] .portal-main-content label {
+  color: #edf2f8;
+}
+.portal-shell[data-theme="dark"] .portal-main-content p,
+.portal-shell[data-theme="dark"] .portal-main-content small,
+.portal-shell[data-theme="dark"] .portal-main-content .text-muted {
+  color: #a9b7c9;
+}
+.portal-shell[data-theme="dark"] .portal-main-content input,
+.portal-shell[data-theme="dark"] .portal-main-content select,
+.portal-shell[data-theme="dark"] .portal-main-content textarea {
+  color: #edf2f8;
+  background: #101827;
+  border-color: #40516a;
+}
+.portal-shell[data-theme="dark"] .portal-main-content input::placeholder,
+.portal-shell[data-theme="dark"] .portal-main-content textarea::placeholder {
+  color: #8293aa;
+}
+.portal-shell[data-theme="dark"] .portal-main-content table,
+.portal-shell[data-theme="dark"] .portal-main-content th,
+.portal-shell[data-theme="dark"] .portal-main-content td {
+  color: #edf2f8;
+  border-color: #34445b;
+}
+.portal-shell[data-theme="dark"] .portal-main-content th {
+  background: #202f45;
+}
+.portal-shell[data-theme="dark"] .portal-mobile-nav {
+  background: rgba(24,36,56,.94);
+  border-color: #34445b;
+  box-shadow: 0 10px 35px rgba(0,0,0,.35);
+}
+.portal-shell[data-theme="dark"] .portal-mobile-nav-item { color: #a9b7c9; }
+.portal-shell[data-theme="dark"] .portal-mobile-nav-item.is-active {
+  color: #1b2a4a;
+  background: #d4a359;
+}
+.portal-shell[data-theme="dark"] .portal-mobile-more-backdrop {
+  background: rgba(0,0,0,.58);
+}
+.portal-shell[data-theme="dark"] .portal-mobile-more-sheet {
+  background: #182438;
+  border-color: #34445b;
+  color: #edf2f8;
+}
+.portal-shell[data-theme="dark"] .portal-mobile-more-heading,
+.portal-shell[data-theme="dark"] .portal-mobile-more-link {
+  color: #edf2f8;
+  border-color: #34445b;
+}
+.portal-shell[data-theme="dark"] .portal-mobile-more-heading span {
+  color: #a9b7c9;
+}
+.portal-shell[data-theme="dark"] .portal-mobile-more-handle {
+  background: #52627a;
+}
+.portal-shell[data-theme="dark"] .portal-mobile-sidebar {
+  background: linear-gradient(160deg, #1b2a4a, #14213a);
+}
+.portal-shell[data-theme="dark"] .portal-main-content a:not(.cc-btn) {
+  color: #e2b873;
+}
+.portal-shell[data-theme="dark"] .portal-main-content button:not(.cc-btn) {
+  color: inherit;
+}
+
+@media (max-width: 480px) {
+  .portal-theme-toggle { min-width: 38px; padding-inline: 9px; }
+  .portal-theme-toggle span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal-shell, .portal-shell * { transition-duration: .01ms !important; }
+}
