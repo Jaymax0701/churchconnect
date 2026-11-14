@@ -161,9 +161,9 @@ BEGIN
 
   IF v_existing_person_id IS NOT NULL AND EXISTS (
     SELECT 1 FROM public.family_members fm
-    WHERE fm.person_id = v_existing_person_id AND fm.status = 'active'
+    WHERE fm.person_id = v_existing_person_id AND fm.status IN ('active', 'pending')
   ) THEN
-    RAISE EXCEPTION 'This account already belongs to an active household.'
+    RAISE EXCEPTION 'This account already has an active or pending household membership.'
       USING ERRCODE = '23505';
   END IF;
 
@@ -388,7 +388,7 @@ BEGIN
 
   IF EXISTS (
     SELECT 1 FROM public.family_members fm
-    WHERE fm.person_id = v_person_id AND fm.status = 'active'
+    WHERE fm.person_id = v_person_id AND fm.status IN ('active', 'pending')
   ) THEN
     RAISE EXCEPTION 'This account already belongs to an active household.'
       USING ERRCODE = '23505';
