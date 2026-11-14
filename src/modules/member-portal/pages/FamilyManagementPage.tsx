@@ -449,6 +449,8 @@ export const FamilyManagementPage: React.FC = () => {
                   Invite someone aged 12 or above using their own email and ChurchConnect account. The invitation expires after 14 days. They must verify their email and complete the required account and safeguarding approvals before joining. ChurchConnect does not send the email automatically; copy the secure link and share it yourself.
                 </p>
                 {invitationWarning && <div role="status" style={{ marginBottom: 12, color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>{invitationWarning}</div>}
+                {!invitationWarning && (
+                  <>
                 <form onSubmit={(event) => void createInvitation(event)}>
                   <label style={fieldStyle}>Invitee email address
                     <input style={inputStyle} type="email" autoComplete="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} maxLength={254} placeholder="family.member@example.com" required />
@@ -524,6 +526,8 @@ export const FamilyManagementPage: React.FC = () => {
                       ))}
                     </div>
                   </div>
+                )}
+                  </>
                 )}
               </CardBody>
             </Card>
