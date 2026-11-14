@@ -354,11 +354,22 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  IF v_dob IS NULL
-     OR v_dob > v_today
-     OR v_dob > (v_today - interval '12 years')::date
-     OR v_minor_status IN ('pending_review', 'rejected') THEN
-    RAISE EXCEPTION 'This account is not yet eligible to join. Under-12s use managed-child registration; under-18 safeguarding review must be cleared.'
+  IF v_dob IS NULL OR v_dob > v_today THEN
+    RAISE EXCEPTION 'A valid date of birth is required before joining a household.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF v_dob > (v_today - interval '12 years')::date THEN
+    RAISE EXCEPTION 'Children under 12 must be registered as managed family members.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF v_minor_status = 'rejected'
+     OR (
+       v_dob > (v_today - interval '18 years')::date
+       AND v_minor_status <> 'cleared'
+     ) THEN
+    RAISE EXCEPTION 'Under-18 safeguarding review must be cleared before joining a household.'
       USING ERRCODE = '42501';
   END IF;
 
@@ -376,6 +387,21 @@ BEGIN
   IF v_invitation.expires_at <= now() THEN
     RAISE EXCEPTION 'This invitation has expired. Ask your Family Leader to send a new one.'
       USING ERRCODE = 'P0002';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.profiles inviter_profile
+    JOIN public.family_members inviter_membership
+      ON inviter_membership.person_id = inviter_profile.person_id
+    WHERE inviter_profile.id = v_invitation.invited_by_auth_user_id
+      AND inviter_profile.is_approved IS TRUE
+      AND inviter_membership.family_id = v_invitation.family_id
+      AND inviter_membership.status = 'active'
+      AND inviter_membership.is_primary_leader IS TRUE
+  ) THEN
+    RAISE EXCEPTION 'This invitation is no longer valid because the inviting Family Leader is no longer active.'
+      USING ERRCODE = '42501';
   END IF;
 
   IF v_invitation.invited_email <> v_email THEN
