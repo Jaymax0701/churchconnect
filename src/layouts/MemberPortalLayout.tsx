@@ -142,7 +142,12 @@ export const MemberPortalLayout: React.FC = () => {
             </div>
           </div>
           <div className="portal-topbar-actions">
-            <span className="portal-topbar-name" title={displayName}>{shortName}</span>
+            <button
+              type="button"
+              className="portal-topbar-name"
+              title="Click to view your full name"
+              onClick={() => { setProfileExpanded(true); setMobileSidebarOpen(true); }}
+            >{shortName}</button>
             <span className="portal-avatar portal-topbar-avatar" title={displayName}>{initials}</span>
             <Button className="portal-desktop-signout" variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
           </div>
@@ -338,7 +343,7 @@ export const MemberPortalLayout: React.FC = () => {
         .portal-topbar-title { display: block; color: var(--color-deep-forest); font-size: var(--text-base); }
         .portal-topbar-subtitle { display: block; color: var(--color-text-secondary); font-size: var(--text-xs); }
         .portal-topbar-actions { display: flex; align-items: center; gap: var(--space-3); }
-        .portal-topbar-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); font-weight: 600; }
+        .portal-topbar-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; padding: 4px 0; background: transparent; color: var(--color-text-primary); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
         .portal-topbar-avatar { width: 32px; height: 32px; flex-basis: 32px; }
         .portal-mobile-sidebar-toggle {
           display: none;
