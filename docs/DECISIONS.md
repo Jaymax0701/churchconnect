@@ -25,9 +25,9 @@ This document records confirmed architectural decisions, dates of confirmation, 
 * **Status:** **[VERIFIED] CONFIRMED**
 
 ### ADR 004: Visual Design Direction & Token Strategy
-* **Decision:** Approved official identity: Forest Green (`#1b2a4a`), Deep Forest (`#1B2A4A`), Sage Green (`#64748b`), Soft Sage (`#DCE8DD`), Warm Ivory (`#F4F6F8`), White (`#FFFFFF`).
-* **Context:** Warm, welcoming, respectful, and dignified aesthetic for church community.
-* **Confirmed Date:** October 18, 2026 (Milestone 1)
+* **Decision:** Updated official ChurchConnect interface identity: Navy (`#1B2A4A`), Slate Grey (`#64748B`), Cool Grey (`#F4F6F8`), Gold (`#D4A359`), and White (`#FFFFFF`). Gold is a restrained highlight accent, not default body text or the primary action colour.
+* **Context:** A modern, secure, institutional digital identity that remains calm, welcoming, readable, and appropriate for a church community. The BEM logo's official identity is preserved.
+* **Confirmed Date:** November 14, 2026
 * **Status:** **[VERIFIED] CONFIRMED**
 
 ### ADR 005 (DEC-001): Member Registration Workflow & Approval Gate
