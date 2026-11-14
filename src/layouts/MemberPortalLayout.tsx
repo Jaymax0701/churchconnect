@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase";
 
 export const MemberPortalLayout: React.FC = () => {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileExpanded, setProfileExpanded] = useState(false);
   const { user, profile, signOut } = useAuth();
@@ -58,37 +59,37 @@ export const MemberPortalLayout: React.FC = () => {
   const sidebarNav = (
     <>
       <div className="portal-sidebar-section-label">Member space</div>
-      <NavLink to="/portal" style={getNavLinkStyle} end onClick={closeMobileSidebar}>
+      <NavLink to="/portal" title="Dashboard" style={getNavLinkStyle} end onClick={closeMobileSidebar}>
         <Icon name="dashboard" size={19} /> Dashboard
       </NavLink>
-      <NavLink to="/portal/family" style={getNavLinkStyle} onClick={closeMobileSidebar}>
+      <NavLink to="/portal/family" title="Family Management" style={getNavLinkStyle} onClick={closeMobileSidebar}>
         <Icon name="family_restroom" size={19} /> Family Management
       </NavLink>
-      <NavLink to="/portal/settings" style={getNavLinkStyle} onClick={closeMobileSidebar}>
+      <NavLink to="/portal/settings" title="Account Settings" style={getNavLinkStyle} onClick={closeMobileSidebar}>
         <Icon name="settings" size={19} /> Account Settings
       </NavLink>
       {isSuperadmin && (
         <>
           <div className="portal-sidebar-section-label portal-sidebar-secondary-label">Administration</div>
-          <Link to="/admin" style={{ ...getNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }} onClick={closeMobileSidebar}>
+          <Link to="/admin" title="Admin View" style={{ ...getNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }} onClick={closeMobileSidebar}>
             <Icon name="admin_panel_settings" size={19} /> Admin View
           </Link>
         </>
       )}
       <div className="portal-sidebar-section-label portal-sidebar-secondary-label">Explore</div>
-      <Link to="/" style={{ ...getNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }} onClick={closeMobileSidebar}>
+      <Link to="/" title="Public Website" style={{ ...getNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }} onClick={closeMobileSidebar}>
         <Icon name="language" size={19} /> Public Website
       </Link>
     </>
   );
 
   return (
-    <div className="portal-shell" style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-page)" }}>
+    <div className={`portal-shell${sidebarCollapsed ? " portal-sidebar-collapsed" : ""}`} style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-page)" }}>
       <aside className="portal-sidebar">
         <div className="portal-sidebar-brand">
           <Link to="/" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", textDecoration: "none", color: "var(--color-white)" }}>
             <span className="portal-brand-icon"><Icon name="church" size={20} color="var(--color-white)" /></span>
-            <span>
+            <span className="portal-brand-copy">
               <strong style={{ display: "block", fontSize: "var(--text-base)" }}>ChurchConnect</strong>
               <small>Member Portal</small>
             </span>
@@ -127,6 +128,16 @@ export const MemberPortalLayout: React.FC = () => {
       <div className="portal-main-column" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         <header className="portal-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", minWidth: 0 }}>
+            <button
+              type="button"
+              className="portal-desktop-sidebar-toggle"
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!sidebarCollapsed}
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+            >
+              <Icon name={sidebarCollapsed ? "left_panel_open" : "left_panel_close"} size={21} />
+            </button>
             <button
               type="button"
               className="portal-mobile-sidebar-toggle"
@@ -220,6 +231,7 @@ export const MemberPortalLayout: React.FC = () => {
         .portal-sidebar {
           width: 252px;
           flex: 0 0 252px;
+          transition: width 180ms ease, flex-basis 180ms ease;
           background: var(--color-deep-forest);
           color: var(--color-white);
           display: none;
@@ -251,6 +263,17 @@ export const MemberPortalLayout: React.FC = () => {
           letter-spacing: .07em;
           text-transform: uppercase;
         }
+        .portal-sidebar-collapsed .portal-sidebar { width: 76px; flex-basis: 76px; }
+        .portal-sidebar-collapsed .portal-sidebar-brand { justify-content: center; padding: 0; }
+        .portal-sidebar-collapsed .portal-brand-copy,
+        .portal-sidebar-collapsed .portal-sidebar-section-label,
+        .portal-sidebar-collapsed .portal-profile-short-name,
+        .portal-sidebar-collapsed .portal-profile-toggle > span:not(.portal-avatar),
+        .portal-sidebar-collapsed .portal-profile-toggle > .material-symbols-outlined { display: none; }
+        .portal-sidebar-collapsed .portal-sidebar-nav a { justify-content: center; padding: var(--space-3); font-size: 0 !important; }
+        .portal-sidebar-collapsed .portal-sidebar-nav a .material-symbols-outlined { font-size: 22px !important; }
+        .portal-sidebar-collapsed .portal-sidebar-footer { padding: var(--space-2); }
+        .portal-sidebar-collapsed .portal-profile-toggle { justify-content: center; }
         .portal-sidebar-nav {
           display: flex;
           flex-direction: column;
@@ -345,6 +368,18 @@ export const MemberPortalLayout: React.FC = () => {
         .portal-topbar-actions { display: flex; align-items: center; gap: var(--space-3); }
         .portal-topbar-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; padding: 4px 0; background: transparent; color: var(--color-text-primary); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
         .portal-topbar-avatar { width: 32px; height: 32px; flex-basis: 32px; }
+        .portal-desktop-sidebar-toggle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 38px;
+          height: 38px;
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-md);
+          background: white;
+          color: var(--color-text-primary);
+          cursor: pointer;
+        }
         .portal-mobile-sidebar-toggle {
           display: none;
           align-items: center;
@@ -361,6 +396,7 @@ export const MemberPortalLayout: React.FC = () => {
           .portal-mobile-nav, .portal-mobile-more-backdrop, .portal-mobile-sidebar-toggle, .portal-mobile-sidebar { display: none !important; }
         }
         @media (max-width: 991px) {
+          .portal-desktop-sidebar-toggle { display: none; }
           .portal-mobile-sidebar-toggle { display: inline-flex; }
           .portal-mobile-sidebar {
             display: flex;
