@@ -318,6 +318,21 @@ export const FamilyManagementPage: React.FC = () => {
     }
   };
 
+  const revokeInvitation = async (invitationId: string) => {
+    setSaving(true);
+    setError(null);
+    const { error: rpcError } = await supabase.rpc("revoke_family_invitation", {
+      p_invitation_id: invitationId,
+    });
+    if (rpcError) {
+      setError(rpcError.message);
+    } else {
+      setNotice("Invitation revoked. Its link can no longer be accepted.");
+      await loadFamily();
+    }
+    setSaving(false);
+  };
+
   const malaysiaDateParts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kuching",
     year: "numeric",
@@ -521,7 +536,12 @@ export const FamilyManagementPage: React.FC = () => {
                               {relationshipLabel(invitation.relationship_to_leader)} · Expires {new Date(invitation.expires_at).toLocaleDateString()}
                             </div>
                           </div>
-                          <Badge variant={invitation.status === "accepted" ? "approved" : "neutral"}>{invitation.status}</Badge>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                            <Badge variant={invitation.status === "accepted" ? "approved" : "neutral"}>{invitation.status}</Badge>
+                            {invitation.status === "pending" && (
+                              <Button type="button" variant="secondary" disabled={saving} onClick={() => void revokeInvitation(invitation.invitation_id)}>Revoke</Button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
