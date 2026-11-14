@@ -374,9 +374,6 @@ BEGIN
   END IF;
 
   IF v_invitation.expires_at <= now() THEN
-    UPDATE public.family_invitations
-    SET status = 'expired', updated_at = now()
-    WHERE id = v_invitation.id;
     RAISE EXCEPTION 'This invitation has expired. Ask your Family Leader to send a new one.'
       USING ERRCODE = 'P0002';
   END IF;
