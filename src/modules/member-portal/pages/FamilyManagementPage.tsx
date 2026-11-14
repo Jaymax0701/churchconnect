@@ -24,6 +24,17 @@ interface HouseholdMember {
   has_login: boolean;
 }
 
+interface FamilyInvitation {
+  invitation_id: string;
+  invited_email: string;
+  relationship_group: string;
+  relationship_to_leader: string;
+  relationship_description: string | null;
+  status: string;
+  expires_at: string;
+  created_at: string;
+}
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "10px 12px",
@@ -64,12 +75,20 @@ export const FamilyManagementPage: React.FC = () => {
   const [relationshipGroup, setRelationshipGroup] = useState("immediate");
   const [relationship, setRelationship] = useState("son");
   const [relationshipDescription, setRelationshipDescription] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRelationshipGroup, setInviteRelationshipGroup] = useState("immediate");
+  const [inviteRelationship, setInviteRelationship] = useState("son");
+  const [inviteRelationshipDescription, setInviteRelationshipDescription] = useState("");
+  const [invitations, setInvitations] = useState<FamilyInvitation[]>([]);
+  const [invitationWarning, setInvitationWarning] = useState<string | null>(null);
+  const [invitationUrl, setInvitationUrl] = useState<string | null>(null);
 
   const loadFamily = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     setError(null);
     setRosterWarning(null);
+    setInvitationWarning(null);
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -171,6 +190,18 @@ export const FamilyManagementPage: React.FC = () => {
       setMembers((rosterRows ?? []) as HouseholdMember[]);
     }
 
+    if (isPrimaryLeader) {
+      const { data: invitationRows, error: invitationError } = await supabase.rpc("list_my_family_invitations");
+      if (invitationError) {
+        setInvitationWarning("Invitation tools will be available after the reviewed family-invitation database update is applied.");
+        setInvitations([]);
+      } else {
+        setInvitations((invitationRows ?? []) as FamilyInvitation[]);
+      }
+    } else {
+      setInvitations([]);
+    }
+
     setLoading(false);
   }, [user]);
 
@@ -243,6 +274,48 @@ export const FamilyManagementPage: React.FC = () => {
       await loadFamily();
     }
     setSaving(false);
+  };
+
+  const createInvitation = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!family?.isPrimaryLeader) return;
+    setSaving(true);
+    setError(null);
+    setNotice(null);
+    setInvitationUrl(null);
+    const { data, error: rpcError } = await supabase.rpc("create_family_invitation", {
+      p_invited_email: inviteEmail.trim().toLowerCase(),
+      p_relationship_group: inviteRelationshipGroup,
+      p_relationship_to_leader: inviteRelationship,
+      p_relationship_description: inviteRelationshipDescription.trim() || null,
+    });
+    if (rpcError) {
+      setError(rpcError.message);
+    } else {
+      const result = data as { token?: string; invited_email?: string; expires_at?: string } | null;
+      if (!result?.token) {
+        setError("The invitation was created, but ChurchConnect did not return a shareable invitation token. Please refresh the page and check the invitation list.");
+      } else {
+        const url = new URL("/family/invite", window.location.origin);
+        url.searchParams.set("token", result.token);
+        setInvitationUrl(url.toString());
+        setNotice(`Invitation created for ${result.invited_email ?? inviteEmail}. Copy the link and send it to the invited person.`);
+        setInviteEmail("");
+        setInviteRelationshipDescription("");
+        await loadFamily();
+      }
+    }
+    setSaving(false);
+  };
+
+  const copyInvitationLink = async () => {
+    if (!invitationUrl) return;
+    try {
+      await navigator.clipboard.writeText(invitationUrl);
+      setNotice("Invitation link copied. Send it to the invited person using your preferred messaging or email app.");
+    } catch {
+      setError("Clipboard access was unavailable. Select and copy the invitation link manually.");
+    }
   };
 
   const malaysiaDateParts = new Intl.DateTimeFormat("en-CA", {
@@ -367,6 +440,94 @@ export const FamilyManagementPage: React.FC = () => {
               )}
             </CardBody>
           </Card>
+
+          {family.isPrimaryLeader && (
+            <Card>
+              <CardHeader><h2 style={{ margin: 0, fontSize: "var(--text-lg)" }}>Invite a family member</h2></CardHeader>
+              <CardBody>
+                <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>
+                  Invite someone aged 12 or above using their own email and ChurchConnect account. The invitation expires after 14 days. They must verify their email and complete the required account and safeguarding approvals before joining. ChurchConnect does not send the email automatically; copy the secure link and share it yourself.
+                </p>
+                {invitationWarning && <div role="status" style={{ marginBottom: 12, color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>{invitationWarning}</div>}
+                <form onSubmit={(event) => void createInvitation(event)}>
+                  <label style={fieldStyle}>Invitee email address
+                    <input style={inputStyle} type="email" autoComplete="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} maxLength={254} placeholder="family.member@example.com" required />
+                  </label>
+                  <label style={fieldStyle}>Relationship group
+                    <select style={inputStyle} value={inviteRelationshipGroup} onChange={(event) => {
+                      const group = event.target.value;
+                      setInviteRelationshipGroup(group);
+                      setInviteRelationship(group === "immediate" ? "son" : "grandson");
+                    }}>
+                      <option value="immediate">Immediate family</option>
+                      <option value="extended">Extended family</option>
+                    </select>
+                  </label>
+                  <label style={fieldStyle}>Relationship to Family Leader
+                    <select style={inputStyle} value={inviteRelationship} onChange={(event) => setInviteRelationship(event.target.value)}>
+                      {inviteRelationshipGroup === "immediate" ? (
+                        <>
+                          <option value="spouse">Spouse</option>
+                          <option value="father">Father</option>
+                          <option value="mother">Mother</option>
+                          <option value="son">Son</option>
+                          <option value="daughter">Daughter</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="grandfather">Grandfather</option>
+                          <option value="grandmother">Grandmother</option>
+                          <option value="grandson">Grandson</option>
+                          <option value="granddaughter">Granddaughter</option>
+                          <option value="brother">Brother</option>
+                          <option value="sister">Sister</option>
+                          <option value="uncle">Uncle</option>
+                          <option value="aunt">Aunt</option>
+                          <option value="nephew">Nephew</option>
+                          <option value="niece">Niece</option>
+                          <option value="cousin">Cousin</option>
+                          <option value="guardian">Guardian</option>
+                          <option value="ward">Ward</option>
+                          <option value="other_relative">Other relative</option>
+                          <option value="other_household_member">Other household member</option>
+                        </>
+                      )}
+                    </select>
+                  </label>
+                  <label style={fieldStyle}>Additional relationship description (optional)
+                    <input style={inputStyle} value={inviteRelationshipDescription} onChange={(event) => setInviteRelationshipDescription(event.target.value)} maxLength={120} />
+                  </label>
+                  <Button type="submit" disabled={saving || !inviteEmail.trim()}>{saving ? "Creating invitation…" : "Create invitation link"}</Button>
+                </form>
+                {invitationUrl && (
+                  <div style={{ marginTop: 16, padding: 12, border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)" }}>
+                    <label style={fieldStyle}>Share this invitation link
+                      <input style={inputStyle} value={invitationUrl} readOnly onFocus={(event) => event.currentTarget.select()} />
+                    </label>
+                    <Button type="button" onClick={() => void copyInvitationLink()}>Copy invitation link</Button>
+                  </div>
+                )}
+                {invitations.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <h3 style={{ fontSize: "var(--text-base)" }}>Recent invitations</h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {invitations.map((invitation) => (
+                        <div key={invitation.invitation_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, borderBottom: "1px solid var(--border-default)", paddingBottom: 10 }}>
+                          <div style={{ minWidth: 0 }}>
+                            <strong>{invitation.invited_email}</strong>
+                            <div style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-xs)" }}>
+                              {relationshipLabel(invitation.relationship_to_leader)} · Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <Badge variant={invitation.status === "accepted" ? "approved" : "neutral"}>{invitation.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+          )}
 
           {family.isPrimaryLeader && (
             <Card>
