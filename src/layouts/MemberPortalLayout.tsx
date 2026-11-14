@@ -8,6 +8,15 @@ import { supabase } from "../lib/supabase";
 
 export const MemberPortalLayout: React.FC = () => {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [themePreference, setThemePreference] = useState<"light" | "dark" | "system">(() => {
+    try {
+      const saved = window.localStorage.getItem("churchconnect-theme");
+      return saved === "dark" || saved === "system" ? saved : "light";
+    } catch {
+      return "light";
+    }
+  });
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileExpanded, setProfileExpanded] = useState(false);
@@ -35,6 +44,35 @@ export const MemberPortalLayout: React.FC = () => {
       active = false;
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const applyTheme = () => {
+      const nextTheme = themePreference === "system"
+        ? (media.matches ? "dark" : "light")
+        : themePreference;
+      setResolvedTheme(nextTheme);
+      document.documentElement.style.colorScheme = nextTheme;
+    };
+
+    try {
+      window.localStorage.setItem("churchconnect-theme", themePreference);
+    } catch {
+      // Theme remains usable for this session when storage is unavailable.
+    }
+
+    applyTheme();
+    if (themePreference === "system") {
+      media.addEventListener("change", applyTheme);
+      return () => media.removeEventListener("change", applyTheme);
+    }
+  }, [themePreference]);
+
+  const cycleTheme = () => {
+    setThemePreference((current) =>
+      current === "light" ? "dark" : current === "dark" ? "system" : "light"
+    );
+  };
 
   const displayName = profile?.full_name || user?.email || "Member";
   const shortName = displayName.trim().split(/\s+/)[0] || "Member";
@@ -84,7 +122,7 @@ export const MemberPortalLayout: React.FC = () => {
   );
 
   return (
-    <div className={`portal-shell${sidebarCollapsed ? " portal-sidebar-collapsed" : ""}`} style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-page)" }}>
+    <div className={`portal-shell${sidebarCollapsed ? " portal-sidebar-collapsed" : ""}`} data-theme={resolvedTheme} style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--bg-page)" }}>
       <aside className="portal-sidebar">
         <div className="portal-sidebar-brand">
           <Link to="/" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", textDecoration: "none", color: "var(--color-white)" }}>
@@ -153,6 +191,16 @@ export const MemberPortalLayout: React.FC = () => {
             </div>
           </div>
           <div className="portal-topbar-actions">
+            <button
+              type="button"
+              className="portal-theme-toggle"
+              onClick={cycleTheme}
+              aria-label={`Theme preference: ${themePreference}. Change theme`}
+              title={`Theme: ${themePreference === "system" ? "System" : themePreference === "dark" ? "Dark" : "Light"} — click to change`}
+            >
+              <Icon name={resolvedTheme === "dark" ? "dark_mode" : "light_mode"} size={19} />
+              <span>{themePreference === "system" ? "System" : themePreference === "dark" ? "Dark" : "Light"}</span>
+            </button>
             <button
               type="button"
               className="portal-topbar-name"
@@ -229,10 +277,12 @@ export const MemberPortalLayout: React.FC = () => {
 
       <style>{`
         .portal-sidebar {
-          width: 252px;
-          flex: 0 0 252px;
+          width: 260px;
+          flex: 0 0 260px;
           transition: width 180ms ease, flex-basis 180ms ease;
-          background: var(--color-deep-forest);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(212,163,89,.18), transparent 45%),
+            linear-gradient(160deg, rgba(27,42,74,.98), rgba(15,34,28,.98));
           color: var(--color-white);
           display: none;
           flex-direction: column;
@@ -357,8 +407,8 @@ export const MemberPortalLayout: React.FC = () => {
           justify-content: space-between;
           gap: var(--space-4);
           padding: 0 var(--space-6);
-          background: white;
-          border-bottom: 1px solid var(--border-default);
+          background: rgba(255,255,255,.82);
+          border-bottom: 1px solid rgba(255,255,255,.86);
           position: sticky;
           top: 0;
           z-index: 80;
@@ -366,6 +416,24 @@ export const MemberPortalLayout: React.FC = () => {
         .portal-topbar-title { display: block; color: var(--color-deep-forest); font-size: var(--text-base); }
         .portal-topbar-subtitle { display: block; color: var(--color-text-secondary); font-size: var(--text-xs); }
         .portal-topbar-actions { display: flex; align-items: center; gap: var(--space-3); }
+        .portal-theme-toggle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          min-height: 38px;
+          padding: 0 11px;
+          border: 1px solid var(--border-default);
+          border-radius: 999px;
+          background: var(--bg-surface);
+          color: var(--text-primary);
+          font: inherit;
+          font-size: var(--text-xs);
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+        }
+        .portal-theme-toggle:hover { border-color: var(--accent-gold); transform: translateY(-1px); }
         .portal-topbar-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; padding: 4px 0; background: transparent; color: var(--color-text-primary); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
         .portal-topbar-avatar { width: 32px; height: 32px; flex-basis: 32px; }
         .portal-desktop-sidebar-toggle {
