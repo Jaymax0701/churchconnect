@@ -25,7 +25,7 @@ This document records confirmed architectural decisions, dates of confirmation, 
 * **Status:** **[VERIFIED] CONFIRMED**
 
 ### ADR 004: Visual Design Direction & Token Strategy
-* **Decision:** Approved official identity: Forest Green (`#245747`), Deep Forest (`#142D25`), Sage Green (`#729985`), Soft Sage (`#DCE8DD`), Warm Ivory (`#FAF9F4`), White (`#FFFFFF`).
+* **Decision:** Approved official identity: Forest Green (`#1b2a4a`), Deep Forest (`#1B2A4A`), Sage Green (`#64748b`), Soft Sage (`#DCE8DD`), Warm Ivory (`#F4F6F8`), White (`#FFFFFF`).
 * **Context:** Warm, welcoming, respectful, and dignified aesthetic for church community.
 * **Confirmed Date:** October 18, 2026 (Milestone 1)
 * **Status:** **[VERIFIED] CONFIRMED**
