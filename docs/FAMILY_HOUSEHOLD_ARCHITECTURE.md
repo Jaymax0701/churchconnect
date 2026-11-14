@@ -126,7 +126,11 @@ The additive review migration `supabase/review/0010_family_creation_and_managed_
 
 The migration is additive because the 0008 and 0009 structures have already been applied to the current Supabase project. Do not rerun 0008 or 0009. Review and apply 0010 manually only after checking it against the live catalog.
 
-PR #34 adds the first family workspace increment: an all-member household roster, with DOB exposed only to the active primary Family Leader, and trusted household-detail updates with audit logging. Its review-only migration is `supabase/review/0012_family_workspace_roster_and_household_updates.review.sql`; apply it manually only after reviewing and confirming the target Supabase project. The UI degrades gracefully until the migration is applied.\n\nStill to implement: invitation/join workflows, nomination and accepted leadership transfer, profile-change approval, guardian-consent capture/verification, managed-child Superadmin review, account linking, and cross-family negative tests.
+PR #34 adds the first family workspace increment: an all-member household roster, with DOB exposed only to the active primary Family Leader, and trusted household-detail updates with audit logging. Migration `supabase/review/0012_family_workspace_roster_and_household_updates.review.sql` was manually applied by the project owner to the active Supabase project. Do not rerun migration 0012. The UI degrades gracefully if its RPCs are unavailable.
+
+PR #35 adds a reviewed invitation increment: approved active primary Family Leaders can invite an email address using a 14-day, single-use link; the invitee must accept using the matching verified email on their own ChurchConnect account. The invitee must have an approved account and cleared safeguarding review before household membership becomes active. Under-12s remain managed-child records. Migration `0013_family_member_invitations.review.sql` is review-only and must be manually inspected and applied to the confirmed Supabase project before invitation tools are usable. The application creates a shareable link but does not send email automatically; the Family Leader shares it through their preferred channel.
+
+Still to implement: nomination and accepted leadership transfer, profile-change approval, guardian-consent capture/verification, managed-child Superadmin review, account linking, automated invitation email delivery, and cross-family negative tests.
 
 ## 9. PR #26 database work and deployment gate
 

@@ -13,6 +13,7 @@ import { SignUpPage } from "../modules/auth/pages/SignUpPage";
 import { ResetPasswordPage } from "../modules/auth/pages/ResetPasswordPage";
 import { AccountSettingsPage } from "../modules/auth/pages/AccountSettingsPage";
 import { FamilyManagementPage } from "../modules/member-portal/pages/FamilyManagementPage";
+import { FamilyInvitationAcceptPage } from "../modules/member-portal/pages/FamilyInvitationAcceptPage";
 import { PendingApprovalPage } from "../modules/auth/pages/PendingApprovalPage";
 import { RequireApprovedUser } from "../modules/auth/RequireApprovedUser";
 import { RequireSuperadmin } from "../modules/auth/RequireSuperadmin";
@@ -29,6 +30,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/forgot-password" element={<ResetPasswordPage mode="request" />} />
         <Route path="/reset-password" element={<ResetPasswordPage mode="update" />} />
         <Route path="/pending" element={<PendingApprovalPage />} />
+        <Route path="/family/invite" element={<FamilyInvitationAcceptPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
