@@ -323,6 +323,7 @@ DECLARE
   v_today date := (now() AT TIME ZONE 'Asia/Kuching')::date;
   v_dob date;
   v_minor_status text;
+  v_email_confirmed_at timestamptz;
 BEGIN
   IF v_actor IS NULL OR p_token IS NULL THEN
     RAISE EXCEPTION 'Sign in to accept this invitation.' USING ERRCODE = '42501';
@@ -330,7 +331,7 @@ BEGIN
 
   SELECT lower(u.email), p.person_id, pe.date_of_birth, pe.minor_review_status,
          u.email_confirmed_at
-    INTO v_email, v_person_id, v_dob, v_minor_status, v_family_name
+    INTO v_email, v_person_id, v_dob, v_minor_status, v_email_confirmed_at
   FROM auth.users u
   JOIN public.profiles p ON p.id = u.id
   JOIN public.people pe ON pe.id = p.person_id
@@ -340,10 +341,7 @@ BEGIN
     RAISE EXCEPTION 'Your ChurchConnect person profile is not ready.' USING ERRCODE = '42501';
   END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM auth.users u
-    WHERE u.id = v_actor AND u.email_confirmed_at IS NOT NULL
-  ) THEN
+  IF v_email_confirmed_at IS NULL THEN
     RAISE EXCEPTION 'Verify your email address before accepting this invitation.'
       USING ERRCODE = '42501';
   END IF;
