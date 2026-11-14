@@ -8,8 +8,8 @@ This document defines the official design system for ChurchConnect. All componen
 
 ChurchConnect balances the welcoming, peaceful warmth of a local church community with the clean organization needed for administrative operations.
 
-*   **Official Brand Aesthetic:** **Forest Green + Sage + Warm Ivory**.
-*   **Design Values:** Default to light, spacious interfaces with warm ivory backgrounds and white cards. Use deep forest for navigation, strong headings on dark surfaces, and footer sections; forest green for primary actions; sage as a supporting accent (never default text on white).
+*   **Official Brand Aesthetic:** **Navy + Slate + Gold + Cool Grey**.
+*   **Design Values:** Default to light, spacious interfaces with cool grey backgrounds and white cards. Use deep forest for navigation, strong headings on dark surfaces, and footer sections; navy for primary actions; sage as a supporting accent (never default text on white).
 *   **Minimal Dependency Rule:** Styles are implemented using modern Vanilla CSS custom properties (design tokens) and CSS Modules. We avoid heavy external UI libraries to prevent bundle bloat and ensure fast load times on mobile devices.
 
 ---
@@ -18,28 +18,30 @@ ChurchConnect balances the welcoming, peaceful warmth of a local church communit
 
 ### 2.1 Brand Palette (Primitive Tokens)
 
+**Current approved palette (2026-11-14):** Navy `#1B2A4A`, Slate Grey `#64748B`, Cool Grey `#F4F6F8`, Gold `#D4A359`, and White `#FFFFFF`. Gold is a restrained accent, not a default button or body-text colour.
+
 ```css
 :root {
   /* Brand Greens & Sage */
-  --color-deep-forest:   #142d25;  /* Navigation, strong headers on dark surfaces, footers */
-  --color-forest-green:  #245747;  /* Primary brand & primary interactive buttons */
-  --color-forest-hover:  #1b4336;  /* Primary hover state */
-  --color-sage-green:    #729985;  /* Supporting accent & icons (not default body text) */
-  --color-soft-sage:     #dce8dd;  /* Accent badges, soft pills, active tint */
+  --color-deep-forest:   #1b2a4a;  /* Navigation, strong headers on dark surfaces, footers */
+  --color-forest-green:  #1b2a4a;  /* Primary brand & primary interactive buttons */
+  --color-forest-hover:  #15213b;  /* Primary hover state */
+  --color-sage-green:    #64748b;  /* Supporting accent & icons (not default body text) */
+  --color-soft-sage:     #e6eaf0;  /* Accent badges, soft pills, active tint */
 
   /* Canvas & Card Surfaces */
-  --color-warm-ivory:    #faf9f4;  /* Canvas background (light & spacious) */
+  --color-warm-ivory:    #f4f6f8;  /* Canvas background (light & spacious) */
   --color-white:         #ffffff;  /* Content cards, inputs, modal containers */
-  --color-ivory-subtle:  #f3f1e9;  /* Secondary surface & table header row */
+  --color-ivory-subtle:  #e9edf2;  /* Secondary surface & table header row */
 
   /* Neutral Typography */
-  --color-text-primary:   #1c2822;  /* Primary body text & headings */
-  --color-text-secondary: #52635a;  /* Secondary metadata, subtitles, muted labels */
+  --color-text-primary:   #1b2a4a;  /* Primary body text & headings */
+  --color-text-secondary: #64748b;  /* Secondary metadata, subtitles, muted labels */
   --color-text-inverse:   #ffffff;  /* Text on dark forest backgrounds */
 
   /* Borders & Dividers */
-  --color-border:        #e5e3da;  /* Card dividers, input borders, table rules */
-  --color-border-hover:  #729985;  /* Interactive hover outline */
+  --color-border:        #dce2e8;  /* Card dividers, input borders, table rules */
+  --color-border-hover:  #64748b;  /* Interactive hover outline */
 
   /* Semantic Feedback & State Colors */
   --color-success-bg:     #eef8f2;
@@ -157,13 +159,13 @@ We use a modern system font stack that ensures instant loading, natural renderin
 
 ### 6.1 Buttons (`<Button>`)
 *   **Variants:**
-    *   `primary`: Forest Green background (`--color-forest-green`), white text. Used for main action (Save, Submit, Join, Register).
-    *   `secondary`: Soft Ivory/Sage background (`--color-ivory-subtle`), forest green text (`--color-forest-green`), border (`--color-border`). Used for secondary actions (Cancel, Back, Filter).
+    *   `primary`: Navy background (`--color-forest-green`), white text. Used for main action (Save, Submit, Join, Register).
+    *   `secondary`: Soft Ivory/Sage background (`--color-ivory-subtle`), navy text (`--color-forest-green`), border (`--color-border`). Used for secondary actions (Cancel, Back, Filter).
     *   `danger`: Crimson border/background (`--color-danger-text`), white text. Used strictly for destructive actions (Delete, Revoke Access).
     *   `ghost`: Transparent background, hover tint. Used for table row action triggers, close buttons (`✕`).
 *   **States:**
     *   `hover`: Brightness reduction on primary (`--color-forest-hover`), clear background shift on ghost.
-    *   `focus-visible`: 2px forest green ring with 2px offset.
+    *   `focus-visible`: 2px navy ring with 2px offset.
     *   `disabled`: Opacity `0.5`, `cursor: not-allowed`, no click handler execution.
     *   `loading`: Inline SVG spinner with "Processing..." label.
 
@@ -178,7 +180,7 @@ We use a modern system font stack that ensures instant loading, natural renderin
 *   Must combine a color tint with unambiguous text:
     *   `Approved` / `Active`: Green tint (`--color-success-bg`, text `--color-success-text`).
     *   `Pending`: Amber tint (`--color-warning-bg`, text `--color-warning-text`).
-    *   `Admin`: Soft Sage tint (`--color-soft-sage`, text `--color-forest-green`).
+    *   `Admin`: Soft Slate tint (`--color-soft-sage`, text `--color-forest-green`).
     *   `Superadmin`: Deep forest tint (`--color-deep-forest`, text `--color-white`) with padlock icon.
 
 ### 6.4 Confirmation Dialogs (`<ConfirmModal>`)
@@ -209,7 +211,7 @@ Every data-driven page or widget must explicitly implement and handle all 5 stat
 
 | Category | Decision Item | Status | Notes |
 | :--- | :--- | :--- | :--- |
-| **Colors** | Warm cream canvas (`#fdfcf9`) & Terracotta accent (`#c85a32`) | **CONFIRMED** | Preserves ChurchConnect established visual direction |
+| **Colors** | Navy (`#1B2A4A`), Slate Grey (`#64748B`), Cool Grey (`#F4F6F8`), Gold (`#D4A359`) | **CONFIRMED** | Approved refresh on 14 November 2026 |
 | **Typography**| Native system font stack | **CONFIRMED** | Zero font download latency, optimal rendering |
 | **Breakpoints** | 640px, 1024px, 1280px | **CONFIRMED** | Standard responsive divisions |
 | **Component Library** | Vanilla CSS Tokens + React 19 UI Primitives | **CONFIRMED** | No heavy third-party UI framework |
