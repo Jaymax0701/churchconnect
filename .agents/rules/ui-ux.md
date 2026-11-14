@@ -17,9 +17,9 @@ These rules guide all UI/UX implementation in ChurchConnect. They ensure consist
 2. **Clarity Over Decorative Effects:**
    * Prioritize readability, clear visual hierarchy, accessible touch targets, and responsive behavior over flashy animations or gratuitous visual noise.
 3. **Preserve the ChurchConnect Visual Direction:**
-   * **Approved Identity:** **Forest Green + Sage + Warm Ivory**.
-   * **Core Palette:** Deep Forest (`#142D25`), Forest Green (`#245747`), Sage Green (`#729985`), Soft Sage (`#DCE8DD`), Warm Ivory (`#FAF9F4`), White (`#FFFFFF`), Primary Text (`#1C2822`), Secondary Text (`#52635A`), Borders (`#E5E3DA`).
-   * **Hierarchy:** Default to light, spacious interfaces with warm ivory backgrounds and white cards. Use deep forest for navigation headers and footers; forest green for primary actions; sage as a supporting accent (never default text on white).
+   * **Approved Identity:** **Navy + Slate + Gold + Cool Grey**.
+   * **Core Palette:** Navy (`#1B2A4A`), Slate Grey (`#64748B`), Cool Grey (`#F4F6F8`), Gold (`#D4A359`), White (`#FFFFFF`), Primary Text (`#1B2A4A`), Secondary Text (`#64748B`), Borders (`#DCE2E8`).
+   * **Hierarchy:** Default to light, spacious interfaces with cool grey backgrounds and white cards. Use navy for navigation headers, sidebars, footers and primary actions; slate grey for secondary text and controls; gold sparingly for highlights and selected accents.
    * Do not redesign the product or introduce a foreign visual identity without explicit user approval.
 4. **Token-Driven Consistency:**
    * Always reference established design tokens for colors, typography, spacing, border radii, shadows, and interactive states. Avoid one-off arbitrary values.

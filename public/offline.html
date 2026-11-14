@@ -9,14 +9,15 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --color-deep-forest:  #142d25;
-      --color-forest-green: #245747;
-      --color-sage-green:   #729985;
-      --color-soft-sage:    #dce8dd;
-      --color-warm-ivory:   #faf9f4;
+      --color-deep-forest:  #1b2a4a;
+      --color-forest-green: #1b2a4a;
+      --color-sage-green:   #64748b;
+      --color-soft-sage:    #e6eaf0;
+      --color-warm-ivory:   #f4f6f8;
       --color-white:        #ffffff;
-      --color-text-primary: #1c2822;
-      --color-text-secondary: #52635a;
+      --color-text-primary: #1b2a4a;
+      --color-text-secondary: #64748b;
+      --color-gold: #d4a359;
     }
 
     html, body {
@@ -61,7 +62,7 @@
       align-items: center;
       gap: 0.5rem;
       padding: 0.75rem 1.75rem;
-      background: linear-gradient(180deg, #2a6653 0%, #1e4d3f 100%);
+      background: linear-gradient(180deg, #1b2a4a 0%, #15213b 100%);
       color: #ffffff;
       border: none;
       border-radius: 10px;
@@ -69,13 +70,13 @@
       font-weight: 600;
       cursor: pointer;
       transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 3px 8px rgba(36,87,71,0.22);
+      box-shadow: 0 3px 8px rgba(27,42,74,0.22);
       text-decoration: none;
     }
 
     .btn:hover {
       transform: translateY(-1.5px);
-      box-shadow: 0 6px 16px rgba(36,87,71,0.3);
+      box-shadow: 0 6px 16px rgba(27,42,74,0.3);
     }
 
     .note {
@@ -89,13 +90,13 @@
     <!-- Inline SVG icon so it works offline -->
     <div class="icon-wrap" aria-hidden="true">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="80" height="80">
-        <rect width="192" height="192" rx="38" fill="#142d25"/>
-        <circle cx="96" cy="88" r="56" fill="none" stroke="#729985" stroke-width="1.5" opacity="0.35"/>
+        <rect width="192" height="192" rx="38" fill="#1b2a4a"/>
+        <circle cx="96" cy="88" r="56" fill="none" stroke="#64748b" stroke-width="1.5" opacity="0.35"/>
         <rect x="87" y="40" width="18" height="80" rx="9" fill="#ffffff"/>
         <rect x="52" y="72" width="88" height="18" rx="9" fill="#ffffff"/>
-        <circle cx="72" cy="144" r="8" fill="#729985"/>
-        <circle cx="96" cy="148" r="8" fill="#dce8dd"/>
-        <circle cx="120" cy="144" r="8" fill="#729985"/>
+        <circle cx="72" cy="144" r="8" fill="#d4a359"/>
+        <circle cx="96" cy="148" r="8" fill="#d4a359"/>
+        <circle cx="120" cy="144" r="8" fill="#64748b"/>
       </svg>
     </div>
 
