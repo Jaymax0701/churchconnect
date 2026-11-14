@@ -7,6 +7,7 @@ import { useAuth } from "../modules/auth/AuthContext";
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const displayName = profile?.full_name || user?.email || "Administrator";
@@ -15,8 +16,9 @@ export const AdminLayout: React.FC = () => {
   const getAdminNavLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
     display: "flex",
     alignItems: "center",
-    gap: "var(--space-3)",
-    padding: "var(--space-3) var(--space-4)",
+    gap: desktopSidebarCollapsed ? 0 : "var(--space-3)",
+    justifyContent: desktopSidebarCollapsed ? "center" : "flex-start",
+    padding: desktopSidebarCollapsed ? "var(--space-3)" : "var(--space-3) var(--space-4)",
     borderRadius: "var(--radius-md)",
     color: isActive ? "var(--color-white)" : "rgba(255, 255, 255, 0.8)",
     backgroundColor: isActive ? "var(--color-forest-green)" : "transparent",
@@ -31,14 +33,15 @@ export const AdminLayout: React.FC = () => {
       {/* Admin Sidebar (Deep Forest Desktop) */}
       <aside
         style={{
-          width: "260px",
+          width: desktopSidebarCollapsed ? "76px" : "260px",
+          transition: "width 180ms ease",
           backgroundColor: "var(--color-deep-forest)",
           color: "var(--color-white)",
           display: "none",
           flexDirection: "column",
           flexShrink: 0,
         }}
-        className="admin-sidebar admin-glass-sidebar"
+        className={`admin-sidebar admin-glass-sidebar${desktopSidebarCollapsed ? " is-collapsed" : ""}`}
       >
         {/* Sidebar Brand Header */}
         <div
@@ -47,7 +50,8 @@ export const AdminLayout: React.FC = () => {
             display: "flex",
             alignItems: "center",
             gap: "var(--space-2)",
-            padding: "0 var(--space-6)",
+            padding: desktopSidebarCollapsed ? 0 : "0 var(--space-6)",
+            justifyContent: desktopSidebarCollapsed ? "center" : "flex-start",
             borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
           }}
         >
@@ -64,47 +68,46 @@ export const AdminLayout: React.FC = () => {
           >
             <Icon name="church" size={20} color="var(--color-white)" />
           </div>
-          <div>
+          {!desktopSidebarCollapsed && <div>
             <div style={{ fontWeight: 700, fontSize: "var(--text-base)", letterSpacing: "-0.01em" }}>ChurchConnect</div>
             <div style={{ fontSize: "10px", color: "var(--color-soft-sage)", textTransform: "uppercase" }}>Administration</div>
-          </div>
+          </div>}
+          <button type="button" onClick={() => setDesktopSidebarCollapsed((collapsed) => !collapsed)} aria-label={desktopSidebarCollapsed ? "Expand admin sidebar" : "Collapse admin sidebar"} title={desktopSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"} className="admin-sidebar-collapse-toggle">
+            <Icon name={desktopSidebarCollapsed ? "chevron_right" : "chevron_left"} size={18} />
+          </button>
         </div>
 
         {/* Sidebar Nav Items */}
         <nav style={{ padding: "var(--space-4) var(--space-3)", display: "flex", flexDirection: "column", gap: "var(--space-1)", flex: 1 }}>
-          <div style={{ padding: "var(--space-2) var(--space-3)", fontSize: "11px", color: "rgba(255, 255, 255, 0.4)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Management
-          </div>
+          {!desktopSidebarCollapsed && <div style={{ padding: "var(--space-2) var(--space-3)", fontSize: "11px", color: "rgba(255, 255, 255, 0.4)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Management</div>}
           <NavLink to="/admin" style={getAdminNavLinkStyle} end>
-            <Icon name="dashboard" size={18} /> Dashboard
+            <Icon name="dashboard" size={18} /> {!desktopSidebarCollapsed && <span>Dashboard</span>}
           </NavLink>
           <NavLink to="/admin/users" style={getAdminNavLinkStyle}>
-            <Icon name="group" size={18} /> User Accounts
+            <Icon name="group" size={18} /> {!desktopSidebarCollapsed && <span>User Accounts</span>}
           </NavLink>
           <a href="#ministries" style={{ ...getAdminNavLinkStyle({ isActive: false }), opacity: 0.9 }}>
-            <Icon name="church" size={18} /> Ministries
+            <Icon name="church" size={18} /> {!desktopSidebarCollapsed && <span>Ministries</span>}
           </a>
           <a href="#events" style={{ ...getAdminNavLinkStyle({ isActive: false }), opacity: 0.9 }}>
-            <Icon name="event" size={18} /> Events & Services
+            <Icon name="event" size={18} /> {!desktopSidebarCollapsed && <span>Events & Services</span>}
           </a>
           <a href="#permissions" style={{ ...getAdminNavLinkStyle({ isActive: false }), opacity: 0.9 }}>
-            <Icon name="shield_person" size={18} /> Permission Matrix
+            <Icon name="shield_person" size={18} /> {!desktopSidebarCollapsed && <span>Permission Matrix</span>}
           </a>
 
-          <div style={{ padding: "var(--space-4) var(--space-3) var(--space-2)", fontSize: "11px", color: "rgba(255, 255, 255, 0.4)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Navigation
-          </div>
-          <Link to="/portal" style={{ ...getAdminNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }}>
-            <Icon name="account_circle" size={18} /> Member Portal
+          {!desktopSidebarCollapsed && <div style={{ padding: "var(--space-4) var(--space-3) var(--space-2)", fontSize: "11px", color: "rgba(255, 255, 255, 0.4)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Navigation</div>}
+          <Link to="/portal" title="Member Portal" style={{ ...getAdminNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }}>
+            <Icon name="account_circle" size={18} /> {!desktopSidebarCollapsed && <span>Member Portal</span>}
           </Link>
-          <Link to="/" style={{ ...getAdminNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }}>
-            <Icon name="language" size={18} /> Public Website
+          <Link to="/" title="Public Website" style={{ ...getAdminNavLinkStyle({ isActive: false }), color: "var(--color-soft-sage)" }}>
+            <Icon name="language" size={18} /> {!desktopSidebarCollapsed && <span>Public Website</span>}
           </Link>
         </nav>
 
         {/* Sidebar Footer User Info */}
-        <div style={{ padding: "var(--space-4)", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
-          <div className="admin-header-actions" style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", flexShrink: 0 }}>
+        <div style={{ padding: desktopSidebarCollapsed ? "var(--space-3)" : "var(--space-4)", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+          <div className="admin-header-actions" style={{ display: "flex", alignItems: "center", gap: desktopSidebarCollapsed ? 0 : "var(--space-3)", flexShrink: 0, justifyContent: desktopSidebarCollapsed ? "center" : "flex-start" }}>
             <div
               style={{
                 width: "36px",
@@ -120,10 +123,10 @@ export const AdminLayout: React.FC = () => {
             >
               {initials}
             </div>
-            <div>
+            {!desktopSidebarCollapsed && <div>
               <div style={{ fontSize: "var(--text-xs)", fontWeight: 600 }}>{displayName}</div>
               <Badge variant="superadmin">SUPERADMIN</Badge>
-            </div>
+            </div>}
           </div>
         </div>
       </aside>
@@ -185,10 +188,10 @@ export const AdminLayout: React.FC = () => {
             className="admin-mobile-nav admin-glass-mobile-nav"
           >
             <NavLink to="/admin" style={getAdminNavLinkStyle} onClick={() => setSidebarOpen(false)} end>
-              <Icon name="dashboard" size={18} /> Dashboard
+              <Icon name="dashboard" size={18} /> {!desktopSidebarCollapsed && <span>Dashboard</span>}
             </NavLink>
             <NavLink to="/admin/users" style={getAdminNavLinkStyle} onClick={() => setSidebarOpen(false)}>
-              <Icon name="group" size={18} /> User Accounts
+              <Icon name="group" size={18} /> {!desktopSidebarCollapsed && <span>User Accounts</span>}
             </NavLink>
             <Link to="/portal" style={getAdminNavLinkStyle({ isActive: false })} onClick={() => setSidebarOpen(false)}>
               <Icon name="account_circle" size={18} /> Switch to Member Portal
@@ -237,6 +240,10 @@ export const AdminLayout: React.FC = () => {
       <style>{`
         @media (min-width: 992px) {
           .admin-sidebar { display: flex !important; }
+          .admin-sidebar-collapse-toggle { margin-left: auto; border: 1px solid rgba(255,255,255,.18); color: white; background: rgba(255,255,255,.08); border-radius: 8px; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+          .admin-sidebar.is-collapsed nav { padding-left: 8px !important; padding-right: 8px !important; }
+          .admin-sidebar.is-collapsed nav a { justify-content: center; padding-left: 8px !important; padding-right: 8px !important; }
+          .admin-sidebar.is-collapsed .admin-sidebar-collapse-toggle { margin-left: 0; }
           .admin-mobile-toggle { display: none !important; }
           .admin-mobile-nav { display: none !important; }
         }
