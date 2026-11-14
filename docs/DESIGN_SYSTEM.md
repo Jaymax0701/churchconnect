@@ -9,7 +9,7 @@ This document defines the official design system for ChurchConnect. All componen
 ChurchConnect balances the welcoming, peaceful warmth of a local church community with the clean organization needed for administrative operations.
 
 *   **Official Brand Aesthetic:** **Navy + Slate + Gold + Cool Grey**.
-*   **Design Values:** Default to light, spacious interfaces with cool grey backgrounds and white cards. Use deep forest for navigation, strong headings on dark surfaces, and footer sections; navy for primary actions; sage as a supporting accent (never default text on white).
+*   **Design Values:** Default to light, spacious interfaces with cool grey backgrounds and white cards. Use navy for navigation, strong headings on dark surfaces, footer sections and primary actions; slate grey for secondary text and controls; gold sparingly for highlights and selected accents.
 *   **Minimal Dependency Rule:** Styles are implemented using modern Vanilla CSS custom properties (design tokens) and CSS Modules. We avoid heavy external UI libraries to prevent bundle bloat and ensure fast load times on mobile devices.
 
 ---
@@ -22,7 +22,7 @@ ChurchConnect balances the welcoming, peaceful warmth of a local church communit
 
 ```css
 :root {
-  /* Brand Greens & Sage */
+  /* Brand Navy, Slate & Gold */
   --color-deep-forest:   #1b2a4a;  /* Navigation, strong headers on dark surfaces, footers */
   --color-forest-green:  #1b2a4a;  /* Primary brand & primary interactive buttons */
   --color-forest-hover:  #15213b;  /* Primary hover state */
@@ -37,7 +37,7 @@ ChurchConnect balances the welcoming, peaceful warmth of a local church communit
   /* Neutral Typography */
   --color-text-primary:   #1b2a4a;  /* Primary body text & headings */
   --color-text-secondary: #64748b;  /* Secondary metadata, subtitles, muted labels */
-  --color-text-inverse:   #ffffff;  /* Text on dark forest backgrounds */
+  --color-text-inverse:   #ffffff;  /* Text on dark navy backgrounds */
 
   /* Borders & Dividers */
   --color-border:        #dce2e8;  /* Card dividers, input borders, table rules */
@@ -181,7 +181,7 @@ We use a modern system font stack that ensures instant loading, natural renderin
     *   `Approved` / `Active`: Green tint (`--color-success-bg`, text `--color-success-text`).
     *   `Pending`: Amber tint (`--color-warning-bg`, text `--color-warning-text`).
     *   `Admin`: Soft Slate tint (`--color-soft-sage`, text `--color-forest-green`).
-    *   `Superadmin`: Deep forest tint (`--color-deep-forest`, text `--color-white`) with padlock icon.
+    *   `Superadmin`: Navy tint (`--color-deep-forest`, text `--color-white`) with padlock icon.
 
 ### 6.4 Confirmation Dialogs (`<ConfirmModal>`)
 *   Triggered whenever an action cannot be easily undone (e.g., deleting an event, revoking permissions).
