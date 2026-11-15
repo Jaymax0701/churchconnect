@@ -1511,3 +1511,273 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .portal-shell, .portal-shell * { transition-duration: .01ms !important; }
 }
+
+/* =========================================================================
+   14. Shared light/dark theme across Public Website, Admin Console and Portal
+   ========================================================================= */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-warm-ivory: #101827;
+  --color-ivory-subtle: #202f45;
+  --color-text-primary: #edf2f8;
+  --color-text-secondary: #b7c4d5;
+  --color-text-muted: #93a4ba;
+  --color-border: #3a4b63;
+  --color-border-hover: #71849e;
+  --bg-page: #101827;
+  --bg-surface: #182438;
+  --bg-surface-subtle: #202f45;
+  --border-default: #3a4b63;
+  --text-primary: #edf2f8;
+  --text-secondary: #b7c4d5;
+  --primary: #e2b873;
+  --primary-hover: #f0c987;
+  --accent-gold: #e2b873;
+  --badge-soft-sage: #293a52;
+}
+
+:root[data-theme="dark"],
+:root[data-theme="dark"] body {
+  background-color: #101827;
+  color: #edf2f8;
+}
+
+:root[data-theme="dark"] .public-layout,
+:root[data-theme="dark"] .admin-shell,
+:root[data-theme="dark"] .portal-shell {
+  background-color: #101827 !important;
+  color: #edf2f8;
+}
+
+:root[data-theme="dark"] .public-layout main,
+:root[data-theme="dark"] .admin-content,
+:root[data-theme="dark"] .portal-main-content {
+  color: #edf2f8;
+}
+
+:root[data-theme="dark"] .public-layout main > section:not(.hero-gradient),
+:root[data-theme="dark"] .public-layout main #services {
+  background: #182438 !important;
+  color: #edf2f8;
+}
+
+:root[data-theme="dark"] .public-layout main .cc-card,
+:root[data-theme="dark"] .public-layout main .card,
+:root[data-theme="dark"] .public-layout main .card-interactive,
+:root[data-theme="dark"] .admin-content .cc-card,
+:root[data-theme="dark"] .admin-content .card,
+:root[data-theme="dark"] .admin-content .card-interactive,
+:root[data-theme="dark"] .portal-main-content .card,
+:root[data-theme="dark"] .portal-main-content .card-interactive,
+:root[data-theme="dark"] .portal-main-content .cc-card {
+  background: #182438 !important;
+  border-color: #3a4b63 !important;
+  color: #edf2f8 !important;
+  box-shadow: 0 16px 42px rgba(0,0,0,.24) !important;
+}
+
+:root[data-theme="dark"] .public-layout main .cc-card-header,
+:root[data-theme="dark"] .admin-content .cc-card-header,
+:root[data-theme="dark"] .portal-main-content .cc-card-header {
+  background: #202f45 !important;
+  border-color: #3a4b63 !important;
+  color: #f1f5fb !important;
+}
+
+:root[data-theme="dark"] .public-layout main .cc-card-footer,
+:root[data-theme="dark"] .admin-content .cc-card-footer,
+:root[data-theme="dark"] .portal-main-content .cc-card-footer {
+  background: #202f45 !important;
+  border-color: #3a4b63 !important;
+}
+
+:root[data-theme="dark"] .public-layout main h1,
+:root[data-theme="dark"] .public-layout main h2,
+:root[data-theme="dark"] .public-layout main h3,
+:root[data-theme="dark"] .public-layout main h4,
+:root[data-theme="dark"] .public-layout main h5,
+:root[data-theme="dark"] .public-layout main h6,
+:root[data-theme="dark"] .public-layout main strong,
+:root[data-theme="dark"] .admin-content h1,
+:root[data-theme="dark"] .admin-content h2,
+:root[data-theme="dark"] .admin-content h3,
+:root[data-theme="dark"] .admin-content h4,
+:root[data-theme="dark"] .admin-content h5,
+:root[data-theme="dark"] .admin-content h6,
+:root[data-theme="dark"] .admin-content strong,
+:root[data-theme="dark"] .portal-main-content h1,
+:root[data-theme="dark"] .portal-main-content h2,
+:root[data-theme="dark"] .portal-main-content h3,
+:root[data-theme="dark"] .portal-main-content h4,
+:root[data-theme="dark"] .portal-main-content h5,
+:root[data-theme="dark"] .portal-main-content h6,
+:root[data-theme="dark"] .portal-main-content strong,
+:root[data-theme="dark"] .public-layout main label,
+:root[data-theme="dark"] .admin-content label,
+:root[data-theme="dark"] .portal-main-content label {
+  color: #f1f5fb !important;
+}
+
+:root[data-theme="dark"] .public-layout main p,
+:root[data-theme="dark"] .public-layout main small,
+:root[data-theme="dark"] .admin-content p,
+:root[data-theme="dark"] .admin-content small,
+:root[data-theme="dark"] .portal-main-content p,
+:root[data-theme="dark"] .portal-main-content small,
+:root[data-theme="dark"] .public-layout main .text-muted,
+:root[data-theme="dark"] .admin-content .text-muted,
+:root[data-theme="dark"] .portal-main-content .text-muted {
+  color: #b7c4d5 !important;
+}
+
+:root[data-theme="dark"] .public-layout main a:not(.cc-btn),
+:root[data-theme="dark"] .admin-content a:not(.cc-btn),
+:root[data-theme="dark"] .portal-main-content a:not(.cc-btn) {
+  color: #e8bd78;
+}
+
+:root[data-theme="dark"] .public-layout main input,
+:root[data-theme="dark"] .public-layout main select,
+:root[data-theme="dark"] .public-layout main textarea,
+:root[data-theme="dark"] .admin-content input,
+:root[data-theme="dark"] .admin-content select,
+:root[data-theme="dark"] .admin-content textarea,
+:root[data-theme="dark"] .portal-main-content input,
+:root[data-theme="dark"] .portal-main-content select,
+:root[data-theme="dark"] .portal-main-content textarea {
+  color: #f1f5fb !important;
+  background: #101827 !important;
+  border-color: #52647d !important;
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: #a5b4c7 !important;
+  opacity: 1;
+}
+
+:root[data-theme="dark"] .public-layout main table,
+:root[data-theme="dark"] .public-layout main th,
+:root[data-theme="dark"] .public-layout main td,
+:root[data-theme="dark"] .admin-content table,
+:root[data-theme="dark"] .admin-content th,
+:root[data-theme="dark"] .admin-content td,
+:root[data-theme="dark"] .portal-main-content table,
+:root[data-theme="dark"] .portal-main-content th,
+:root[data-theme="dark"] .portal-main-content td {
+  color: #edf2f8;
+  border-color: #3a4b63;
+}
+
+:root[data-theme="dark"] .public-layout main th,
+:root[data-theme="dark"] .admin-content th,
+:root[data-theme="dark"] .portal-main-content th {
+  background: #202f45;
+}
+
+:root[data-theme="dark"] .admin-header {
+  background: #182438 !important;
+  border-bottom-color: #3a4b63 !important;
+  color: #edf2f8;
+}
+
+:root[data-theme="dark"] .admin-header h1,
+:root[data-theme="dark"] .admin-header .admin-header-subtitle {
+  color: #edf2f8 !important;
+}
+
+:root[data-theme="dark"] .public-layout .public-mobile-bottom-nav,
+:root[data-theme="dark"] .admin-shell .admin-mobile-bottom-nav {
+  background: rgba(24,36,56,.96);
+  border-color: #3a4b63;
+}
+
+:root[data-theme="dark"] .public-mobile-nav-item,
+:root[data-theme="dark"] .admin-mobile-nav-item {
+  color: #c1cddd;
+}
+
+:root[data-theme="dark"] .public-mobile-nav-item.is-active,
+:root[data-theme="dark"] .admin-mobile-nav-item.is-active {
+  color: #1b2a4a;
+  background: #e2b873;
+}
+
+:root[data-theme="dark"] .public-mobile-more-sheet,
+:root[data-theme="dark"] .admin-mobile-more-sheet,
+:root[data-theme="dark"] .portal-mobile-more-sheet {
+  background: #182438 !important;
+  border-color: #3a4b63 !important;
+  color: #edf2f8 !important;
+}
+
+:root[data-theme="dark"] .public-mobile-more-link,
+:root[data-theme="dark"] .admin-mobile-more-link,
+:root[data-theme="dark"] .portal-mobile-more-link,
+:root[data-theme="dark"] .public-mobile-more-heading,
+:root[data-theme="dark"] .admin-mobile-more-heading,
+:root[data-theme="dark"] .portal-mobile-more-heading {
+  color: #edf2f8;
+  border-color: #3a4b63;
+}
+
+.cc-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.cc-theme-toggle:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-1px);
+}
+
+.public-theme-toggle {
+  background: rgba(255,255,255,.10);
+  color: #ffffff;
+  border-color: rgba(255,255,255,.28);
+}
+
+.public-theme-toggle:hover {
+  background: rgba(255,255,255,.18);
+  color: #ffffff;
+}
+
+.admin-theme-toggle {
+  flex-shrink: 0;
+}
+
+.portal-theme-toggle {
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .public-theme-toggle,
+  .admin-theme-toggle,
+  .portal-theme-toggle {
+    min-width: 38px;
+    padding-inline: 9px;
+  }
+  .public-theme-toggle span,
+  .admin-theme-toggle span,
+  .portal-theme-toggle span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-theme-toggle { transition-duration: .01ms !important; }
+}
