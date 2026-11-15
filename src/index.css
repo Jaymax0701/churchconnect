@@ -1781,3 +1781,26 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .cc-theme-toggle { transition-duration: .01ms !important; }
 }
+
+
+/* Admin dark-mode glass treatment for card headers (including inline-styled CardHeader). */
+:root[data-theme="dark"] .admin-content .cc-card-header {
+  background: rgba(255, 255, 255, 0.075) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #f4f7fc !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+}
+
+:root[data-theme="dark"] .admin-content .cc-card-header h1,
+:root[data-theme="dark"] .admin-content .cc-card-header h2,
+:root[data-theme="dark"] .admin-content .cc-card-header h3,
+:root[data-theme="dark"] .admin-content .cc-card-header h4,
+:root[data-theme="dark"] .admin-content .cc-card-header strong {
+  color: #f4f7fc !important;
+}
+
+:root[data-theme="dark"] .admin-content .cc-card-header p,
+:root[data-theme="dark"] .admin-content .cc-card-header small {
+  color: #c5d0df !important;
+}
