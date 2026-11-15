@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type ThemePreference = "light" | "dark" | "system";
 type ResolvedTheme = "light" | "dark";
@@ -54,8 +54,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
-  const value = useMemo(() => ({ themePreference, resolvedTheme, cycleTheme }), [themePreference, resolvedTheme]);
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={{ themePreference, resolvedTheme, cycleTheme }}>{children}</ThemeContext.Provider>;
 };
 
 export function useTheme() {
