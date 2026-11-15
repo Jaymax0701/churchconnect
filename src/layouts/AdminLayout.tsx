@@ -4,6 +4,7 @@ import { Badge } from "../components/ui/Badge";
 import { Icon } from "../components/ui/Icon";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../modules/auth/AuthContext";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -170,6 +171,7 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)" }}>
+            <ThemeToggle className="admin-theme-toggle" />
             <Badge variant="superadmin">SUPERADMIN</Badge>
             <Button variant="ghost" size="sm" onClick={() => void signOut()}>Sign out</Button>
           </div>
