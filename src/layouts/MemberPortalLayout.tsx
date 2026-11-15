@@ -148,7 +148,7 @@ export const MemberPortalLayout: React.FC = () => {
           >
             <span className="portal-avatar">{initials}</span>
             <span className="portal-profile-short-name">{shortName}</span>
-            <Icon name={profileExpanded ? "chevron_up" : "chevron_down"} size={17} />
+            <Icon name={profileExpanded ? "expand_less" : "expand_more"} size={17} />
           </button>
           {profileExpanded && (
             <div className="portal-profile-expanded">
