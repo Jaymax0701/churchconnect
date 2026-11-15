@@ -10,7 +10,7 @@ import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 export const MemberPortalLayout: React.FC = () => {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
-  const { themePreference, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileExpanded, setProfileExpanded] = useState(false);
