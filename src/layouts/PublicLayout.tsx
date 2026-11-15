@@ -4,6 +4,7 @@ import { Button } from "../components/ui/Button";
 import { Icon } from "../components/ui/Icon";
 import { useAuth } from "../modules/auth/AuthContext";
 import { supabase } from "../lib/supabase";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -281,6 +282,7 @@ export const PublicLayout: React.FC = () => {
               <span className="install-label">Install App</span>
             </Button>
           )}
+          <ThemeToggle className="public-theme-toggle" />
           {/* Desktop Navigation */}
           <nav
             style={{ display: "none", alignItems: "center", gap: "var(--space-2)" }}

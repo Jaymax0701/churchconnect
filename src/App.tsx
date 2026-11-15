@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "./routes/AppRoutes";
 import { supabase } from "./lib/supabase";
 import { AuthProvider } from "./modules/auth/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 export default function App() {
   const [supabaseStatus, setSupabaseStatus] = useState<string>("Checking Supabase connection…");
@@ -29,6 +30,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ThemeProvider>
         <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
           <AppRoutes />
           <aside
@@ -64,6 +66,7 @@ export default function App() {
             <span>{supabaseStatus}</span>
           </aside>
         </div>
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   );

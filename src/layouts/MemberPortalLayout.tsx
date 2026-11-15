@@ -5,18 +5,12 @@ import { Icon } from "../components/ui/Icon";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../modules/auth/AuthContext";
 import { supabase } from "../lib/supabase";
+import { useTheme } from "../contexts/ThemeContext";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 export const MemberPortalLayout: React.FC = () => {
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
-  const [themePreference, setThemePreference] = useState<"light" | "dark" | "system">(() => {
-    try {
-      const saved = window.localStorage.getItem("churchconnect-theme");
-      return saved === "dark" || saved === "system" ? saved : "light";
-    } catch {
-      return "light";
-    }
-  });
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+  const { resolvedTheme } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileExpanded, setProfileExpanded] = useState(false);
@@ -44,35 +38,6 @@ export const MemberPortalLayout: React.FC = () => {
       active = false;
     };
   }, [user?.id]);
-
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const applyTheme = () => {
-      const nextTheme = themePreference === "system"
-        ? (media.matches ? "dark" : "light")
-        : themePreference;
-      setResolvedTheme(nextTheme);
-      document.documentElement.style.colorScheme = nextTheme;
-    };
-
-    try {
-      window.localStorage.setItem("churchconnect-theme", themePreference);
-    } catch {
-      // Theme remains usable for this session when storage is unavailable.
-    }
-
-    applyTheme();
-    if (themePreference === "system") {
-      media.addEventListener("change", applyTheme);
-      return () => media.removeEventListener("change", applyTheme);
-    }
-  }, [themePreference]);
-
-  const cycleTheme = () => {
-    setThemePreference((current) =>
-      current === "light" ? "dark" : current === "dark" ? "system" : "light"
-    );
-  };
 
   const displayName = profile?.full_name || user?.email || "Member";
   const shortName = displayName.trim().split(/\s+/)[0] || "Member";
@@ -191,16 +156,7 @@ export const MemberPortalLayout: React.FC = () => {
             </div>
           </div>
           <div className="portal-topbar-actions">
-            <button
-              type="button"
-              className="portal-theme-toggle"
-              onClick={cycleTheme}
-              aria-label={`Theme preference: ${themePreference}. Change theme`}
-              title={`Theme: ${themePreference === "system" ? "System" : themePreference === "dark" ? "Dark" : "Light"} — click to change`}
-            >
-              <Icon name={resolvedTheme === "dark" ? "dark_mode" : "light_mode"} size={19} />
-              <span>{themePreference === "system" ? "System" : themePreference === "dark" ? "Dark" : "Light"}</span>
-            </button>
+            <ThemeToggle className="portal-theme-toggle" />
             <button
               type="button"
               className="portal-topbar-name"
