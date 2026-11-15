@@ -30,8 +30,9 @@ export const Card: React.FC<CardProps> = ({
   );
 };
 
-export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, style, ...props }) => (
+export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className = "", style, ...props }) => (
   <div
+    className={`cc-card-header ${className}`.trim()}
     style={{
       padding: "var(--space-5) var(--space-6)",
       borderBottom: "1px solid var(--border-default)",
