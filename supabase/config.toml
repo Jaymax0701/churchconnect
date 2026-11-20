@@ -1,0 +1,5 @@
+# Supabase Edge Function configuration.
+# Only the password login gateway is public; it performs its own input,
+# origin, IP-rate-limit, and credential handling.
+[functions.secure-login]
+verify_jwt = false
