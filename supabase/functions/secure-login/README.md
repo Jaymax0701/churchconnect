@@ -12,11 +12,13 @@ Example generation command (run locally; do not commit the output):
 openssl rand -hex 32
 ```
 
-The function uses these existing Supabase Edge Function environment variables:
+The function uses these Supabase Edge Function environment variables:
 
 - `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` for the restricted login-counter RPCs
+- `SUPABASE_SECRET_KEYS` (Supabase-provided JSON map; the function uses its `default` secret key for password sign-in)
+
+The Auth request uses the new-format secret API key with the `Sb-Forwarded-For` header. Supabase requires a secret API key for forwarded-IP Auth rate limiting; the legacy anonymous and service-role keys do not support that feature.
 
 Optional configuration:
 
