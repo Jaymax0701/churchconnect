@@ -20,7 +20,7 @@ const allowedOrigins = new Set([
     .filter(Boolean),
 ]);
 
-const corsHeaders = (origin: string | null): HeadersInit => ({
+const corsHeaders = (origin: string | null): Record<string, string> => ({
   ...(origin && allowedOrigins.has(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
