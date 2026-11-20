@@ -33,6 +33,12 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
+interface SecureLoginResponse {
+  access_token?: string;
+  refresh_token?: string;
+  error?: string;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivity = useRef(Date.now());
@@ -77,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       events.forEach((eventName) => window.removeEventListener(eventName, recordActivity));
     };
   }, [session?.user.id]);
+
   const refreshProfile = useCallback(async () => {
     const currentUser = session?.user;
     if (!currentUser) {
@@ -168,11 +175,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user.id]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    return { error: error?.message ?? null };
+    try {
+      const { data, error } = await supabase.functions.invoke<SecureLoginResponse>(
+        "secure-login",
+        { body: { email: email.trim(), password } },
+      );
+
+      if (error) {
+        const context = error.context;
+        if (context instanceof Response) {
+          const responseBody = await context.clone()
+            .json()
+            .catch(() => null) as SecureLoginResponse | null;
+          return {
+            error: responseBody?.error ?? "Unable to sign in right now. Please try again.",
+          };
+        }
+        return { error: "Unable to sign in right now. Please try again." };
+      }
+
+      if (!data?.access_token || !data.refresh_token) {
+        return {
+          error: data?.error ?? "Unable to sign in right now. Please try again.",
+        };
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      return { error: sessionError?.message ?? null };
+    } catch {
+      return { error: "Unable to sign in right now. Please check your connection and try again." };
+    }
   }, []);
 
   const signOut = useCallback(async () => {
