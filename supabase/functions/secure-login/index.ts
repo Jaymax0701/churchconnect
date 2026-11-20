@@ -1,12 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
-const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const secretKeysRaw = Deno.env.get("SUPABASE_SECRET_KEYS");
+let authSecretKey: string | null = null;
+
+try {
+  const secretKeys = JSON.parse(secretKeysRaw ?? "{}") as Record<string, string>;
+  authSecretKey = secretKeys.default ?? null;
+} catch {
+  throw new Error("Supabase default secret API key is not configured.");
+}
 const hmacSecret = Deno.env.get("LOGIN_RATE_LIMIT_SECRET");
 const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://churchconnect-alpha.vercel.app";
 
-if (!supabaseUrl || !anonKey || !serviceRoleKey || !hmacSecret || hmacSecret.length < 32) {
+if (!supabaseUrl || !serviceRoleKey || !authSecretKey || !hmacSecret || hmacSecret.length < 32) {
   throw new Error("Secure login environment is not configured.");
 }
 
@@ -170,7 +178,10 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const authClient = createClient(supabaseUrl, anonKey, {
+  // Supabase requires a new-format secret API key with Sb-Forwarded-For
+  // for Auth rate limiting to use the real visitor IP behind this proxy.
+  const authClient = createClient(supabaseUrl, authSecretKey, {
+    global: { headers: { "Sb-Forwarded-For": clientIp } },
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
