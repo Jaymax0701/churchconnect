@@ -50,7 +50,7 @@ The Account Login Security panel is part of the admin account-management page. I
 - Administrators do not see raw IP addresses or HMAC keys.
 - The audited unlock action clears the selected account's email + IP buckets. It does not clear shared IP-wide buckets.
 - Account association is populated when failed login attempts are recorded through the account-aware RPC. Existing buckets created before that change are not automatically backfilled.
-- The login security objects use concise database names: `login_attempt_buckets`, `login_lockout_audit`, and the `check_login_lockout`, `record_login_failure`, `clear_login_failures`, `record_login_failure_with_account`, `list_active_login_lockouts`, and `admin_unlock_login_lockout` RPCs. Their responsibilities and security boundaries are documented in the relevant SQL migration and `supabase/functions/secure-login/README.md`. Files under `supabase/review/` are review/manual-application scripts, not automatically applied migrations.
+- The login security objects use concise database names: `login_attempt_buckets`, `login_lockout_audit`, and the `check_login_lockout`, `record_login_failure`, `clear_login_failures`, `record_login_failure_with_account`, `list_active_login_lockouts`, and `admin_unlock_login_lockout` RPCs. Their responsibilities and security boundaries are documented in `supabase/review/0012_rename_login_security_objects.review.sql` and `supabase/functions/secure-login/README.md`. Files under `supabase/review/` are review/manual-application scripts, not automatically applied migrations.
 
 ### Edge Function deployment requirements
 
