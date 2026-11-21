@@ -5,6 +5,7 @@ import { Badge } from "../../../components/ui/Badge";
 import { Alert } from "../../../components/ui/Alert";
 import { Icon } from "../../../components/ui/Icon";
 import { supabase } from "../../../lib/supabase";
+import { LoginLockoutPanel } from "../components/LoginLockoutPanel";
 
 interface PendingAccount {
   user_id: string;
@@ -103,6 +104,8 @@ export const AdminDashboardPage: React.FC = () => {
           <Icon name="refresh" size={16} /> Refresh
         </Button>
       </div>
+
+      <LoginLockoutPanel />
 
       {error && <Alert variant="danger" title="Unable to load or update account approvals">{error}{error.includes("list_pending_accounts") || error.includes("approve_account") || error.includes("review_minor_registration") ? " The reviewed account and privacy SQL may not have been applied yet." : ""}</Alert>}
       {notice && <Alert variant="success" title="Account updated">{notice}</Alert>}

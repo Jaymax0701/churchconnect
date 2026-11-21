@@ -1,6 +1,6 @@
 # Secure login gateway
 
-The `secure-login` Edge Function is the ChurchConnect password sign-in entry point. It calls Supabase Auth with the project's public/anonymous key, records failed attempts through narrowly scoped database RPCs, and returns the resulting access/refresh tokens to the browser for `supabase.auth.setSession()`.
+The `secure-login` Edge Function is the ChurchConnect password sign-in entry point. It calls Supabase Auth with the project's new-format secret API key, records failed attempts through narrowly scoped database RPCs, and returns the resulting access/refresh tokens to the browser for `supabase.auth.setSession()`.
 
 ## Required Edge Function secret
 
@@ -43,7 +43,7 @@ Do not disable JWT verification for other functions.
 - Ten failed attempts from one client IP across accounts: 15-minute cooldown.
 - The email/IP counter clears after a successful sign-in.
 - The shared IP counter remains to slow password spraying across accounts.
-- Counters use HMAC-SHA-256 keys. Raw email addresses and IP addresses are not stored in the tracking table.
+- Counters use HMAC-SHA-256 keys. Raw email addresses and IP addresses are not stored in the tracking table. The optional admin-monitoring enhancement associates email+IP buckets with the matching Auth user UUID, without storing the raw email or IP.
 - The application returns a generic sign-in failure message for invalid credentials, unknown accounts, and unverified email addresses.
 
 The custom counters apply to password sign-ins made through ChurchConnect. Direct calls to Supabase Auth do not pass through this gateway and remain subject to Supabase Auth's own rate limits.
