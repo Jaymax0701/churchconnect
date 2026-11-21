@@ -222,8 +222,12 @@ Deno.serve(async (req) => {
     }
 
     const { error: recordError } = await adminClient.rpc(
-      "record_churchconnect_login_failure",
-      { p_email_ip_key: emailIpKey, p_ip_key: ipKey },
+      "record_churchconnect_login_failure_with_account",
+      {
+        p_email_ip_key: emailIpKey,
+        p_ip_key: ipKey,
+        p_email: email,
+      },
     );
 
     if (recordError) {
