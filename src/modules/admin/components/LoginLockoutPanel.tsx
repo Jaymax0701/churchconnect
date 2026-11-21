@@ -30,7 +30,7 @@ export const LoginLockoutPanel: React.FC = () => {
     setError(null);
 
     const { data, error: rpcError } = await supabase.rpc(
-      "list_active_churchconnect_login_lockouts",
+      "list_active_login_lockouts",
     );
 
     if (rpcError) {
@@ -60,7 +60,7 @@ export const LoginLockoutPanel: React.FC = () => {
     setNotice(null);
 
     const { data, error: unlockError } = await supabase.rpc(
-      "admin_unlock_churchconnect_login_lockout",
+      "admin_unlock_login_lockout",
       { p_target_user_id: account.user_id },
     );
 
