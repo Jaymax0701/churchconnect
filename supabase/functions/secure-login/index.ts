@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
   });
 
   const { data: lockoutRows, error: lockoutError } = await adminClient.rpc(
-    "check_churchconnect_login_lockout",
+    "check_login_lockout",
     { p_email_ip_key: emailIpKey, p_ip_key: ipKey },
   );
 
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
     }
 
     const { error: recordError } = await adminClient.rpc(
-      "record_churchconnect_login_failure_with_account",
+      "record_login_failure_with_account",
       {
         p_email_ip_key: emailIpKey,
         p_ip_key: ipKey,
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: updatedRows, error: updatedLockoutError } = await adminClient.rpc(
-      "check_churchconnect_login_lockout",
+      "check_login_lockout",
       { p_email_ip_key: emailIpKey, p_ip_key: ipKey },
     );
 
@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
   // A successful password sign-in clears only this email/IP pair. The
   // shared IP bucket remains to limit password spraying across accounts.
   await adminClient.rpc(
-    "clear_churchconnect_login_failures",
+    "clear_login_failures",
     { p_email_ip_key: emailIpKey },
   );
 
