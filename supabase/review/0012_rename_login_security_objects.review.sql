@@ -39,7 +39,7 @@ ALTER FUNCTION public.admin_unlock_churchconnect_login_lockout(uuid)
   RENAME TO admin_unlock_login_lockout;
 
 -- 4. Rebuild function bodies against the renamed table and RPCs.
--- The SECURITY DEFINER attribute and empty search_path are retained.
+-- SECURITY DEFINER, function signatures, return shapes, and empty search_path remain.
 
 CREATE OR REPLACE FUNCTION public.check_login_lockout(
   p_email_ip_key text,
@@ -342,6 +342,9 @@ GRANT EXECUTE ON FUNCTION public.list_active_login_lockouts() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_unlock_login_lockout(uuid) TO authenticated;
 
 COMMIT;
+
+-- Refresh PostgREST's schema cache so the renamed RPCs are available immediately.
+NOTIFY pgrst, 'reload schema';
 
 -- Post-application verification:
 -- 1. Confirm the two tables and all six RPCs exist under their concise names.
