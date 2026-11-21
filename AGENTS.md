@@ -59,7 +59,9 @@ Operational requirements:
 - Manual unlock clears the target user's email + IP buckets only. It must not silently clear shared IP-wide buckets.
 - Unlock operations must be audited server-side.
 - Account association begins when failed attempts are recorded through the account-aware RPC. Do not claim that old buckets have been backfilled.
-- Review SQL for this feature is in `supabase/review/0011_admin_login_lockout_monitoring.review.sql`.
+- Login security database objects use concise names: `login_attempt_buckets`, `login_lockout_audit`, `check_login_lockout`, `record_login_failure`, `clear_login_failures`, `record_login_failure_with_account`, `list_active_login_lockouts`, and `admin_unlock_login_lockout`.
+- Their purposes, parameters, grants, and authorization rules belong in `supabase/review/0012_rename_login_security_objects.review.sql` and `supabase/functions/secure-login/README.md`, not in unnecessarily long object names.
+- Review SQL for the account-aware monitoring enhancement is in `supabase/review/0011_admin_login_lockout_monitoring.review.sql`; the rename migration will be tracked separately.
 
 ## Database change workflow
 
