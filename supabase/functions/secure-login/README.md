@@ -39,7 +39,7 @@ Do not disable JWT verification for other functions.
 
 ## Database objects
 
-The login security database objects use concise names. The tracking table is `public.login_attempt_buckets`; the audit table is `public.login_lockout_audit`. The RPCs are `public.check_login_lockout`, `public.record_login_failure`, `public.clear_login_failures`, `public.record_login_failure_with_account`, `public.list_active_login_lockouts`, and `public.admin_unlock_login_lockout`. Their purpose, parameters, execution grants, and authorization rules are maintained in the database migration and this operational guide.
+The login security database objects use concise names. The tracking table is `public.login_attempt_buckets`; the audit table is `public.login_lockout_audit`. The RPCs are `public.check_login_lockout`, `public.record_login_failure`, `public.clear_login_failures`, `public.record_login_failure_with_account`, `public.list_active_login_lockouts`, and `public.admin_unlock_login_lockout`. Their purpose, parameters, execution grants, and authorization rules are maintained in `supabase/review/0012_rename_login_security_objects.review.sql` and this operational guide. Apply that review script before deploying a function version that uses the concise RPC names.
 
 ## Lockout policy
 
