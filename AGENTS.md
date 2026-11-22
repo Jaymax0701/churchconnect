@@ -12,6 +12,15 @@ These instructions apply to all work in this repository unless a more specific i
 
 Do not assume that the production database is disposable. Verify the project ref before every database operation.
 
+## Repository inspection and source of truth
+
+- For tracked source code, documentation, SQL review scripts, branches, and pull requests, inspect the connected GitHub repository directly before asking the owner to run local file-reading commands.
+- Treat the current GitHub default branch and commit as the shared source of truth for tracked files. Confirm the branch/commit before beginning a work session.
+- Use local PowerShell commands only when local runtime state matters: uncommitted changes, installed dependencies, build/lint/test execution, browser behavior, local environment configuration, or other information unavailable from GitHub.
+- Never assume the owner's local working tree is clean or identical to GitHub. If local-only state is relevant, ask for a focused command and preserve untracked files.
+- Do not ask the owner to manually copy source files or search the repository when the GitHub connection can retrieve them.
+- Do not use public web search as a substitute for the connected GitHub repository.
+
 ## Working style and approvals
 
 - Make focused, incremental changes. Explain the purpose and impact of each meaningful change.
@@ -20,6 +29,16 @@ Do not assume that the production database is disposable. Verify the project ref
 - A merge may trigger an automatic Vercel production deployment. Warn about this before recommending a merge.
 - A GitHub merge does not automatically apply SQL review scripts or deploy Supabase Edge Functions.
 - Provide copy-paste-ready commands and SQL when requested. Do not ask the owner to expose credentials.
+- Do not make schema changes until the current implementation, live schema, and relevant review scripts have been reconciled and the design is agreed.
+
+## Documentation and session handoff (required)
+
+- At the end of every substantive ChurchConnect work session, update the relevant repository Markdown documentation so the next session can continue without repeating discovery.
+- Maintain a concise current handoff/progress record in `docs/SESSION_HANDOFF.md`: current focus, verified repository commit, completed inspections/changes, outstanding decisions, blockers, and the exact next step.
+- Update the relevant domain documents when implementation or verified architecture changes; update `README.md` for user-facing setup/operations changes and this `AGENTS.md` for durable contributor workflow or safety rules.
+- Do not overwrite historical findings silently. Mark superseded documents clearly and link to the current inventory/handoff when needed.
+- Documentation changes must follow the same branch/PR review process as code changes. Do not merge the documentation PR without explicit approval.
+- Distinguish repository observations, owner-supplied live database evidence, and assumptions. Include inspection dates and project refs where relevant; never present a past staging snapshot as current production truth.
 
 ## Security requirements
 
@@ -73,8 +92,7 @@ Authentication changes must preserve server-side bot verification and must not t
 - Unlock operations must be audited server-side.
 - Account association begins when failed attempts are recorded through the account-aware RPC. Do not claim that old buckets have been backfilled.
 - Login security database objects use concise names: `login_attempt_buckets`, `login_lockout_audit`, `check_login_lockout`, `record_login_failure`, `clear_login_failures`, `record_login_failure_with_account`, `list_active_login_lockouts`, and `admin_unlock_login_lockout`.
-- Their purposes, parameters, grants, and authorization rules belong in `supabase/review/0012_rename_login_security_objects.review.sql` and `supabase/functions/secure-login/README.md`, not in unnecessarily long object names.
-- Review SQL for the account-aware monitoring enhancement is in `supabase/review/0011_admin_login_lockout_monitoring.review.sql`; the rename migration will be tracked separately.
+- Their purposes, parameters, grants, and authorization rules belong in the corresponding SQL review files and `supabase/functions/secure-login/README.md`.
 
 ## Database change workflow
 
