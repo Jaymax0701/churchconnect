@@ -8,6 +8,7 @@ import { Input } from "../../../components/ui/Input";
 import { Turnstile } from "../../../components/ui/Turnstile";
 import { useAuth } from "../AuthContext";
 import { supabase } from "../../../lib/supabase";
+import { isPasswordStrong, PasswordRequirements } from "../components/PasswordRequirements";
 
 const PRIVACY_NOTICE_VERSION = "2026-11-v1";
 
@@ -76,8 +77,8 @@ export const SignUpPage = () => {
       setError("You must acknowledge the Privacy Notice and provide the required consent to register.");
       return;
     }
-    if (password.length < 8) {
-      setError("Use a password with at least 8 characters.");
+    if (!isPasswordStrong(password)) {
+      setError("Your password does not meet all the security requirements.");
       return;
     }
     if (password !== confirmPassword) {
@@ -148,7 +149,8 @@ export const SignUpPage = () => {
               </Alert>}
               {!under12Registration && <>
               <Input id="signup-email" label="Email address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
-              <Input id="signup-password" label="Password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} hint="At least 8 characters." required minLength={8} />
+              <Input id="signup-password" label="Password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
+              <PasswordRequirements password={password} />
               <Input id="signup-confirm-password" label="Confirm password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} />
 
               <div style={{ borderTop: "1px solid var(--border-default)", paddingTop: "var(--space-4)", display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
