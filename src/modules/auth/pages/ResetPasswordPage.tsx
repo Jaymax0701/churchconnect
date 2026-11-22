@@ -21,10 +21,35 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
 
   useEffect(() => {
     if (mode !== "update") return;
+
+    let active = true;
+    const hasRecoveryCallback =
+      new URLSearchParams(window.location.search).has("code") ||
+      new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setRecoveryReady(true);
+      if (active && event === "PASSWORD_RECOVERY") setRecoveryReady(true);
     });
-    return () => subscription.unsubscribe();
+
+    // The recovery event can fire before this page mounts because the app
+    // initializes Supabase auth before rendering its routes. In that case,
+    // detect the recovery callback in the URL and verify that it produced a session.
+    if (hasRecoveryCallback) {
+      void supabase.auth.getSession().then(({ data, error: sessionError }) => {
+        if (!active) return;
+        if (sessionError) {
+          setError("Your password-reset link could not be verified. Please request a new link.");
+          return;
+        }
+        if (data.session) setRecoveryReady(true);
+        else setError("Your password-reset link is invalid or has expired. Please request a new link.");
+      });
+    }
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, [mode]);
 
   async function handleRequest(event: FormEvent<HTMLFormElement>) {
