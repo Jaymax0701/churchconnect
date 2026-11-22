@@ -114,7 +114,7 @@ export const LoginLockoutPanel: React.FC = () => {
           <div role="status" style={{ padding: "var(--space-8)", textAlign: "center", color: "var(--color-text-secondary)" }}>Loading active login blocks…</div>
         ) : lockouts.length === 0 ? (
           <div style={{ padding: "var(--space-8)", textAlign: "center" }}>
-            <Icon name="shield_check" size={28} color="var(--color-success-text)" />
+            <Icon name="verified_user" size={28} color="var(--color-success-text)" />
             <h4 style={{ margin: "var(--space-2) 0" }}>No active account login blocks</h4>
             <p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "var(--text-sm)" }}>
               No active email + IP lockouts are currently associated with registered accounts.
