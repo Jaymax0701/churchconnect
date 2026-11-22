@@ -5,6 +5,7 @@ import { Card, CardBody } from "../../../components/ui/Card";
 import { Alert } from "../../../components/ui/Alert";
 import { Icon } from "../../../components/ui/Icon";
 import { Input } from "../../../components/ui/Input";
+import { Turnstile } from "../../../components/ui/Turnstile";
 import { useAuth } from "../AuthContext";
 import { supabase } from "../../../lib/supabase";
 
@@ -43,6 +44,8 @@ export const SignUpPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [noticeLanguage, setNoticeLanguage] = useState<"en" | "ms">("en");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +84,10 @@ export const SignUpPage = () => {
       setError("The passwords do not match.");
       return;
     }
+    if (!captchaToken) {
+      setError("Please complete the security check before creating your account.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -96,6 +103,7 @@ export const SignUpPage = () => {
             privacy_consent: true,
             marketing_consent: marketingConsent,
           },
+          captchaToken,
           emailRedirectTo: `${window.location.origin}/login`,
         },
       });
@@ -108,6 +116,8 @@ export const SignUpPage = () => {
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to create your account.");
     } finally {
+      setCaptchaToken("");
+      setCaptchaResetKey((current) => current + 1);
       setSubmitting(false);
     }
   }
@@ -162,6 +172,13 @@ export const SignUpPage = () => {
                   <option value="ms">Bahasa Malaysia</option>
                 </select>
               </div>
+              <Turnstile
+                action="signup"
+                resetKey={captchaResetKey}
+                onToken={setCaptchaToken}
+                onError={() => setCaptchaToken("")}
+                onExpire={() => setCaptchaToken("")}
+              />
               </>}
 
               <Button type="submit" size="lg" isLoading={submitting} disabled={submitting || authLoading || under12Registration} style={{ width: "100%" }}>Create account</Button>

@@ -25,6 +25,24 @@ Optional configuration:
 - `APP_ORIGIN` (defaults to `https://churchconnect-alpha.vercel.app`)
 - `ADDITIONAL_ALLOWED_ORIGINS` (comma-separated exact origins, for additional development domains)
 
+## Cloudflare Turnstile
+
+`secure-login` requires the `TURNSTILE_SECRET_KEY` Supabase Edge Function secret and verifies each login token directly with Cloudflare Siteverify. It checks the `login` action and the hostname against the configured allowed origins. The function fails closed when the secret is missing or verification is unavailable.
+
+The same `TURNSTILE_SECRET_KEY` is required by `admin-manage-user` for superadmin-initiated password resets. Set the secret in the linked Supabase project before deploying either updated function:
+
+```bash
+supabase secrets set TURNSTILE_SECRET_KEY=<your-cloudflare-turnstile-secret>
+supabase functions deploy secure-login
+supabase functions deploy admin-manage-user
+```
+
+Replace the placeholder locally; never commit the secret or paste it into chat. Confirm the Supabase CLI is linked to project `iikdiuezfnwgsjhvedzk` before running these commands.
+
+Signup and forgot-password requests pass Turnstile tokens to Supabase Auth's native CAPTCHA integration. Those flows require Cloudflare Turnstile to be selected and enabled in Supabase Auth's CAPTCHA settings with the same private secret. The Edge Function secret alone does not enable native Auth CAPTCHA. Do not enable it until signup and password recovery have been tested end-to-end and the Auth redirect allowlist includes the intended local and production URLs.
+
+Configure `APP_ORIGIN=https://churchconnect-alpha.vercel.app` if the default origin needs to be explicit. The frontend site key is `VITE_TURNSTILE_SITE_KEY`; it is public and belongs in Vercel frontend environment configuration, never in Supabase secrets.
+
 ## Deployment configuration
 
 The `supabase/config.toml` entry sets `verify_jwt = false` for this function because password sign-in occurs before a user session exists. The function must therefore be treated as a public endpoint: it validates input, checks the gateway-provided client IP, applies the database lockout counters, and never returns secrets.

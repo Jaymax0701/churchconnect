@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const secretKeysRaw = Deno.env.get("SUPABASE_SECRET_KEYS");
+const turnstileSecretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
 let authSecretKey: string | null = null;
 
 try {
@@ -14,7 +15,7 @@ try {
 const hmacSecret = Deno.env.get("LOGIN_RATE_LIMIT_SECRET");
 const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://churchconnect-alpha.vercel.app";
 
-if (!supabaseUrl || !serviceRoleKey || !authSecretKey || !hmacSecret || hmacSecret.length < 32) {
+if (!supabaseUrl || !serviceRoleKey || !authSecretKey || !turnstileSecretKey || !hmacSecret || hmacSecret.length < 32) {
   throw new Error("Secure login environment is not configured.");
 }
 
@@ -27,6 +28,16 @@ const allowedOrigins = new Set([
     .map((origin) => origin.trim())
     .filter(Boolean),
 ]);
+
+const allowedHostnames = new Set(
+  [...allowedOrigins].flatMap((origin) => {
+    try {
+      return [new URL(origin).hostname];
+    } catch {
+      return [];
+    }
+  }),
+);
 
 const corsHeaders = (origin: string | null): Record<string, string> => ({
   ...(origin && allowedOrigins.has(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
@@ -79,7 +90,7 @@ function getTrustedClientIp(req: Request): string | null {
 
 async function readJsonBody(req: Request): Promise<unknown> {
   const declaredLength = Number(req.headers.get("content-length") ?? "0");
-  if (Number.isFinite(declaredLength) && declaredLength > 4096) {
+  if (Number.isFinite(declaredLength) && declaredLength > 8192) {
     throw new Error("REQUEST_TOO_LARGE");
   }
 
@@ -94,7 +105,7 @@ async function readJsonBody(req: Request): Promise<unknown> {
       const { done, value } = await reader.read();
       if (done) break;
       total += value.byteLength;
-      if (total > 4096) {
+      if (total > 8192) {
         await reader.cancel();
         throw new Error("REQUEST_TOO_LARGE");
       }
@@ -112,6 +123,48 @@ async function readJsonBody(req: Request): Promise<unknown> {
   }
 
   return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+}
+
+interface TurnstileValidation {
+  success: boolean;
+  hostname?: string;
+  action?: string;
+  "error-codes"?: string[];
+}
+
+async function verifyTurnstile(
+  token: string,
+  clientIp: string,
+): Promise<"valid" | "invalid" | "unavailable"> {
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secret: turnstileSecretKey,
+        response: token,
+        remoteip: clientIp,
+        idempotency_key: crypto.randomUUID(),
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) return "unavailable";
+
+    const result = await response.json() as TurnstileValidation;
+    if (!result.success) {
+      const errorCodes = result["error-codes"] ?? [];
+      return errorCodes.includes("internal-error") ? "unavailable" : "invalid";
+    }
+
+    if (result.action !== "login" || !result.hostname || !allowedHostnames.has(result.hostname)) {
+      return "invalid";
+    }
+
+    return "valid";
+  } catch {
+    return "unavailable";
+  }
 }
 
 Deno.serve(async (req) => {
@@ -157,15 +210,19 @@ Deno.serve(async (req) => {
   if (
     typeof input.email !== "string" ||
     typeof input.password !== "string" ||
+    typeof input.captchaToken !== "string" ||
+    input.captchaToken.length < 1 ||
+    input.captchaToken.length > 2048 ||
     input.email.length > 254 ||
     input.password.length < 1 ||
     input.password.length > 1024
   ) {
-    return jsonResponse({ error: "Enter a valid email address and password." }, 400, headers);
+    return jsonResponse({ error: "Complete the security check and enter your email and password." }, 400, headers);
   }
 
   const email = input.email.trim().toLowerCase();
   const password = input.password;
+  const captchaToken = input.captchaToken;
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return jsonResponse({ error: "Enter a valid email address and password." }, 400, headers);
@@ -178,8 +235,9 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Supabase requires a new-format secret API key with Sb-Forwarded-For
-  // for Auth rate limiting to use the real visitor IP behind this proxy.
+  // A secret API key is required for trusted Sb-Forwarded-For handling.
+  // Secret keys use the service_role and can bypass Supabase Auth CAPTCHA
+  // middleware, so this endpoint verifies Turnstile directly with Siteverify.
   const authClient = createClient(supabaseUrl, authSecretKey, {
     global: { headers: { "Sb-Forwarded-For": clientIp } },
     auth: { autoRefreshToken: false, persistSession: false },
@@ -204,6 +262,14 @@ Deno.serve(async (req) => {
       ...headers,
       "Retry-After": String(Math.max(1, Number(lockout.retry_after_seconds || 60))),
     });
+  }
+
+  const captchaResult = await verifyTurnstile(captchaToken, clientIp);
+  if (captchaResult === "unavailable") {
+    return jsonResponse({ error: "Security verification is temporarily unavailable. Please try again." }, 503, headers);
+  }
+  if (captchaResult !== "valid") {
+    return jsonResponse({ error: "Security verification failed or expired. Please complete the check again." }, 400, headers);
   }
 
   const { data: authData, error: authError } = await authClient.auth.signInWithPassword({

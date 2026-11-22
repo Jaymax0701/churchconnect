@@ -51,6 +51,19 @@ Operational requirements:
 - Existing sessions are not revoked when a cooldown begins.
 - See `supabase/functions/secure-login/README.md` for deployment and operational details.
 
+## Cloudflare Turnstile
+
+Authentication changes must preserve server-side bot verification and must not treat a completed browser widget as proof by itself.
+
+- Frontend site key: `VITE_TURNSTILE_SITE_KEY` only. It is public and belongs in Vercel Preview/Production environment configuration.
+- Private secret: `TURNSTILE_SECRET_KEY` belongs only in Supabase Edge Function secrets and the Supabase Auth CAPTCHA provider configuration. Never put it in source control, Vercel frontend variables, `VITE_*`, logs, or chat.
+- `secure-login` validates the `login` action and allowed hostname with Cloudflare Siteverify. It remains the only function with Verify JWT disabled because login is unauthenticated before password sign-in.
+- `admin-manage-user` validates the `admin_password_reset` action and production hostname server-side. Keep Verify JWT enabled and preserve its caller authorization checks.
+- Signup and forgot-password pass the token through Supabase Auth's native CAPTCHA support. These flows are not server-verified unless Supabase Auth CAPTCHA is configured for Cloudflare Turnstile and enabled. Do not claim they are protected by server verification while that setting is off.
+- Before enabling Auth CAPTCHA, verify the Cloudflare widget hostname list, the secret, Auth redirect allowlist (`http://localhost:5173/**` and `https://churchconnect-alpha.vercel.app/**` as applicable), and end-to-end signup and recovery behavior.
+- Deploy `secure-login` and `admin-manage-user` separately from frontend releases. Set `TURNSTILE_SECRET_KEY` before deploying either function version that requires it.
+- Never enable CAPTCHA, merge, or deploy production without explicit owner approval. A GitHub merge may automatically trigger the Vercel production deployment.
+
 ## Administrative lockout monitoring
 
 - The Account Login Security panel is intended for approved global superadmins only.

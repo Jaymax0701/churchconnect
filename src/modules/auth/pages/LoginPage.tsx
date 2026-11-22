@@ -5,6 +5,7 @@ import { Card, CardBody } from "../../../components/ui/Card";
 import { Alert } from "../../../components/ui/Alert";
 import { Icon } from "../../../components/ui/Icon";
 import { Input } from "../../../components/ui/Input";
+import { Turnstile } from "../../../components/ui/Turnstile";
 import { useAuth } from "../AuthContext";
 
 interface LoginLocationState {
@@ -19,6 +20,8 @@ export const LoginPage = () => {
   const { user, loading: authLoading, signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,13 +35,20 @@ export const LoginPage = () => {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (!captchaToken) {
+      setError("Please complete the security check before signing in.");
+      return;
+    }
+
     setSubmitting(true);
-
-    const result = await signIn(email, password);
-
+    const result = await signIn(email, password, captchaToken);
     setSubmitting(false);
+
     if (result.error) {
       setError(result.error);
+      setCaptchaToken("");
+      setCaptchaResetKey((current) => current + 1);
       return;
     }
 
@@ -107,6 +117,13 @@ export const LoginPage = () => {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
+              />
+              <Turnstile
+                action="login"
+                resetKey={captchaResetKey}
+                onToken={setCaptchaToken}
+                onError={() => setCaptchaToken("")}
+                onExpire={() => setCaptchaToken("")}
               />
               <Button type="submit" size="lg" isLoading={submitting} disabled={submitting || authLoading} style={{ width: "100%" }}>
                 Sign in

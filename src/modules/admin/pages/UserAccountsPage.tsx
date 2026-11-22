@@ -5,6 +5,7 @@ import { Badge } from "../../../components/ui/Badge";
 import { Button } from "../../../components/ui/Button";
 import { Icon } from "../../../components/ui/Icon";
 import { Input } from "../../../components/ui/Input";
+import { Turnstile } from "../../../components/ui/Turnstile";
 import { supabase } from "../../../lib/supabase";
 
 interface UserAccount {
@@ -42,6 +43,9 @@ export const UserAccountsPage: React.FC = () => {
   const [savingSecondary, setSavingSecondary] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resettingUserId, setResettingUserId] = useState<string | null>(null);
+  const [resetAccount, setResetAccount] = useState<UserAccount | null>(null);
+  const [resetCaptchaToken, setResetCaptchaToken] = useState("");
+  const [resetCaptchaResetKey, setResetCaptchaResetKey] = useState(0);
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
@@ -138,21 +142,37 @@ export const UserAccountsPage: React.FC = () => {
     } finally { setSavingSecondary(false); }
   };
 
-  const sendPasswordReset = async (account: UserAccount) => {
+  const openPasswordReset = (account: UserAccount) => {
     if (!account.email || resettingUserId) return;
-    if (!window.confirm(`Send a password-reset email to ${account.email}?`)) return;
+    setResetAccount(account);
+    setResetCaptchaToken("");
+    setError(null);
+    setNotice(null);
+  };
+
+  const sendPasswordReset = async () => {
+    if (!resetAccount?.email || !resetCaptchaToken || resettingUserId) return;
+    const account = resetAccount;
     setResettingUserId(account.user_id);
     setError(null);
     setNotice(null);
     try {
       const { data, error: invokeError } = await supabase.functions.invoke("admin-manage-user", {
-        body: { action: "send_password_reset", target_user_id: account.user_id },
+        body: {
+          action: "send_password_reset",
+          target_user_id: account.user_id,
+          captcha_token: resetCaptchaToken,
+        },
       });
       if (invokeError) throw invokeError;
       if (data?.error) throw new Error(data.error);
       setNotice(`Password-reset email sent to ${account.email}.` + (data?.warning ? ` ${data.warning}` : ""));
+      setResetAccount(null);
+      setResetCaptchaToken("");
     } catch (resetError) {
       setError(resetError instanceof Error ? resetError.message : "Unable to send the password-reset email.");
+      setResetCaptchaToken("");
+      setResetCaptchaResetKey((key) => key + 1);
     } finally {
       setResettingUserId(null);
     }
@@ -228,7 +248,7 @@ export const UserAccountsPage: React.FC = () => {
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)", minWidth: "190px" }}>
                     <Button size="sm" variant="secondary" onClick={() => openEditor(account)}><Icon name="edit" size={14} /> Edit</Button>
                     <Button size="sm" variant="ghost" disabled={!account.email || Boolean(resettingUserId)}
-                      isLoading={resettingUserId === account.user_id} onClick={() => void sendPasswordReset(account)}>
+                      isLoading={resettingUserId === account.user_id} onClick={() => openPasswordReset(account)}>
                       <Icon name="lock_reset" size={14} /> Reset
                     </Button>
                   </div>
@@ -237,6 +257,26 @@ export const UserAccountsPage: React.FC = () => {
             </table></div>}
         </CardBody>
       </Card>
+
+
+      {resetAccount && <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !resettingUserId) { setResetAccount(null); setResetCaptchaToken(""); } }}
+        style={{ position: "fixed", inset: 0, zIndex: 1001, background: "rgba(0,0,0,.45)", display: "grid", placeItems: "center", padding: "var(--space-4)" }}>
+        <Card><CardBody style={{ width: "min(440px, calc(100vw - 48px))", display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+          <div><h3 style={{ margin: 0 }}>Confirm password reset</h3>
+            <p style={{ fontSize: "var(--text-sm)", color: "var(--color-text-secondary)" }}>A password-reset email will be sent to <strong>{resetAccount.email}</strong>.</p></div>
+          <div>
+            <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--text-sm)", fontWeight: 600 }}>Complete the security check</p>
+            <Turnstile action="admin_password_reset" onToken={setResetCaptchaToken}
+              onError={() => setResetCaptchaToken("")} onExpire={() => setResetCaptchaToken("")}
+              resetKey={resetCaptchaResetKey} />
+          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
+            <Button type="button" variant="secondary" onClick={() => { setResetAccount(null); setResetCaptchaToken(""); }} disabled={Boolean(resettingUserId)}>Cancel</Button>
+            <Button type="button" onClick={() => void sendPasswordReset()} isLoading={resettingUserId === resetAccount.user_id}
+              disabled={!resetCaptchaToken || Boolean(resettingUserId)}>Send reset email</Button>
+          </div>
+        </CardBody></Card>
+      </div>}
 
       {editing && <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setEditing(null); }}
         style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,.45)", display: "grid", placeItems: "center", padding: "var(--space-4)" }}>
