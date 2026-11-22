@@ -119,6 +119,7 @@ export const LoginPage = () => {
                 required
               />
               <Turnstile
+                action="login"
                 resetKey={captchaResetKey}
                 onToken={setCaptchaToken}
                 onError={() => setCaptchaToken("")}
