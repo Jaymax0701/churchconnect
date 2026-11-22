@@ -1,5 +1,7 @@
 # ChurchConnect Authorization Schema Reconciliation
 
+> **Historical staging snapshot — superseded for current-state decisions (2026-11-22).** The schema below was captured on 2026-10-27 against a non-production project. It is retained for history only. The active working Supabase project is now `iikdiuezfnwgsjhvedzk`; use the dated owner-supplied live inventory in `docs/AUTHORIZATION_APPLICATION_INVENTORY.md` and `docs/SESSION_HANDOFF.md` for current facts. Do not treat the old staging project or its row counts as current.
+
 Status: Staging inventory captured; approval/bootstrap design drafted on the security branch; no migration applied.
 
 ## Verified staging schema
