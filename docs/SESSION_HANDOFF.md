@@ -4,8 +4,8 @@ Last updated: 2026-11-22
 Current workstream: Ministry Management, Roles, and Permissions
 Repository: `Jaymax0701/churchconnect`
 Base branch: `main`
-Base commit: `155b94ff22ae52760da09d4f61df1117c2f1aaf2` (PR #50 merge)
-Current documentation branch: `docs/ministry-roles-permissions-handoff`
+Base commit: `bca4394d69afb3ba9e988d751fdc096b577ba490` (PR #51 merge)
+Current documentation branch: `docs/ministry-roles-permissions-handoff` (follow-up commits after PR #51 merge)
 
 ## Working agreement
 
@@ -38,7 +38,7 @@ Current documentation branch: `docs/ministry-roles-permissions-handoff`
 - Existing functions/triggers protect canonical Superadmin role integrity and the last active approved global Superadmin. Preserve them.
 
 ### Repository and local environment
-- GitHub `main` matches local commit `155b94f` (PR #50 merge).
+- GitHub `main` was confirmed at `bca4394d69afb3ba9e988d751fdc096b577ba490` after PR #51 merged. Local checkout may still be at the earlier `155b94f`; verify before local testing.
 - GitHub has `supabase/review/` scripts and `supabase/functions/`; no `supabase/migrations/` directory was found in the local tree.
 - Local-only untracked paths reported by owner: `openai-audit/` and `supabase/.temp/`. Do not delete, stage, or commit these without inspection and owner approval.
 - Review SQL is manual/review-only and must not be applied without explicit approval.
