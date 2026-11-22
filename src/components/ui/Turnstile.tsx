@@ -26,7 +26,7 @@ function loadTurnstile(): Promise<void> {
   if (window.turnstile) return Promise.resolve();
   if (turnstileLoader) return turnstileLoader;
 
-  turnstileLoader = new Promise((resolve, reject) => {
+  const loader = new Promise<void>((resolve, reject) => {
     const existingScript = document.querySelector<HTMLScriptElement>(
       'script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]',
     );
@@ -55,7 +55,8 @@ function loadTurnstile(): Promise<void> {
     throw error;
   });
 
-  return turnstileLoader;
+  turnstileLoader = loader;
+  return loader;
 }
 
 interface TurnstileProps {
