@@ -1,6 +1,6 @@
 import React from "react";
 
-const SPECIAL_CHARACTERS = "!@#$%^&*()_+-=[]{};':"\\|<>?,./\`~";
+const SPECIAL_CHARACTERS = "!@#$%^&*()_+-=[]{};':\"\\|<>?,./`~";
 
 export const PASSWORD_REQUIREMENTS = [
   { label: "At least 8 characters", test: (value: string) => value.length >= 8 },
