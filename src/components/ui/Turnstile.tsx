@@ -77,15 +77,20 @@ export function Turnstile({
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const callbacksRef = useRef({ onToken, onError, onExpire });
-  callbacksRef.current = { onToken, onError, onExpire };
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+  const configurationError = !siteKey
+    ? "Turnstile is not configured. Please contact the site administrator."
+    : null;
+
+  useEffect(() => {
+    callbacksRef.current = { onToken, onError, onExpire };
+  }, [onToken, onError, onExpire]);
 
   useEffect(() => {
     let active = true;
     let widgetId: string | undefined;
 
     if (!siteKey) {
-      setLoadError("Turnstile is not configured. Please contact the site administrator.");
       callbacksRef.current.onError?.();
       return;
     }
@@ -127,9 +132,9 @@ export function Turnstile({
   return (
     <div>
       <div ref={containerRef} />
-      {loadError && (
+      {(configurationError || loadError) && (
         <p role="alert" style={{ color: "var(--color-danger, #b42318)", fontSize: "var(--text-xs)" }}>
-          {loadError}
+          {configurationError || loadError}
         </p>
       )}
     </div>
