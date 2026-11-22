@@ -1,5 +1,7 @@
 # ChurchConnect Authorization Implementation Gate
 
+> **Historical staging gate — not current environment instructions.** This document records the 2026-10 non-production setup. The active working Supabase project is now `iikdiuezfnwgsjhvedzk`; do not follow old staging-reference placeholders or infer that historical staging scripts were applied to the active project. Rebuild the execution gate from the current owner-supplied inventory before any SQL operation.
+
 Status: Draft artifacts added on 2026-10-28. Authorization-foundation draft has not been applied or database-tested. Staging-only SQL files were moved out of supabase/migrations to prevent automatic migration deployment.
 
 ## Verified staging state
