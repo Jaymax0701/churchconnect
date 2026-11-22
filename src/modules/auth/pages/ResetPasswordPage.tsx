@@ -6,6 +6,7 @@ import { Input } from "../../../components/ui/Input";
 import { Alert } from "../../../components/ui/Alert";
 import { Turnstile } from "../../../components/ui/Turnstile";
 import { consumePasswordRecoveryMarker, supabase } from "../../../lib/supabase";
+import { isPasswordStrong, PasswordRequirements } from "../components/PasswordRequirements";
 
 export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
   async function handleUpdate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null); setMessage(null);
-    if (password.length < 8) { setError("Use a password with at least 8 characters."); return; }
+    if (!isPasswordStrong(password)) { setError("Your password does not meet all the security requirements."); return; }
     if (password !== confirmPassword) { setError("The passwords do not match."); return; }
     setSubmitting(true);
     const { error: updateError } = await supabase.auth.updateUser({ password });
@@ -105,6 +106,7 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
         <Button type="submit" isLoading={submitting} disabled={submitting}>Send reset link</Button>
       </form> : recoveryReady ? <form onSubmit={(event) => void handleUpdate(event)} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
         <Input id="new-password" label="New password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required autoComplete="new-password" />
+        <PasswordRequirements password={password} />
         <Input id="confirm-new-password" label="Confirm new password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={8} required autoComplete="new-password" />
         <Button type="submit" isLoading={submitting} disabled={submitting}>Update password</Button>
       </form> : <Alert variant="info" title="Open your password-reset email">Use the latest reset link sent to your inbox. If it has expired, request a new one.</Alert>}
