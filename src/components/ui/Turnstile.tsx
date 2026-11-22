@@ -5,6 +5,7 @@ interface TurnstileRenderOptions {
   callback: (token: string) => void;
   "error-callback": () => void;
   "expired-callback": () => void;
+  action?: string;
   theme?: "light" | "dark" | "auto";
   size?: "normal" | "compact";
 }
@@ -64,6 +65,7 @@ interface TurnstileProps {
   onToken: (token: string) => void;
   onError?: () => void;
   onExpire?: () => void;
+  action?: string;
   resetKey?: number;
   theme?: "light" | "dark" | "auto";
   size?: "normal" | "compact";
@@ -73,6 +75,7 @@ export function Turnstile({
   onToken,
   onError,
   onExpire,
+  action,
   resetKey = 0,
   theme = "auto",
   size = "normal",
@@ -105,6 +108,7 @@ export function Turnstile({
           sitekey: siteKey,
           theme,
           size,
+          ...(action ? { action } : {}),
           callback: (token) => {
             if (active) callbacksRef.current.onToken(token);
           },
@@ -133,7 +137,7 @@ export function Turnstile({
         widgetIdRef.current = null;
       }
     };
-  }, [siteKey, theme, size]);
+  }, [siteKey, theme, size, action]);
 
   useEffect(() => {
     if (resetKey > 0 && widgetIdRef.current && window.turnstile) {
