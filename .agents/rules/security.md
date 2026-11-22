@@ -1,37 +1,64 @@
 ---
 trigger: always_on
-description: Core security rules, authorization protocols, secret handling, Row Level Security (RLS) enforcement, and safety gates for destructive operations across ChurchConnect.
+description: ChurchConnect security rules for repository workflow, Supabase authorization, role/ministry scope, secret handling, and approval gates.
 ---
 
 # ChurchConnect Security & Authorization Rules
 
-These security rules apply unconditionally across all development and agent interactions within ChurchConnect.
+These rules apply unconditionally across ChurchConnect development and agent interactions. `AGENTS.md` contains the repository-wide workflow and documentation requirements.
 
 ## 1. Secrets & Credential Management
-* **Zero Secret Exposure:** Never put database passwords, service-role keys, private API keys, or JWT secrets in client-side code, git-tracked files, or terminal command arguments.
-* **Environment Separation:**
-  * Client-exposed variables must strictly use the `VITE_` prefix (e.g., `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`).
-  * High-privilege tokens (such as Supabase `service_role` key) must never be loaded into the frontend bundle. They are reserved exclusively for secure, server-side execution contexts (e.g., Supabase Edge Functions).
-* **Git Hygiene:** Verify that `.env*` files containing secrets or credentials remain excluded in `.gitignore`.
+- Never place database passwords, service-role keys, Supabase secret API keys, HMAC secrets, JWTs, access tokens, refresh tokens, or passwords in frontend code, Git-tracked files, terminal arguments, logs, screenshots, or documentation.
+- Browser configuration may use only the intended publishable values such as `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and the public Turnstile site key.
+- High-privilege credentials belong only in approved server-side environments such as Supabase Edge Functions.
+- Verify `.env*` exclusions in `.gitignore`.
 
-## 2. Server-Side Authorization & RLS
-* **The Database is the Sole Authority:** Never rely on frontend routing (`<AdminRoute>`), conditionally hidden buttons, or disabled inputs to enforce security. All access controls must be enforced by PostgreSQL Row Level Security (RLS) policies.
-* **Default Deny:** Every new table created in PostgreSQL must immediately execute `ALTER TABLE <table_name> ENABLE ROW LEVEL SECURITY;`. By default, no row may be read or written unless an explicit policy permits it.
-* **Separate Reads from Writes:** Always specify granular policies per operation (`FOR SELECT`, `FOR INSERT`, `FOR UPDATE`, `FOR DELETE`). Avoid broad `FOR ALL` policies that inadvertently grant write access when only read access was intended.
-* **Evaluation Functions:** Complex permission lookups (such as role checks or per-user module grants) must use `SECURITY DEFINER` functions in PostgreSQL to prevent recursive policy evaluations and policy circumvention.
+## 2. Database Authorization & RLS
+- PostgreSQL grants, RLS policies, constraints, and trusted database operations are the authorization boundary. Frontend route guards, hidden navigation, and disabled buttons are UX controls only.
+- Enable RLS on every new sensitive table and create narrow policies per operation. Avoid broad `FOR ALL` policies unless the full read/write behavior is explicitly justified.
+- Review SQL privileges and RLS together. A grant does not bypass RLS; a policy does not grant missing table privileges.
+- Use `SECURITY DEFINER` only when required. Fix `search_path`, schema-qualify objects, derive caller identity from `auth.uid()`, revoke default PUBLIC execution, grant EXECUTE narrowly, and validate all privileged parameters.
+- Never accept a browser-supplied user ID or role as proof of caller identity.
+- Do not apply files under `supabase/review/` without explicit owner approval. They are manual review scripts, not automatically applied migrations.
 
-## 3. Dual-Tier Permission Architecture
-* **Roles vs. Module CRUD:**
-  * System roles (`SUPERADMIN`, `ADMIN`, `MINISTRY_LEADER`, `MEMBER`) define baseline administrative access and hierarchy.
-  * Fine-grained module permissions (`user_module_permissions`) provide explicit View, Create, Update, and Delete grants on individual feature modules.
-  * Permissions are strictly additive: a user receives the union of their role permissions and any explicit per-user grants.
+## 3. Canonical Roles, Assignments & Permission Model
+Use the exact current role IDs:
+- `superadmin`
+- `church_council`
+- `church_admin`
+- `ministry_leader`
+- `ministry_volunteer`
+- `member`
 
-## 4. SUPERADMIN Protection
-* **PostgreSQL-Enforced Invariants:**
-  * The `SUPERADMIN` role is marked as `is_system_role = TRUE` and cannot be deleted, renamed, or demoted.
-  * A PostgreSQL trigger must block any non-SUPERADMIN user from assigning the `SUPERADMIN` role or modifying a SUPERADMIN user's records.
-  * The system must block self-demotion or deletion if only one active `SUPERADMIN` remains in the database.
+Keep three concepts separate:
+1. System role: the person's church/platform position.
+2. Ministry-scoped assignment: the ministry within which a role applies.
+3. Module/action permission: the capability to perform an operation.
 
-## 5. Destructive Operation Safety Gate
-* **Stop and Verify:** Never execute destructive SQL statements (`DROP TABLE`, `TRUNCATE`, bulk `DELETE` without precise `WHERE` clauses) or modify existing production tables without explicit, documented user confirmation.
-* **No Unplanned Migrations:** Do not generate or run SQL migrations until schema designs have been reviewed and approved.
+A ministry-scoped `ministry_leader` or `ministry_volunteer` assignment must never become global Church Admin or Superadmin authority. Do not infer role hierarchy from role names. Role delegation remains blocked until a schema-backed hierarchy and assignment rules are approved.
+
+The proposed `role_module_permissions` / `user_module_permissions` engine is not present in the owner-supplied current schema inventory as of 2026-11-22. Do not assume it exists or implement against it until current schema evidence confirms it.
+
+## 4. Permission Resolution & Default Deny
+- Missing or PENDING grants deny access.
+- For non-superadmins, an explicit per-user FALSE override denies an otherwise granted action; an explicit TRUE is still subject to authentication, account approval, module activity, record ownership, ministry scope, and all other safeguards.
+- Owner-approved rule: an authenticated, approved user with a valid canonical global `superadmin` assignment bypasses ordinary per-user permission overrides (both TRUE and FALSE). This precedence exception does not itself seed or grant every module/action and does not bypass authentication, approval/integrity, record/ministry scope, constraints, audit, or protected-role safeguards.
+- Do not seed permissions or translate legacy `permissions` / `role_permissions` rows without explicit owner-approved mapping.
+
+## 5. Superadmin Integrity
+- Preserve the canonical `superadmin` role and existing database safeguards. Do not rename, delete, demote, or replace protection functions/triggers without inspecting their current definitions and every mutation path.
+- Maintain at least one active, approved global Superadmin. Concurrency protection must cover all relevant ways to invalidate or delete such an account; do not claim full coverage based only on a trigger for one table.
+- Never use the real bootstrap Superadmin as a destructive test fixture. Use isolated disposable accounts and independent sessions.
+
+## 6. Ministry Scope
+- A role assignment scoped to one ministry authorizes no other ministry.
+- Ministry capability checks and row-level ministry scope checks are separate requirements.
+- Prefer deactivation over deletion where foreign-key cascades could remove assignments.
+- If primary and additional leaders are both supported, keep the primary-leader reference and matching role assignment consistent in one trusted transaction. Additional leaders must not inherit primary-leader-only actions unless separately approved.
+
+## 7. Safe Change Gate
+- Inspect the connected GitHub repository before asking the owner to read tracked files manually. Use local commands only for local-only state, runtime tests, or environment verification.
+- Inspect the live target schema before any database operation. Verify the exact project ref.
+- Never execute destructive SQL, apply review SQL, alter production configuration, merge a PR, deploy an Edge Function, or deploy the frontend without explicit owner approval.
+- A merge may trigger the configured Vercel production deployment. Warn before requesting merge approval.
+- No new migration or permission seed until the design, rollback, grants, RLS, and test plan are reviewed and approved.
