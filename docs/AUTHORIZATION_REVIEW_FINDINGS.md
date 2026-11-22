@@ -1,5 +1,7 @@
 # ChurchConnect Authorization Review Findings
 
+> **Historical review — update required before implementation.** This 2026-10-28 review contains staging-era findings. The login-demo finding is superseded by the current Supabase Auth implementation. Current live schema/function evidence is recorded in `docs/AUTHORIZATION_APPLICATION_INVENTORY.md` and `docs/SESSION_HANDOFF.md` (2026-11-22). Preserve the unresolved permission, ministry-scope, trusted-workflow, and last-Superadmin test gates.
+
 Status: Review findings only. No database changes. No permission grants are approved by this document.
 
 ## Scope reviewed
