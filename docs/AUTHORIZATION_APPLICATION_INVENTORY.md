@@ -43,6 +43,9 @@ The current admin dashboard is not merely the earlier demo-only dashboard descri
 
 ### APP-AUTH-04 — Supabase review scripts are manual artifacts, not migrations
 
+The existing `0002_global_role_check.review.sql` is a historical review artifact, not a safe reapplication candidate. Its function body checks only the global role assignment and does not include the current owner-supplied approved-profile condition. Reapplying it would replace the stronger current `current_user_has_role(text)` definition with a weaker version. Preserve the current live definition; do not execute this older script without reconciling and rewriting it first.
+
+
 The repository contains `supabase/review/` with numbered `.review.sql` files, including `0002_global_role_check.review.sql`. The local project inspected by the owner has `supabase/config.toml`, `supabase/functions/`, `supabase/review/`, and `.temp/`; it has no `supabase/migrations/` directory.
 
 Review scripts are not automatically applied by GitHub or by the Supabase CLI migration mechanism. Do not create a migration directory or move review scripts into it without a deliberate, reviewed migration workflow. Inspect the existing review scripts directly from GitHub before proposing changes.
