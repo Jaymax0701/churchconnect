@@ -32,6 +32,21 @@ The function is invoked by the frontend as `secure-login` and is deployed at:
 
 The function uses a server-side `LOGIN_RATE_LIMIT_SECRET`, Supabase-provided server environment variables, and restricted database RPCs. Never place these secrets in Vite environment variables, browser code, Git commits, screenshots, or chat messages.
 
+### Cloudflare Turnstile
+
+The frontend uses Cloudflare Turnstile for password login (`login`), account signup (`signup`), forgot-password email requests (`password_reset`), and superadmin-initiated password resets (`admin_password_reset`).
+
+Server-side verification is performed by the `secure-login` and `admin-manage-user` Edge Functions. Signup and forgot-password requests pass their tokens to Supabase Auth through its native CAPTCHA integration. **Supabase Auth CAPTCHA must be configured with Cloudflare Turnstile and enabled for those two flows to receive server-side verification; a browser widget alone is not sufficient.** Keep it disabled until the Cloudflare secret, Auth provider configuration, redirect allowlist, Edge Functions, and end-to-end flows have been verified together.
+
+Operational requirements:
+- Set `VITE_TURNSTILE_SITE_KEY` in Vercel Preview and Production. This is a public site key.
+- Configure `TURNSTILE_SECRET_KEY` as a Supabase Edge Function secret. Use the same Cloudflare secret in Supabase Auth's native CAPTCHA provider configuration when enabling Auth CAPTCHA.
+- Never put the Turnstile secret in a `VITE_*` variable, GitHub, browser code, screenshots, or chat messages.
+- Allow the production hostname `churchconnect-alpha.vercel.app` in the Cloudflare Turnstile widget configuration.
+- Include `http://localhost:5173/**` and `https://churchconnect-alpha.vercel.app/**` in the Supabase Auth redirect allowlist.
+- Deploy `secure-login` and `admin-manage-user` after configuring server-side secrets. Function deployments are separate from GitHub merges and Vercel frontend deployments.
+- Keep Verify JWT disabled only for `secure-login`; keep JWT verification enabled for `admin-manage-user`.
+
 ### Current login rate-limit policy
 
 - Three failed password attempts for the same normalized email + client IP: 15-minute cooldown.
