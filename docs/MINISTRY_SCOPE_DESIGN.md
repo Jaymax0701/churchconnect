@@ -1,6 +1,8 @@
 # ChurchConnect Ministry Leadership Scope Design
 
-Status: Proposed design for staging review. Documentation only; no database changes.
+Status: Proposed design only — **not yet confirmed by the owner**. Documentation only; no database changes.
+
+> The current owner-supplied live schema inventory (2026-11-22) confirms `user_roles.scope_type` and `ministry_id`, but does not include `ministries.leader_id`. The one-primary-leader-plus-additional-leaders model below is a proposal, not an approved requirement. Do not add `leader_id` or assume a dual-source leadership invariant until the owner confirms the desired model.
 
 ## Decision
 
