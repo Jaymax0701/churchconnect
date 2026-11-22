@@ -1,11 +1,13 @@
 import React from "react";
 
+const SPECIAL_CHARACTERS = "!@#$%^&*()_+-=[]{};':"\\|<>?,./\`~";
+
 export const PASSWORD_REQUIREMENTS = [
   { label: "At least 8 characters", test: (value: string) => value.length >= 8 },
   { label: "One uppercase letter (A–Z)", test: (value: string) => /[A-Z]/.test(value) },
   { label: "One lowercase letter (a–z)", test: (value: string) => /[a-z]/.test(value) },
   { label: "One number (0–9)", test: (value: string) => /[0-9]/.test(value) },
-  { label: "One special character (e.g. !@#$%)", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
+  { label: "One special character (e.g. !@#$%)", test: (value: string) => [...value].some((character) => SPECIAL_CHARACTERS.includes(character)) },
 ] as const;
 
 export function isPasswordStrong(value: string): boolean {
