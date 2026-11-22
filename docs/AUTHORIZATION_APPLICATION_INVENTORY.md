@@ -1,60 +1,136 @@
 # ChurchConnect Application Authorization Inventory
 
-Status: Repository inspection only. No application, database, or production changes were made by this inventory.
+Status: Current repository and owner-supplied database review. Inspection only; no application or database changes were made during this review.
 
-Inspection date: 2026-10-28
-Repository branch inspected: `main` after merge of authorization review PR #2
-Scope: tracked source tree, route configuration, Supabase client initialization, public-home page, member portal, admin dashboard, and current authorization design documents.
+Inspection date: 2026-11-22
+Repository: `Jaymax0701/churchconnect`
+Branch/commit: `main` / `155b94ff22ae52760da09d4f61df1117c2f1aaf2` (PR #50 merge)
+Database project reviewed from owner-supplied SQL/catalog output: `iikdiuezfnwgsjhvedzk`
+Scope: current route configuration, admin/member/public layouts, authorization references in tracked frontend source, Supabase review-script directory, existing authorization design documents, and owner-supplied live database schema/function/security inventory.
 
-## 1. Findings
+> Evidence distinction: frontend findings below were checked against GitHub at the commit above. Database findings are based on SQL and catalog output supplied by the project owner on 2026-11-22; they were not queried directly by this inventory. Older authorization documents may describe a prior staging snapshot and should not override this dated inventory without fresh verification.
 
-### APP-AUTH-01 — No real login/session flow is implemented
+## 1. Current frontend findings
 
-`src/modules/auth/pages/LoginPage.tsx` uses a client-side timeout and displays a demonstration message. It does not call `supabase.auth.signInWithPassword`, establish a real session, or handle authentication errors from Supabase.
+### APP-AUTH-01 — Authentication and approval route gates exist
 
-`src/App.tsx` calls `supabase.auth.getSession()` only to display a connection diagnostic. It does not use the session to protect routes.
+The current route tree in `src/routes/AppRoutes.tsx` places the member portal and admin console under `RequireApprovedUser`. The admin console is additionally nested under `RequireSuperadmin`.
 
-**Implication:** a successful-looking login is not evidence of authentication. Implement real sign-in/sign-out/session restoration and error handling before end-to-end authorization tests.
+- `RequireApprovedUser` requires a signed-in user, a loaded profile, and `profile.is_approved === true`; profile-loading errors fail closed.
+- `RequireSuperadmin` calls `supabase.rpc("current_user_has_role", { required_role: "superadmin" })`; RPC errors and false results deny admin access.
+- This is route-level UX/access gating. PostgreSQL grants, RLS, and trusted database operations remain the security boundary.
 
-### APP-AUTH-02 — Member and admin routes have no route guard
+This supersedes the 2026-10-28 inventory statement that member/admin routes had no guards and the login flow was only a demonstration.
 
-`src/routes/AppRoutes.tsx` mounts `/portal` and `/admin` directly under their layouts. The inspected route file contains no authentication, approval, role, or permission guard.
+### APP-AUTH-02 — Admin route coverage is incomplete
 
-**Implication:** these pages are reachable as client-side previews. Route guards are useful for UX but must not replace database RLS and server-side authorization.
+The current admin route tree contains:
+- `/admin` — `AdminDashboardPage`
+- `/admin/users` — `UserAccountsPage`
 
-### APP-AUTH-03 — The inspected UI pages are demo-only, not database-backed workflows
+There are no registered routes for Ministry Management, Events & Services, or Permission Matrix. The corresponding desktop and mobile items in `src/layouts/AdminLayout.tsx` are hash anchors (`#ministries`, `#events`, `#permissions`), not React Router routes. Selecting them changes the URL hash but does not render a corresponding page.
 
-- `PublicHomePage.tsx` renders static marketing copy and service-time/location placeholders; the inspected component makes no Supabase data query.
-- `MemberPortalPage.tsx` displays hard-coded demo identity, roster, cell-group, and profile content; its actions update local React state or show a demo notice.
-- `AdminDashboardPage.tsx` displays hard-coded metrics and an in-memory permission matrix; toggles do not write to Supabase.
+The AdminLayout also renders a hardcoded `SUPERADMIN` badge rather than deriving the displayed role from a general role-resolution result. This should be addressed as part of role-aware UI work, without weakening the existing route/database gate.
 
-**Implication:** there is no current public-home database query in these inspected pages that requires an anonymous database read grant. Do not add broad `anon` SELECT privileges merely to support the current static homepage. When public content becomes database-backed, inventory each query and exposed column first.
+### APP-AUTH-03 — Existing admin workflows are database-backed, but ministry/RBAC UI is absent
 
-### APP-AUTH-04 — Admin UI module identifiers diverge from the canonical database inventory
+- `AdminDashboardPage` calls `list_pending_accounts`, `approve_account`, and `review_minor_registration` for account approval and minor-review workflows.
+- `UserAccountsPage` calls `list_user_accounts` and invokes the `admin-manage-user` Edge Function for approved account-management actions.
+- No ministry CRUD page, role-assignment UI, or permission-matrix page is currently registered in `AppRoutes.tsx`.
+- No general-purpose frontend permission helper or usage of `role_permissions`, `permissions`, or ministry-scoped `user_roles` was found in the tracked `src/**/*.ts(x)` search performed for this review. Existing role-aware checks are limited to the global `superadmin` RPC calls in `RequireSuperadmin`, `MemberPortalLayout`, and `PublicLayout`.
 
-The inspected `AdminDashboardPage.tsx` defines demo modules `registration`, `ministry`, and `mainpage_cms`. The verified staging inventory instead uses canonical module IDs such as `member_portal`, `congregation`, `cms`, and ministry-specific IDs. `registration` and `ministry` are not canonical IDs in the verified 12-module staging inventory.
+The current admin dashboard is not merely the earlier demo-only dashboard described by the 2026-10-28 inventory; it now handles real account approval and minor-review RPC workflows. Keep these account workflows separate from ministry/RBAC work.
 
-**Implication:** do not persist the current demo matrix or translate these identifiers implicitly. Replace it with canonical IDs only after the owner-approved permission matrix is finalized.
+### APP-AUTH-04 — Supabase review scripts are manual artifacts, not migrations
 
-### APP-AUTH-05 — Server-side/service-role workflow inventory is incomplete
+The repository contains `supabase/review/` with numbered `.review.sql` files, including `0002_global_role_check.review.sql`. The local project inspected by the owner has `supabase/config.toml`, `supabase/functions/`, `supabase/review/`, and `.temp/`; it has no `supabase/migrations/` directory.
 
-The inspected tracked source tree includes a browser Supabase client in `src/lib/supabase.ts` using `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. The inspected tree did not reveal a tracked server/API route or Supabase Edge Function directory. This is a repository observation, not proof that no external server, dashboard workflow, scheduled job, or out-of-repository integration exists.
+Review scripts are not automatically applied by GitHub or by the Supabase CLI migration mechanism. Do not create a migration directory or move review scripts into it without a deliberate, reviewed migration workflow. Inspect the existing review scripts directly from GitHub before proposing changes.
 
-**Implication:** before applying the foundation draft's service-role revokes, confirm with the owner whether any external server or Supabase Edge Function uses service-role credentials or direct table access. Never put a service-role secret in `VITE_*` variables or browser code.
+### APP-AUTH-05 — Canonical role and module identifiers
 
-## 2. Safe implementation order
+Six canonical system roles:
+- `superadmin`
+- `church_council`
+- `church_admin`
+- `ministry_leader`
+- `ministry_volunteer`
+- `member`
 
-1. Keep `supabase/drafts/0004_authorization_foundation.staging.sql` unapplied until its privilege effects and backup/restore path have been reviewed.
-2. Approve permission precedence, the role/module/action matrix, special `manage`/`approve`/`assign` capabilities, and ministry appointment rules.
-3. Implement real Supabase Auth session handling and protected-route UX; do not treat client checks as the security boundary.
-4. Inventory any external/server-side administrative workflows and design narrow, auditable trusted operations before deciding service-role grants.
-5. Keep public-site database access closed until an actual data-backed public feature and exact table/column allowlist exist.
-6. Replace demo permission identifiers and fake permission toggles with canonical, database-backed UI only after the authorization API/policies are implemented.
-7. Validate using real test-user JWTs and the behavioral test plan; never use the real bootstrap superadmin for destructive tests.
+Twelve canonical modules:
+- `public_site`
+- `member_portal`
+- `congregation`
+- `cell_groups`
+- `youth`
+- `children`
+- `women`
+- `men`
+- `evangelism`
+- `praise_worship`
+- `sunday_service`
+- `cms`
 
-## 3. Explicit non-claims
+Do not introduce legacy aliases such as `portal`, `ministry`, `events`, or `registration` as canonical module IDs without an approved schema decision.
 
-- This document does not claim that all application paths or external integrations have been exhaustively audited.
-- It does not claim that RLS policies, the permission resolver, trusted admin workflows, or last-superadmin protection are complete.
-- It does not authorize any permission seed, staging SQL application, or production change.
-- The current UI's sample names, metrics, roster entries, and actions are demonstrations, not verified live database records.
+## 2. Current database findings (owner-supplied evidence, 2026-11-22)
+
+Existing tables:
+- `ministries`: `id`, `name`, `slug`, `description`, `is_active`, `created_at`
+- `modules`: `id`, `name`, `description`, `is_active`
+- `permissions`: `id`, `module_id`, `action`, `scope`
+- `role_permissions`: `role_id`, `permission_id`
+- `roles`: `id`, `name`, `description`, `is_system`
+- `user_roles`: `id`, `user_id`, `role_id`, `scope_type`, `ministry_id`, `assigned_by`, `created_at`
+
+The owner reports:
+- `ministries` is empty.
+- `roles` contains the six canonical system roles.
+- `modules` contains the twelve canonical modules.
+- `permissions` and `role_permissions` are empty.
+- `user_roles` contains the owner's single global `superadmin` assignment.
+- `permissions.action` allows `view`, `create`, `update`, `delete`, `manage`, `approve`, and `assign`.
+- `permissions.scope` allows `global`, `assigned_ministry`, and `self`.
+- `user_roles.scope_type` allows `global` and `ministry`; a global assignment must have a NULL ministry, and a ministry assignment must have a non-NULL ministry.
+- `permissions` has a unique constraint on `(module_id, action, scope)`; `role_permissions` has composite primary key `(role_id, permission_id)`.
+- `user_roles` has a primary key on `id`, but no unique constraint currently prevents duplicate user/role/scope assignments. This remains a design/review item.
+
+RLS is enabled on all six tables. The owner reports no RLS policies on these tables at the time of inspection. The owner-supplied grants show `anon` and `authenticated` table privileges on `ministries` and `modules`, while the other four tables have no direct `anon`/`authenticated` grants. With no applicable policies, those grants on ministries/modules do not by themselves allow ordinary API access. Do not add broad grants or policies as a workaround.
+
+### Existing authorization functions and safeguards
+
+The owner supplied current definitions/catalog results for:
+- `current_user_has_role(text)`: SECURITY DEFINER, fixed empty search path; checks the authenticated user's global role and approved profile.
+- `guard_canonical_superadmin_role()`: prevents deletion or unsafe mutation of the canonical `superadmin` role.
+- `guard_last_global_superadmin_role()`: protects removal/demotion of an active approved global Superadmin assignment.
+- `assert_another_active_global_superadmin(uuid)`: serializes the invariant using a transaction-level lock on the canonical role row and requires another active, approved, non-deleted, non-banned global Superadmin.
+- Triggers exist on `roles` before UPDATE/DELETE and on `user_roles` before UPDATE/DELETE for the safeguards above.
+
+Preserve and inspect these objects and all call sites before any modification. Do not replace them with the older, weaker role-check SQL merely because it exists in the review directory.
+
+## 3. Existing authorization decisions to preserve
+
+- Separate system roles, ministry-scoped assignments, and module/action permissions.
+- A ministry-scoped `ministry_leader` assignment must never confer global Church Admin or Superadmin authority.
+- Superadmin bypasses ordinary per-user permission overrides, but not authentication, approval/integrity, ministry/record scope, database constraints, audit, or protected-role safeguards.
+- Prefer ministry deactivation over deletion while `user_roles.ministry_id` uses `ON DELETE CASCADE`.
+- Do not infer role hierarchy from role names. Delegation remains blocked until a schema-backed hierarchy and exact assignment rules are approved.
+- Ministry primary/additional leader consistency design is documented in `docs/MINISTRY_SCOPE_DESIGN.md`; reconcile it with the current schema before implementation.
+- Do not seed any role/module/action permissions while the owner matrix remains PENDING.
+
+## 4. Required open work
+
+1. Inspect all current GitHub `supabase/review/*.review.sql` files and reconcile them against the owner-supplied live definitions/catalog output.
+2. Review `docs/AUTHORIZATION_IMPLEMENTATION_GATE.md`, `docs/AUTHORIZATION_MIGRATION_DESIGN.md`, `docs/SCHEMA_RECONCILIATION.md`, and related design documents for stale environment claims or conflicting schema assumptions. Preserve historical evidence but clearly mark superseded snapshots.
+3. Complete the owner-approved role/module/action/scope matrix, including the meaning of `manage`, `approve`, and `assign`.
+4. Agree ministry creation, deactivation, primary/additional leader appointment, volunteer assignment, and removal workflows.
+5. Design the authoritative permission resolver and transactional role/ministry assignment workflows, including RLS, grants, audit, and last-Superadmin safeguards.
+6. Only after design approval, implement in small PRs and validate with disposable authenticated test users against the active test environment. No production SQL or deployment without explicit approval.
+
+## 5. Explicit non-claims
+
+- This inventory is not a complete application security audit.
+- Owner-supplied database output has not been independently re-queried by this document.
+- No permissions are approved or seeded by this inventory.
+- No new RLS policy, database function, role assignment, ministry record, or production deployment is authorized by this inventory.
+- A frontend route guard is not a substitute for database authorization.
