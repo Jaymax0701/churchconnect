@@ -5,7 +5,7 @@ import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import { Alert } from "../../../components/ui/Alert";
 import { Turnstile } from "../../../components/ui/Turnstile";
-import { supabase } from "../../../lib/supabase";
+import { consumePasswordRecoveryMarker, supabase } from "../../../lib/supabase";
 
 export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
   const navigate = useNavigate();
@@ -24,6 +24,7 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
 
     let active = true;
     const hasRecoveryCallback =
+      consumePasswordRecoveryMarker() ||
       new URLSearchParams(window.location.search).has("code") ||
       new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
 
@@ -31,9 +32,8 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
       if (active && event === "PASSWORD_RECOVERY") setRecoveryReady(true);
     });
 
-    // The recovery event can fire before this page mounts because the app
-    // initializes Supabase auth before rendering its routes. In that case,
-    // detect the recovery callback in the URL and verify that it produced a session.
+    // Supabase can process the PKCE callback before this route mounts. The
+    // marker is captured in the client module before createClient initializes.
     if (hasRecoveryCallback) {
       void supabase.auth.getSession().then(({ data, error: sessionError }) => {
         if (!active) return;
