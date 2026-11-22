@@ -11,6 +11,7 @@ interface TurnstileRenderOptions {
 
 interface TurnstileApi {
   render: (container: HTMLElement, options: TurnstileRenderOptions) => string;
+  reset: (widgetId?: string) => void;
   remove: (widgetId: string) => void;
 }
 
@@ -63,6 +64,7 @@ interface TurnstileProps {
   onToken: (token: string) => void;
   onError?: () => void;
   onExpire?: () => void;
+  resetKey?: number;
   theme?: "light" | "dark" | "auto";
   size?: "normal" | "compact";
 }
@@ -71,10 +73,12 @@ export function Turnstile({
   onToken,
   onError,
   onExpire,
+  resetKey = 0,
   theme = "auto",
   size = "normal",
 }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const callbacksRef = useRef({ onToken, onError, onExpire });
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
@@ -88,7 +92,6 @@ export function Turnstile({
 
   useEffect(() => {
     let active = true;
-    let widgetId: string | undefined;
 
     if (!siteKey) {
       callbacksRef.current.onError?.();
@@ -98,7 +101,7 @@ export function Turnstile({
     void loadTurnstile()
       .then(() => {
         if (!active || !containerRef.current || !window.turnstile) return;
-        widgetId = window.turnstile.render(containerRef.current, {
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
           theme,
           size,
@@ -125,9 +128,18 @@ export function Turnstile({
 
     return () => {
       active = false;
-      if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
     };
   }, [siteKey, theme, size]);
+
+  useEffect(() => {
+    if (resetKey > 0 && widgetIdRef.current && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  }, [resetKey]);
 
   return (
     <div>
