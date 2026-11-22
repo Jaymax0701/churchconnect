@@ -79,7 +79,7 @@ function getTrustedClientIp(req: Request): string | null {
 
 async function readJsonBody(req: Request): Promise<unknown> {
   const declaredLength = Number(req.headers.get("content-length") ?? "0");
-  if (Number.isFinite(declaredLength) && declaredLength > 4096) {
+  if (Number.isFinite(declaredLength) && declaredLength > 8192) {
     throw new Error("REQUEST_TOO_LARGE");
   }
 
@@ -94,7 +94,7 @@ async function readJsonBody(req: Request): Promise<unknown> {
       const { done, value } = await reader.read();
       if (done) break;
       total += value.byteLength;
-      if (total > 4096) {
+      if (total > 8192) {
         await reader.cancel();
         throw new Error("REQUEST_TOO_LARGE");
       }
@@ -157,15 +157,19 @@ Deno.serve(async (req) => {
   if (
     typeof input.email !== "string" ||
     typeof input.password !== "string" ||
+    typeof input.captchaToken !== "string" ||
+    input.captchaToken.length < 1 ||
+    input.captchaToken.length > 4096 ||
     input.email.length > 254 ||
     input.password.length < 1 ||
     input.password.length > 1024
   ) {
-    return jsonResponse({ error: "Enter a valid email address and password." }, 400, headers);
+    return jsonResponse({ error: "Complete the security check and enter your email and password." }, 400, headers);
   }
 
   const email = input.email.trim().toLowerCase();
   const password = input.password;
+  const captchaToken = input.captchaToken;
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return jsonResponse({ error: "Enter a valid email address and password." }, 400, headers);
@@ -209,9 +213,20 @@ Deno.serve(async (req) => {
   const { data: authData, error: authError } = await authClient.auth.signInWithPassword({
     email,
     password,
+    options: { captchaToken },
   });
 
   if (authError || !authData.session) {
+    // CAPTCHA failures are not credential failures and must not increase
+    // the application's failed-password counters.
+    const authErrorCode = authError?.code?.toLowerCase() ?? "";
+    const authErrorMessage = authError?.message.toLowerCase() ?? "";
+    if (authErrorCode === "captcha_failed" || authErrorMessage.includes("captcha")) {
+      return jsonResponse({
+        error: "Security verification failed or expired. Please complete the check again.",
+      }, 400, headers);
+    }
+
     // Upstream Auth throttling or server failures are not counted as an
     // incorrect password attempt in this application's own counter.
     if (authError?.status === 429) {
