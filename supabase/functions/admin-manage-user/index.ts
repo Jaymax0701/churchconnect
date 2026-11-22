@@ -4,6 +4,7 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const appOrigin = Deno.env.get("APP_ORIGIN") ?? "https://churchconnect-alpha.vercel.app";
+const turnstileSecretKey = Deno.env.get("TURNSTILE_SECRET_KEY") ?? "";
 
 const getCorsHeaders = (origin: string | null) => ({
   "Access-Control-Allow-Origin": origin && (origin === appOrigin || origin.startsWith("http://localhost:")) ? origin : appOrigin,
@@ -11,6 +12,39 @@ const getCorsHeaders = (origin: string | null) => ({
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Vary": "Origin",
 });
+
+ 
+async function verifyTurnstile(token: string, remoteIp: string | null) {
+  if (!turnstileSecretKey) {
+    return { success: false, error: "Turnstile is not configured on the server." };
+  }
+  const formData = new FormData();
+  formData.set("secret", turnstileSecretKey);
+  formData.set("response", token);
+  if (remoteIp) formData.set("remoteip", remoteIp);
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) return { success: false, error: "Unable to verify the security check." };
+    const result = await response.json() as {
+      success?: boolean;
+      action?: string;
+      hostname?: string;
+    };
+    const expectedHostname = new URL(appOrigin).hostname;
+    const hostnameAllowed = result.hostname === expectedHostname ||
+      (expectedHostname === "localhost" && result.hostname === "localhost");
+    if (!result.success || result.action !== "admin_password_reset" || !hostnameAllowed) {
+      return { success: false, error: "Security check failed. Please complete it again." };
+    }
+    return { success: true, error: null };
+  } catch {
+    return { success: false, error: "Unable to verify the security check." };
+  }
+}
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -38,7 +72,7 @@ Deno.serve(async (req) => {
   const { data: actorProfile, error: profileError } = await adminClient
     .from("profiles").select("is_approved").eq("id", actor.id).maybeSingle();
 
-  let body: { action?: string; target_user_id?: string; full_name?: string; email?: string; secondary_email?: string | null };
+  let body: { action?: string; target_user_id?: string; full_name?: string; email?: string; secondary_email?: string | null; captcha_token?: string };
   try { body = await req.json(); } catch {
     return Response.json({ error: "Invalid request body" }, { status: 400, headers: corsHeaders });
   }
@@ -61,6 +95,17 @@ Deno.serve(async (req) => {
       .eq("scope_type", "global").is("ministry_id", null).limit(1);
     if (roleError || !actorRoles?.length) {
       return Response.json({ error: "Only an approved global Superadmin can manage other accounts." }, { status: 403, headers: corsHeaders });
+    }
+  }
+
+  if (body.action === "send_password_reset") {
+    const captchaToken = body.captcha_token?.trim();
+    if (!captchaToken) {
+      return Response.json({ error: "Complete the security check before sending a password-reset email." }, { status: 400, headers: corsHeaders });
+    }
+    const captcha = await verifyTurnstile(captchaToken, req.headers.get("cf-connecting-ip"));
+    if (!captcha.success) {
+      return Response.json({ error: captcha.error ?? "Security check failed." }, { status: 403, headers: corsHeaders });
     }
   }
 
@@ -121,6 +166,7 @@ Deno.serve(async (req) => {
     if (targetError || !targetUser.user?.email) return Response.json({ error: "Target account or email not found." }, { status: 404, headers: corsHeaders });
     const { error: resetError } = await callerClient.auth.resetPasswordForEmail(targetUser.user.email, {
       redirectTo: `${appOrigin}/reset-password`,
+      captchaToken: body.captcha_token,
     });
     if (resetError) return Response.json({ error: resetError.message }, { status: 400, headers: corsHeaders });
     auditAction = "send_password_reset";
