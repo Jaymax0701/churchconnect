@@ -75,6 +75,8 @@ export function Turnstile({
 }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const callbacksRef = useRef({ onToken, onError, onExpire });
+  callbacksRef.current = { onToken, onError, onExpire };
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export function Turnstile({
 
     if (!siteKey) {
       setLoadError("Turnstile is not configured. Please contact the site administrator.");
-      onError?.();
+      callbacksRef.current.onError?.();
       return;
     }
 
@@ -95,31 +97,31 @@ export function Turnstile({
           theme,
           size,
           callback: (token) => {
-            if (active) onToken(token);
+            if (active) callbacksRef.current.onToken(token);
           },
           "error-callback": () => {
             if (!active) return;
-            onToken("");
-            onError?.();
+            callbacksRef.current.onToken("");
+            callbacksRef.current.onError?.();
           },
           "expired-callback": () => {
             if (!active) return;
-            onToken("");
-            onExpire?.();
+            callbacksRef.current.onToken("");
+            callbacksRef.current.onExpire?.();
           },
         });
       })
       .catch(() => {
         if (!active) return;
         setLoadError("Unable to load the security check. Please refresh the page and try again.");
-        onError?.();
+        callbacksRef.current.onError?.();
       });
 
     return () => {
       active = false;
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
     };
-  }, [siteKey, theme, size, onToken, onError, onExpire]);
+  }, [siteKey, theme, size]);
 
   return (
     <div>
