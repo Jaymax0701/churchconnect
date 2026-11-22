@@ -4,6 +4,7 @@ import { Card, CardBody } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import { Alert } from "../../../components/ui/Alert";
+import { Turnstile } from "../../../components/ui/Turnstile";
 import { supabase } from "../../../lib/supabase";
 
 export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
@@ -11,6 +12,8 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [recoveryReady, setRecoveryReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -26,11 +29,23 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
 
   async function handleRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitting(true); setError(null); setMessage(null);
+    setError(null);
+    setMessage(null);
+
+    if (!captchaToken) {
+      setError("Please complete the security check before requesting a password-reset link.");
+      return;
+    }
+
+    setSubmitting(true);
     const { error: requestError } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: `${window.location.origin}/reset-password`,
+      captchaToken,
     });
     setSubmitting(false);
+    setCaptchaToken("");
+    setCaptchaResetKey((current) => current + 1);
+
     if (requestError) setError(requestError.message);
     else setMessage("If an account exists for that email, a password-reset link has been sent.");
   }
@@ -55,6 +70,13 @@ export const ResetPasswordPage = ({ mode }: { mode: "request" | "update" }) => {
       {message && <Alert variant="success" title="Password reset">{message}</Alert>}
       {mode === "request" ? <form onSubmit={(event) => void handleRequest(event)} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
         <Input id="reset-email" label="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
+        <Turnstile
+          action="password_reset"
+          resetKey={captchaResetKey}
+          onToken={setCaptchaToken}
+          onError={() => setCaptchaToken("")}
+          onExpire={() => setCaptchaToken("")}
+        />
         <Button type="submit" isLoading={submitting} disabled={submitting}>Send reset link</Button>
       </form> : recoveryReady ? <form onSubmit={(event) => void handleUpdate(event)} style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
         <Input id="new-password" label="New password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required autoComplete="new-password" />
