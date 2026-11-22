@@ -24,7 +24,7 @@ interface AuthContextValue {
   profile: AuthProfile | null;
   loading: boolean;
   profileError: string | null;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string, captchaToken: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
 }
@@ -174,11 +174,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [session?.user.id]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string, captchaToken: string) => {
     try {
       const { data, error } = await supabase.functions.invoke<SecureLoginResponse>(
         "secure-login",
-        { body: { email: email.trim(), password } },
+        { body: { email: email.trim(), password, captchaToken } },
       );
 
       if (error) {
