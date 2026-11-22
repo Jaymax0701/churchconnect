@@ -56,12 +56,20 @@ Current documentation branch: `docs/ministry-roles-permissions-handoff`
 
 The role/module/action matrix remains pending. No permission grants should be inferred or seeded.
 
+## Additional repository review completed
+
+- Inspected the full `supabase/review/` directory listing on GitHub. It contains numbered manual SQL review files (0001–0013, with two duplicated sequence numbers); there is no dedicated ministry/RBAC implementation script in that directory.
+- Read `0001_account_foundation.review.sql`: it is an old empty-database preflight and explicitly aborts if profiles/auth users or approval columns already exist. It must not be rerun against the current populated project.
+- Read `0002_global_role_check.review.sql`: its function body does not check `profiles.is_approved`, unlike the current owner-supplied live function. Reapplying it would weaken the role gate; do not run it.
+- Read `.agents/rules/security.md`: it contained stale role IDs (`ADMIN`, `SUPERADMIN`), an obsolete additive-only permission rule, and a simplistic superadmin description. Updated it on this documentation branch to align with canonical role IDs, explicit-deny precedence, ministry scope, GitHub-first inspection, and approval safeguards.
+- GitHub code search found the proposed `role_module_permissions`, `user_module_permissions`, and `has_module_permission()` in design documentation only; no implementation references in current tracked frontend code were found. The live schema evidence supplied by the owner also does not include these proposed tables/functions.
+
 ## Next exact steps
 
-1. Inspect the complete GitHub `supabase/review/` directory and read each relevant SQL script, starting with the authorization foundation, role-check, and ministry-related scripts.
-2. Reconcile the SQL scripts with the current owner-supplied function definitions, triggers, grants, policies, and schema constraints.
-3. Review stale design-document claims that refer to old staging projects/schema snapshots; preserve history and add dated current-state references.
-4. Present a consolidated authorization/ministry design for owner decision before writing implementation SQL.
+1. Finish a targeted review of the remaining review SQL files only where they affect role, ministry, profile, or trusted-admin behavior; do not bulk-read unrelated family/auth scripts.
+2. Reconcile the historical design docs and agent rules with current owner-supplied schema/function evidence, retaining historical snapshots but marking them superseded.
+3. Inspect the current live definitions for every function and trigger that can mutate roles, user assignments, profile approval, or Auth users; verify whether the last-Superadmin invariant covers all paths.
+4. Present a consolidated authorization/ministry design and remaining owner decisions before writing implementation SQL.
 5. Only after the design is agreed, create a focused implementation PR and separate SQL review artifact. No SQL execution or deployment without approval.
 
 ## Work completed in this session
