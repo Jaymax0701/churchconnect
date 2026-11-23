@@ -139,3 +139,27 @@ The role/module/action matrix remains pending. No permission grants should be in
   - Resource-level RLS and frontend permission integration remain a separate implementation phase; the evaluator alone does not secure every resource table.
 - Next step: user runs `0020_authorization_preflight_read_only.review.sql` in the active Supabase SQL Editor and shares the result sets. Do not execute scripts 0014–0019 until all preflight and PostgreSQL validation gates pass and the user explicitly approves execution.
 
+## Live Supabase preflight results received (2026-11-23)
+
+The user ran `0020_authorization_preflight_read_only.review.sql` in the active Supabase SQL Editor and supplied results. Confirmed:
+
+- `public.profiles.id` is UUID, NOT NULL; `profiles.is_approved` is BOOLEAN, NOT NULL; `approved_at` and `approved_by` exist.
+- `auth.users.id` is UUID, NOT NULL; `deleted_at` and `banned_until` both exist as nullable `timestamp with time zone`.
+- The live `current_user_has_role(text)` is owned by `postgres`, SECURITY DEFINER, STABLE, has empty search_path, and checks `profiles.is_approved IS TRUE` plus a global role assignment. It does not itself check Auth ban/deletion status; the proposed `current_user_is_active_approved()` helper adds those checks.
+- Existing `approve_account(uuid)` and `review_minor_registration(uuid,text)` are SECURITY DEFINER, authenticated-executable, anon-not-executable. `assert_another_active_global_superadmin(uuid)` is SECURITY DEFINER and not executable by authenticated, as expected for internal trigger use.
+- Twelve modules exist and all twelve are active.
+- Existing `user_roles` unique expression index is confirmed, including the all-zero UUID sentinel.
+- Four last-Superadmin/canonical-role triggers are present and enabled: Auth users, profiles, roles, and user_roles.
+- RLS is enabled (not forced) on all six existing authorization tables. Existing policies returned only the two profile policies shown in user output; no existing policies were reported on ministries/modules/permissions/roles/user_roles.
+- All five new authorization tables are absent, as expected before migration.
+- The live results confirm the expected profile/Auth columns and core schema assumptions. The user did not include the output rows from the role catalog query or the constraints query in their message; obtain those if needed before final approval.
+
+Additional read-only checks were added to `0020_authorization_preflight_read_only.review.sql` on the hardening branch:
+- Candidate function-name/signature collision inventory for scripts 0016–0018.
+- Existing direct table grants on core authorization tables.
+- The existing role catalog query in section 3 already reports canonical role IDs; no duplicate role query remains.
+
+Important arithmetic correction to the earlier handoff matrix count: the approved role/module profiles in `0015` produce **37** Ministry Leader grants (one congregation view grant plus nine ministry-management modules with four grants each), not 36. Other expected totals remain Superadmin 60, Church Admin 60, Council 12, Volunteer 25, Member 13. The SQL script derives grants from the matrix; the count is a verification expectation, not hardcoded seed data.
+
+Next: ask user to run the updated `0020` script and provide the new function-collision and direct-grant result sets, plus the role catalog if omitted. Then finish manual review and seek PostgreSQL validation in a disposable environment. Do not execute migrations or deploy.
+
