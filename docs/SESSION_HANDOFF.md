@@ -89,3 +89,28 @@ The role/module/action matrix remains pending. No permission grants should be in
 - Retrieved current repository documentation and route/auth files directly from GitHub.
 - Identified stale 2026-10-28 authorization inventory claims and documented current frontend/database evidence.
 - Created a documentation-only branch; no application code, SQL, database, or deployment changes were made.
+
+## Authorization SQL review scripts prepared (2026-11-23)
+
+- Created branch `feature/authorization-sql-review` from the then-current `main` HEAD (`889eaf8e998fcdce705c5ae6e1f35f4b48960af3`).
+- Added six manual review scripts under `supabase/review/`:
+  - `0014_authorization_foundation.review.sql`
+  - `0015_permission_definitions_and_seeds.review.sql`
+  - `0016_authorization_evaluator.review.sql`
+  - `0017_ministry_assignment_workflows.review.sql`
+  - `0018_override_workflows_and_rls.review.sql`
+  - `0019_verification_and_review_gates.review.sql`
+- The scripts reuse the live-schema authorization tables `permissions`, `role_permissions`, `roles`, and `user_roles`; they do not create a parallel role-permission engine.
+- Owner-approved role/module matrix and lifecycle/delegation rules are reflected in the review scripts. Permission seeds use conflict-safe inserts and do not delete existing role mappings.
+- Ministry assignments and mapping deactivation retain historical assignments; evaluator design suspends derived access when the ministry or module mapping is inactive.
+- Permission overrides are permanent until changed/removed by an authorized administrator. Audit tables retain historical identifiers without cascading foreign keys.
+- The branch contains six SQL files and eight commits (two follow-up hardening edits). All six files were fetched back from GitHub to verify their presence.
+- GitHub compare reported branch ahead of main by eight commits and behind by zero at verification. No PR was opened.
+- No SQL was executed, no Supabase schema/data was changed, and no Vercel deployment was triggered.
+- Important review limitations before execution:
+  - These SQL files have not been executed or validated by PostgreSQL parser against the active project.
+  - Verify live `profiles.id`, `profiles.is_approved`, Auth status columns, function owners, grants, and all resource-table RLS policies.
+  - The scripts establish authorization metadata/workflows but do not retrofit every existing resource table or frontend call site.
+  - Review concurrency/audit behavior and SECURITY DEFINER execution ownership before approval.
+- Next step: perform a line-by-line SQL/security review of the six files, correct issues on this branch, then request explicit approval before opening a PR or executing any SQL.
+
