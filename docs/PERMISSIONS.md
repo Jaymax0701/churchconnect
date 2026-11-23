@@ -1,3 +1,5 @@
+> **Reconciliation notice — 2026-11-22:** This is a historical design artifact, not a statement of the current live schema or deployed implementation. The current active Supabase project is `iikdiuezfnwgsjhvedzk`. See [the current authorization inventory](AUTHORIZATION_APPLICATION_INVENTORY.md) and [session handoff](SESSION_HANDOFF.md) for owner-supplied live catalog evidence. Do not execute SQL or infer deployed behavior from this document. Unresolved proposals are identified below.
+
 # ChurchConnect — Security & Authorization Architecture (Milestone 2)
 
 This document establishes the precise operational rules, precedence engine, function-hardening standards, and concurrency guarantees governing authorization in ChurchConnect.
@@ -71,6 +73,9 @@ The ChurchConnect authorization engine operates under nine strict, non-negotiabl
 ```
 
 ### B. Deterministic Resolution Rules
+
+> Reconciliation: The permission-engine precedence rules in this document include owner-confirmed decisions, but the proposed `role_module_permissions`, `user_module_permissions`, and `has_module_permission()` objects were not present in the 2026-11-22 owner-supplied live schema inventory. This document's role/module grants remain pending. Examples using uppercase role IDs and `ministries.leader_id` are legacy examples, not canonical identifiers or approved live schema.
+
 
 1. **Role Grants vs. Explicit Per-User Overrides:**
    * Role-module permissions (`role_module_permissions`) establish the default baseline for ordinary roles.

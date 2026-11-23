@@ -1,5 +1,7 @@
 # ChurchConnect Authorization Migration Design (Staging First)
 
+> **Historical proposal — not implementation-ready.** Its verified baseline and workflow references describe the 2026-10 staging environment, not the current active Supabase project. The app now uses real Supabase Auth flows; the old statement that login is a demonstration form is superseded. The proposed permission tables/functions and ministry leader column are not confirmed in the 2026-11-22 live inventory. Reconcile this document before generating SQL.
+
 Status: DESIGN PROPOSAL — not executable SQL. Do not apply to production.
 
 Branch: security/milestone-2-migration-plan

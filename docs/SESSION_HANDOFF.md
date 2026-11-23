@@ -4,8 +4,8 @@ Last updated: 2026-11-22
 Current workstream: Ministry Management, Roles, and Permissions
 Repository: `Jaymax0701/churchconnect`
 Base branch: `main`
-Base commit: `155b94ff22ae52760da09d4f61df1117c2f1aaf2` (PR #50 merge)
-Current documentation branch: `docs/ministry-roles-permissions-handoff`
+Base commit: `bca4394d69afb3ba9e988d751fdc096b577ba490` (PR #51 merge)
+Current documentation branch: `docs/ministry-roles-permissions-handoff` (follow-up commits after PR #51 merge)
 
 ## Working agreement
 
@@ -38,7 +38,7 @@ Current documentation branch: `docs/ministry-roles-permissions-handoff`
 - Existing functions/triggers protect canonical Superadmin role integrity and the last active approved global Superadmin. Preserve them.
 
 ### Repository and local environment
-- GitHub `main` matches local commit `155b94f` (PR #50 merge).
+- GitHub `main` was confirmed at `bca4394d69afb3ba9e988d751fdc096b577ba490` after PR #51 merged. Local checkout may still be at the earlier `155b94f`; verify before local testing.
 - GitHub has `supabase/review/` scripts and `supabase/functions/`; no `supabase/migrations/` directory was found in the local tree.
 - Local-only untracked paths reported by owner: `openai-audit/` and `supabase/.temp/`. Do not delete, stage, or commit these without inspection and owner approval.
 - Review SQL is manual/review-only and must not be applied without explicit approval.
@@ -64,13 +64,24 @@ The role/module/action matrix remains pending. No permission grants should be in
 - Read `.agents/rules/security.md`: it contained stale role IDs (`ADMIN`, `SUPERADMIN`), an obsolete additive-only permission rule, and a simplistic superadmin description. Updated it on this documentation branch to align with canonical role IDs, explicit-deny precedence, ministry scope, GitHub-first inspection, and approval safeguards.
 - GitHub code search found the proposed `role_module_permissions`, `user_module_permissions`, and `has_module_permission()` in design documentation only; no implementation references in current tracked frontend code were found. The live schema evidence supplied by the owner also does not include these proposed tables/functions.
 
+## Further authorization-document reconciliation (2026-11-22)
+
+- Read `docs/PERMISSIONS.md`, `docs/ROLE_MODULE_PERMISSION_MATRIX.md`, `docs/SCHEMA_RECONCILIATION.md`, `docs/MINISTRY_SCOPE_DESIGN.md`, `docs/AUTHORIZATION_MIGRATION_DESIGN.md`, `docs/AUTHORIZATION_REVIEW_FINDINGS.md`, `docs/AUTHORIZATION_IMPLEMENTATION_GATE.md`, and `docs/AUTHORIZATION_BEHAVIORAL_TEST_PLAN.md`.
+- Found that `PERMISSIONS.md` contains conceptual engine rules that include confirmed precedence decisions, but its proposed permission tables/functions are not in the current live schema. It also contains uppercase role-ID examples and refers to `ministries.leader_id`, neither of which should be treated as current implementation.
+- `MINISTRY_SCOPE_DESIGN.md` proposes both `ministries.leader_id` and ministry-scoped `user_roles` for primary/additional leaders. The owner has not confirmed this dual-source model. Current live inventory confirms only ministry-scoped `user_roles`; do not add `leader_id` without an explicit decision.
+- `SCHEMA_RECONCILIATION.md`, `AUTHORIZATION_MIGRATION_DESIGN.md`, and `AUTHORIZATION_IMPLEMENTATION_GATE.md` describe the 2026-10 non-production staging snapshot and must not be used as current live-project instructions.
+- `AUTHORIZATION_REVIEW_FINDINGS.md` and `AUTHORIZATION_MIGRATION_DESIGN.md` still describe login as a demo flow; that is superseded by the current real Supabase Auth implementation. End-to-end authorization behavior still needs testing with real user sessions.
+- Added reconciliation banners to these historical docs on this branch; no historic SQL was modified and no SQL was executed.
+
 ## Next exact steps
 
-1. Finish a targeted review of the remaining review SQL files only where they affect role, ministry, profile, or trusted-admin behavior; do not bulk-read unrelated family/auth scripts.
-2. Reconcile the historical design docs and agent rules with current owner-supplied schema/function evidence, retaining historical snapshots but marking them superseded.
-3. Inspect the current live definitions for every function and trigger that can mutate roles, user assignments, profile approval, or Auth users; verify whether the last-Superadmin invariant covers all paths.
-4. Present a consolidated authorization/ministry design and remaining owner decisions before writing implementation SQL.
-5. Only after the design is agreed, create a focused implementation PR and separate SQL review artifact. No SQL execution or deployment without approval.
+1. Inspect the live definitions and all mutation paths for roles, user_roles, profile approval/status, and Auth-user deletion; confirm exactly which trigger/function safeguards run on each path.
+2. Decide the ministry leadership model: (A) ministry-scoped `user_roles` only, or (B) one primary leader via `ministries.leader_id` plus optional additional leaders in `user_roles`. Do not add a second source of truth before this is decided.
+3. Decide whether the permission engine will retain legacy `permissions`/`role_permissions` as the active engine or introduce `role_module_permissions`/`user_module_permissions`; current live schema only confirms the legacy tables.
+4. Define `view/create/update/delete` and whether `manage`, `approve`, and `assign` are separate capabilities; then complete the 6-role × 12-module matrix. All grants remain pending until explicitly approved.
+5. Inspect real frontend queries/RPCs and public-site data sources, then design narrow grants, RLS policies, and trusted transactional admin RPCs.
+6. Verify last-active-Superadmin protection across user_roles mutation, profile approval/deletion, role mutation/deletion, and Auth-user cascade paths, including concurrent transactions.
+7. Only after these decisions are agreed, prepare implementation SQL and tests. No SQL execution, merge, or deployment without explicit approval.
 
 ## Work completed in this session
 
