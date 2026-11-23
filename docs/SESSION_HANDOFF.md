@@ -90,27 +90,34 @@ The role/module/action matrix remains pending. No permission grants should be in
 - Identified stale 2026-10-28 authorization inventory claims and documented current frontend/database evidence.
 - Created a documentation-only branch; no application code, SQL, database, or deployment changes were made.
 
-## Authorization SQL review scripts prepared (2026-11-23)
+## Authorization SQL review scripts and first-pass security review (2026-11-23)
 
-- Created branch `feature/authorization-sql-review` from the then-current `main` HEAD (`889eaf8e998fcdce705c5ae6e1f35f4b48960af3`).
-- Added six manual review scripts under `supabase/review/`:
+- Working branch: `feature/authorization-sql-review`.
+- Six review-only SQL files are present under `supabase/review/`:
   - `0014_authorization_foundation.review.sql`
   - `0015_permission_definitions_and_seeds.review.sql`
   - `0016_authorization_evaluator.review.sql`
   - `0017_ministry_assignment_workflows.review.sql`
   - `0018_override_workflows_and_rls.review.sql`
   - `0019_verification_and_review_gates.review.sql`
-- The scripts reuse the live-schema authorization tables `permissions`, `role_permissions`, `roles`, and `user_roles`; they do not create a parallel role-permission engine.
-- Owner-approved role/module matrix and lifecycle/delegation rules are reflected in the review scripts. Permission seeds use conflict-safe inserts and do not delete existing role mappings.
-- Ministry assignments and mapping deactivation retain historical assignments; evaluator design suspends derived access when the ministry or module mapping is inactive.
-- Permission overrides are permanent until changed/removed by an authorized administrator. Audit tables retain historical identifiers without cascading foreign keys.
-- The branch contains six SQL files and eight commits (two follow-up hardening edits). All six files were fetched back from GitHub to verify their presence.
-- GitHub compare reported branch ahead of main by eight commits and behind by zero at verification. No PR was opened.
+- These use the existing authorization tables `permissions`, `role_permissions`, `roles`, and `user_roles`; they do not introduce a parallel role-permission engine.
+- The owner-approved role/module matrix, ministry lifecycle, delegation, permanent override, and historical audit retention decisions are reflected in the scripts.
+- First-pass review corrections committed:
+  - Added `current_user_is_active_approved()` and used it to gate privileged RPCs and ministry mapping reads.
+  - Restricted the ministry mapping read helper to ministry leaders, consistent with the approved governance.
+  - Added active/approved actor checks to ministry role removal and ministry-module activation/deactivation.
+  - Reworked permission override audit classification to use the actual prior row state, rather than infer it from the last audit event.
+  - Serialized override changes per target Auth user to reduce audit-state races between concurrent set/remove operations.
+  - Added UPDATE/DELETE rejection triggers for the three authorization audit tables.
+  - Corrected the canonical role grant verification count and added checks for audit triggers and the existing all-zero UUID sentinel used by the user_roles unique expression index.
+- All six SQL files were fetched back from GitHub after edits. Script 0019 is intentionally read-only and has no transaction wrapper.
+- GitHub branch comparison after review edits reported four commits ahead and one commit behind `main`. Main advanced after this branch was created; inspect the changed history and reconcile the branch before opening a PR. No PR has been opened.
 - No SQL was executed, no Supabase schema/data was changed, and no Vercel deployment was triggered.
-- Important review limitations before execution:
-  - These SQL files have not been executed or validated by PostgreSQL parser against the active project.
-  - Verify live `profiles.id`, `profiles.is_approved`, Auth status columns, function owners, grants, and all resource-table RLS policies.
-  - The scripts establish authorization metadata/workflows but do not retrofit every existing resource table or frontend call site.
-  - Review concurrency/audit behavior and SECURITY DEFINER execution ownership before approval.
-- Next step: perform a line-by-line SQL/security review of the six files, correct issues on this branch, then request explicit approval before opening a PR or executing any SQL.
-
+- Remaining pre-execution gates:
+  - Confirm live `profiles.id`, `profiles.is_approved`, `auth.users.deleted_at`, and `auth.users.banned_until` columns and types.
+  - Confirm `current_user_has_role()` behavior, function signatures/owners, grants, and SECURITY DEFINER ownership.
+  - Run a PostgreSQL syntax/semantic validation against a disposable clone or test database.
+  - Review whether audit-log read access should be provided through a restricted admin RPC; direct client access is intentionally not granted.
+  - Remember that audit UPDATE/DELETE triggers are not a substitute for restricting table ownership, TRUNCATE, trigger disabling, or superuser access.
+  - Inventory and implement resource-level RLS and frontend authorization call sites separately; these six scripts do not retrofit all application data tables.
+- Next step: resolve the remaining schema and PostgreSQL validation gates, then request explicit approval before opening a PR or executing any SQL.
