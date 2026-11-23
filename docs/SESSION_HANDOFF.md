@@ -228,3 +228,15 @@ The owner supplied the remaining role-catalog, constraint/index, and updated fun
 5. Resource-level RLS and frontend permission enforcement remain separate future work; do not imply these scripts secure every application resource.
 
 No SQL has been executed. No live schema/data changed. No PR has been opened for the hardening branch, and no Vercel deployment has been triggered. Explicit owner approval is still required for any of those actions.
+
+
+## 2026-11-24 — 0021 application call-site review
+
+- Reviewed all tracked frontend TypeScript/TSX files on `feature/authorization-sql-hardening` using the GitHub repository tree and file contents.
+- No frontend query or RPC was found that reads `public.ministries` or `public.modules`. The Ministry and Permission Matrix navigation items remain placeholder hash links; no corresponding management pages are registered.
+- Existing frontend authorization RPC calls are limited to `current_user_has_role` in route/layout gates and account-management RPCs (`list_pending_accounts`, `approve_account`, `review_minor_registration`, `list_user_accounts`). No frontend use of `role_permissions`, `permissions`, or ministry-scoped `user_roles` was found.
+- Inspected both deployed Edge Function source files. `admin-manage-user` uses a service-role client for a `user_roles` lookup; `secure-login` uses privileged clients for authentication operations. Neither currently reads `ministries` or `modules`.
+- This reduces the likelihood that 0021 breaks an existing catalog read path, but does not prove every future or external server integration is covered.
+- 0021 review observations: its new membership helper is SECURITY DEFINER with an empty search_path, accepts only a ministry ID (caller identity comes from `auth.uid()`), checks active/approved status, and limits membership to ministry_leader/ministry_volunteer assignments. Its execution grants are revoked from PUBLIC/anon and restored to authenticated. Its effective owner will be the role executing the script; confirm that this is the trusted database owner (normally postgres in Supabase SQL Editor) before any future execution.
+- Remaining check before calling 0021 execution-ready: inspect effective/direct `service_role` privileges and table owners for `ministries` and `modules`, and verify whether any external server/service integration reads these tables. Existing preflight output only listed anon/authenticated grants and did not establish service_role's effective privileges.
+- SQL parser/semantic validation against a disposable PostgreSQL database remains outstanding. No SQL was executed, no database changes were made, no PR was opened, and no deployment was triggered.
