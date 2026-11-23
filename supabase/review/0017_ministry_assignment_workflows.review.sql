@@ -195,6 +195,10 @@ BEGIN
         RAISE EXCEPTION 'Authentication required';
     END IF;
 
+    IF NOT public.current_user_is_active_approved() THEN
+        RAISE EXCEPTION 'Active approved account required';
+    END IF;
+
     IF p_assignment_id IS NULL
        OR p_reason IS NULL
        OR length(btrim(p_reason)) = 0 THEN
@@ -296,6 +300,7 @@ DECLARE
     v_old_active BOOLEAN;
 BEGIN
     IF v_actor IS NULL
+       OR NOT public.current_user_is_active_approved()
        OR NOT (
             public.current_user_has_role('superadmin')
             OR public.current_user_has_role('church_admin')
