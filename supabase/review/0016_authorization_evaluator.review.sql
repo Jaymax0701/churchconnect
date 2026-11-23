@@ -155,7 +155,11 @@ BEGIN
               AND p.module_id = p_module_id
               AND p.action = p_action
               AND (
-                    (uo.ministry_id IS NULL AND p.scope IN ('global', 'self'))
+                    (uo.ministry_id IS NULL AND p.scope = 'global')
+                    OR
+                    (uo.ministry_id IS NULL
+                     AND p.scope = 'self'
+                     AND p_record_owner_id = v_user_id)
                     OR
                     (uo.ministry_id IS NOT NULL
                      AND p.scope = 'assigned_ministry'
