@@ -175,7 +175,7 @@ WHERE module_id IN (
 SELECT
     r.id AS role_id,
     r.name AS role_name,
-    COUNT(rp.permission_id) AS grant_count
+    COUNT(p.id) AS grant_count
 FROM public.roles AS r
 LEFT JOIN public.role_permissions AS rp
     ON rp.role_id = r.id
@@ -220,7 +220,11 @@ SELECT
     ministry_id,
     COUNT(*) AS duplicate_count
 FROM public.user_roles
-GROUP BY user_id, role_id, scope_type, ministry_id
+GROUP BY
+    user_id,
+    role_id,
+    scope_type,
+    COALESCE(ministry_id, '00000000-0000-0000-0000-000000000000'::UUID)
 HAVING COUNT(*) > 1;
 
 
@@ -290,6 +294,43 @@ WHERE NOT t.tgisinternal
 ORDER BY schema_name, table_name, trigger_name;
 
 
+-- ------------------------------------------------------------
+-- 12. Append-only audit trigger status.
+-- Expected: each audit table has a BEFORE UPDATE OR DELETE
+-- trigger that rejects mutation.
+-- ------------------------------------------------------------
+
+SELECT
+    c.relname AS table_name,
+    t.tgname AS trigger_name,
+    t.tgenabled AS enabled_state,
+    pg_get_triggerdef(t.oid) AS trigger_definition
+FROM pg_trigger AS t
+JOIN pg_class AS c ON c.oid = t.tgrelid
+JOIN pg_namespace AS n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND NOT t.tgisinternal
+  AND c.relname IN (
+      'user_role_assignment_audit',
+      'user_permission_override_audit',
+      'ministry_module_audit'
+  )
+ORDER BY c.relname, t.tgname;
+
+
+-- ------------------------------------------------------------
+-- 13. Sentinel UUID collision review for the existing unique
+-- user_roles expression index.
+-- Expected: zero rows. The all-zero UUID must not be used as an
+-- actual ministry ID because the existing unique index uses it
+-- as the NULL/global-scope sentinel.
+-- ------------------------------------------------------------
+
+SELECT *
+FROM public.user_roles
+WHERE ministry_id = '00000000-0000-0000-0000-000000000000'::UUID;
+
+
 -- ============================================================
 -- MANUAL BEHAVIORAL REGRESSION TESTS
 --
@@ -343,7 +384,7 @@ ORDER BY schema_name, table_name, trigger_name;
 -- [ ] Self-service access is limited to the authenticated user.
 -- [ ] Ministry leaders see only records in assigned ministries.
 -- [ ] Browser clients cannot directly mutate authorization tables.
--- [ ] Audit tables cannot be modified by anon/authenticated.
+-- [ ] Audit tables cannot be modified by anon/authenticated.\n-- [ ] Audit UPDATE/DELETE triggers reject mutation.
 --
 -- F. Concurrency and integrity
 -- [ ] Concurrent duplicate assignment attempts cannot create
