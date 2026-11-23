@@ -113,6 +113,7 @@ WHERE n.nspname = 'public'
   AND p.proname IN (
       'current_user_is_active_approved',
       'current_user_has_ministry_assignment',
+      'current_user_has_ministry_membership',
       'has_module_permission',
       'assign_ministry_role',
       'remove_ministry_role',
