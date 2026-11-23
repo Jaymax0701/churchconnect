@@ -298,7 +298,7 @@ REVOKE ALL ON TABLE
     public.user_permission_overrides,
     public.user_role_assignment_audit,
     public.user_permission_override_audit
-FROM anon, authenticated;
+FROM PUBLIC, anon, authenticated;
 
 COMMIT;
 
