@@ -114,3 +114,28 @@ The role/module/action matrix remains pending. No permission grants should be in
   - Review concurrency/audit behavior and SECURITY DEFINER execution ownership before approval.
 - Next step: perform a line-by-line SQL/security review of the six files, correct issues on this branch, then request explicit approval before opening a PR or executing any SQL.
 
+## Authorization SQL hardening and live-schema preflight (2026-11-23)
+
+- GitHub now shows PR #53 (`feature/authorization-sql-review` → `main`) as merged at commit `0d28d681fe728c1fcd9ceb34f5d69242b729e1c7`. The six original review scripts are therefore present on `main`. This merge occurred outside the current tool actions; do not assume the later hardening edits were included in that merge.
+- Created fresh branch `feature/authorization-sql-hardening` from the current `main` HEAD to avoid continuing on a branch that had diverged after PR #53.
+- Carried forward the first-pass hardening edits to:
+  - `0016_authorization_evaluator.review.sql`
+  - `0017_ministry_assignment_workflows.review.sql`
+  - `0018_override_workflows_and_rls.review.sql`
+  - `0019_verification_and_review_gates.review.sql`
+- Additional corrections on the hardening branch:
+  - `0014_authorization_foundation.review.sql` now revokes table privileges from `PUBLIC` as well as `anon` and `authenticated`.
+  - Ministry-scoped explicit ALLOW overrides in the evaluator now require the target user to have an assignment in that ministry, as well as an active ministry and module mapping.
+  - Override workflows reject administrators modifying their own overrides, preventing self-escalation through this path.
+  - Authorization audit tables have restricted SELECT policies for active, approved global Superadmins and Church Admins. Church Admin can read ministry role-assignment audit events; global role-assignment audit events remain Superadmin-only. Audit tables remain non-writable to client roles.
+  - Verification script now includes the active-account helper and audit protection function.
+- Added `supabase/review/0020_authorization_preflight_read_only.review.sql`, a SELECT-only catalog inspection script to verify profiles/Auth columns, current role-check function, function owners/grants, existing constraints/indexes, RLS, policies, Superadmin triggers, and table-name collisions.
+- No Supabase SQL was executed. No frontend deployment was triggered. No new PR was opened for the hardening branch.
+- Remaining gates:
+  - The live SQL Editor results for `auth.users.deleted_at` and `auth.users.banned_until` have not yet been supplied/verified. The preflight script explicitly checks both.
+  - The active live definition and owner/grants of `current_user_has_role(text)` still need confirmation from the preflight output.
+  - The scripts have not been parsed/executed by PostgreSQL. A real PostgreSQL validation against a disposable clone is still required.
+  - Review audit visibility policy: Church Admin can read all permission-override audit entries, while cannot change overrides for a Superadmin.
+  - Resource-level RLS and frontend permission integration remain a separate implementation phase; the evaluator alone does not secure every resource table.
+- Next step: user runs `0020_authorization_preflight_read_only.review.sql` in the active Supabase SQL Editor and shares the result sets. Do not execute scripts 0014–0019 until all preflight and PostgreSQL validation gates pass and the user explicitly approves execution.
+
