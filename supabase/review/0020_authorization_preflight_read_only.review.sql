@@ -95,16 +95,6 @@ FROM public.modules;
 
 
 -- ------------------------------------------------------------
--- 3A. Exact canonical role IDs and system flags.
--- Expected: six canonical roles from the approved matrix.
--- ------------------------------------------------------------
-
-SELECT id, name, is_system
-FROM public.roles
-ORDER BY id;
-
-
--- ------------------------------------------------------------
 -- 3B. Potential function-name/signature collisions.
 -- These names are introduced or replaced by scripts 0016-0018.
 -- Review any returned row before approving those scripts.
