@@ -65,6 +65,18 @@ BEGIN
         RAISE EXCEPTION 'Authentication required';
     END IF;
 
+    IF NOT EXISTS (
+        SELECT 1
+        FROM auth.users AS au
+        JOIN public.profiles AS pr ON pr.id = au.id
+        WHERE au.id = v_actor
+          AND au.deleted_at IS NULL
+          AND (au.banned_until IS NULL OR au.banned_until <= NOW())
+          AND pr.is_approved IS TRUE
+    ) THEN
+        RAISE EXCEPTION 'Active approved account required';
+    END IF;
+
     IF p_target_user_id IS NULL OR p_ministry_id IS NULL THEN
         RAISE EXCEPTION 'Target user and ministry are required';
     END IF;
