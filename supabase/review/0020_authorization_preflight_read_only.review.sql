@@ -95,6 +95,71 @@ FROM public.modules;
 
 
 -- ------------------------------------------------------------
+-- 3A. Exact canonical role IDs and system flags.
+-- Expected: six canonical roles from the approved matrix.
+-- ------------------------------------------------------------
+
+SELECT id, name, is_system
+FROM public.roles
+ORDER BY id;
+
+
+-- ------------------------------------------------------------
+-- 3B. Potential function-name/signature collisions.
+-- These names are introduced or replaced by scripts 0016-0018.
+-- Review any returned row before approving those scripts.
+-- Expected before first application: zero rows for these names.
+-- ------------------------------------------------------------
+
+SELECT
+    p.oid::regprocedure AS function_signature,
+    pg_get_userbyid(p.proowner) AS function_owner,
+    p.prosecdef AS security_definer,
+    p.proconfig AS function_settings,
+    p.proacl AS function_acl
+FROM pg_proc AS p
+JOIN pg_namespace AS n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.proname IN (
+      'current_user_is_active_approved',
+      'current_user_has_ministry_assignment',
+      'has_module_permission',
+      'assign_ministry_role',
+      'remove_ministry_role',
+      'set_ministry_module_active',
+      'set_user_permission_override',
+      'remove_user_permission_override',
+      'prevent_authorization_audit_mutation'
+  )
+ORDER BY p.proname, p.oid::regprocedure::text;
+
+
+-- ------------------------------------------------------------
+-- 3C. Existing direct table privileges.
+-- The new tables should not exist yet. Existing user_roles,
+-- permissions and role_permissions should not expose unintended
+-- direct client write privileges.
+-- ------------------------------------------------------------
+
+SELECT
+    table_name,
+    grantee,
+    privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public'
+  AND table_name IN (
+      'ministries',
+      'modules',
+      'permissions',
+      'role_permissions',
+      'roles',
+      'user_roles'
+  )
+  AND grantee IN ('PUBLIC', 'anon', 'authenticated')
+ORDER BY table_name, grantee, privilege_type;
+
+
+-- ------------------------------------------------------------
 -- 4. Existing authorization table columns.
 -- ------------------------------------------------------------
 
