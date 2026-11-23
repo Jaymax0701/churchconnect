@@ -163,3 +163,26 @@ Important arithmetic correction to the earlier handoff matrix count: the approve
 
 Next: ask user to run the updated `0020` script and provide the new function-collision and direct-grant result sets, plus the role catalog if omitted. Then finish manual review and seek PostgreSQL validation in a disposable environment. Do not execute migrations or deploy.
 
+
+
+## Catalog least-privilege review update (2026-11-23)
+
+- User supplied the full read-only preflight outputs from 0020.
+- Confirmed: existing auth.users and profiles IDs are UUID; profile approval and Auth ban/deletion columns match the SQL assumptions.
+- All 12 modules exist and are active. All five new ministry-mapping, permission-override, and audit tables are absent.
+- Existing role, permission, module, and assignment table structures match the reviewed assumptions. Existing unique user_roles expression index and all four last-Superadmin/canonical-role triggers are present.
+- Existing RLS is enabled on all six core authorization tables; current policies shown were the two profile policies.
+- Live current_user_has_role(text) is postgres-owned, SECURITY DEFINER, STABLE, empty search_path, and checks approved profile plus global role assignment.
+- The pasted results did not include the role catalog rows; canonical role IDs are known from the earlier schema inventory but should still be checked against the role query before final approval.
+- Critical finding: anon and authenticated currently have broad direct table privileges on public.ministries and public.modules, including INSERT/UPDATE/DELETE; modules also exposes TRUNCATE. RLS alone does not neutralize TRUNCATE.
+- Created supabase/review/0021_existing_catalog_least_privilege.review.sql on feature/authorization-sql-hardening.
+  - Revokes all direct client privileges from PUBLIC, anon, and authenticated on ministries/modules.
+  - Restores authenticated SELECT only.
+  - Adds RLS read policy: active approved Superadmin/Church Admin can read all ministry metadata; active approved ministry leaders/volunteers can read only their assigned ministry.
+  - Adds RLS read policy: active approved users can read active modules; Superadmin/Church Admin can read inactive module definitions too.
+  - Adds SECURITY DEFINER helper current_user_has_ministry_membership(uuid), distinct from the leader-only helper used for ministry-module mapping visibility.
+  - No catalog rows are changed; no client write or anonymous access is granted.
+- Updated the 0020 function-collision inventory to include current_user_has_ministry_membership(uuid).
+- File created and verified by fetching it back from GitHub. No SQL was executed, no live schema/data changed, no PR opened, and no Vercel deployment triggered.
+- Review caveat: before execution, verify frontend call sites for ministry/module reads and confirm server/service-role workflows retain required access. The attempted GitHub code search did not reveal direct Supabase query strings; this is not proof that no such call sites exist.
+- Next step: confirm the role catalog output and complete a final line-by-line review of 0021 plus migration dependencies. PostgreSQL parser/behavior validation against a disposable clone remains outstanding. Do not execute SQL or open a PR unless explicitly approved.
