@@ -13,6 +13,38 @@
 BEGIN;
 
 -- ------------------------------------------------------------
+-- 0. Shared active/approved caller check.
+-- Prevents an approved-but-banned/deleted Auth account from
+-- invoking privileged workflows with an otherwise valid JWT.
+-- ------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.current_user_is_active_approved()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+    SELECT auth.uid() IS NOT NULL
+       AND EXISTS (
+            SELECT 1
+            FROM auth.users AS au
+            JOIN public.profiles AS pr ON pr.id = au.id
+            WHERE au.id = auth.uid()
+              AND au.deleted_at IS NULL
+              AND (au.banned_until IS NULL OR au.banned_until <= NOW())
+              AND pr.is_approved IS TRUE
+       );
+$function$;
+
+REVOKE ALL ON FUNCTION public.current_user_is_active_approved()
+FROM PUBLIC, anon;
+
+GRANT EXECUTE ON FUNCTION public.current_user_is_active_approved()
+TO authenticated;
+
+
+-- ------------------------------------------------------------
 -- 1. RLS helper: caller has an assignment in a ministry.
 -- The caller identity always comes from auth.uid(); no arbitrary
 -- user ID can be supplied by the client.
@@ -39,6 +71,7 @@ AS $function$
               ON au.id = ur.user_id
             WHERE ur.user_id = auth.uid()
               AND ur.scope_type = 'ministry'
+              AND ur.role_id = 'ministry_leader'
               AND ur.ministry_id = p_ministry_id
               AND pr.is_approved IS TRUE
               AND au.deleted_at IS NULL
@@ -263,6 +296,13 @@ BEGIN
                         uo.ministry_id IS NOT NULL
                         AND p.scope = 'assigned_ministry'
                         AND uo.ministry_id = p_ministry_id
+                        AND EXISTS (
+                            SELECT 1
+                            FROM public.user_roles AS assigned_role
+                            WHERE assigned_role.user_id = v_user_id
+                              AND assigned_role.scope_type = 'ministry'
+                              AND assigned_role.ministry_id = uo.ministry_id
+                        )
                         AND EXISTS (
                             SELECT 1
                             FROM public.ministries AS mn
