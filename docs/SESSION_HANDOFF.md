@@ -173,7 +173,7 @@ Next: ask user to run the updated `0020` script and provide the new function-col
 - Existing role, permission, module, and assignment table structures match the reviewed assumptions. Existing unique user_roles expression index and all four last-Superadmin/canonical-role triggers are present.
 - Existing RLS is enabled on all six core authorization tables; current policies shown were the two profile policies.
 - Live current_user_has_role(text) is postgres-owned, SECURITY DEFINER, STABLE, empty search_path, and checks approved profile plus global role assignment.
-- The pasted results did not include the role catalog rows; canonical role IDs are known from the earlier schema inventory but should still be checked against the role query before final approval.
+- The role catalog output was subsequently supplied: all six canonical IDs (`superadmin`, `church_admin`, `church_council`, `ministry_leader`, `ministry_volunteer`, `member`) exist and all six are marked `is_system = true`.
 - Critical finding: anon and authenticated currently have broad direct table privileges on public.ministries and public.modules, including INSERT/UPDATE/DELETE; modules also exposes TRUNCATE. RLS alone does not neutralize TRUNCATE.
 - Created supabase/review/0021_existing_catalog_least_privilege.review.sql on feature/authorization-sql-hardening.
   - Revokes all direct client privileges from PUBLIC, anon, and authenticated on ministries/modules.
@@ -185,4 +185,46 @@ Next: ask user to run the updated `0020` script and provide the new function-col
 - Updated the 0020 function-collision inventory to include current_user_has_ministry_membership(uuid).
 - File created and verified by fetching it back from GitHub. No SQL was executed, no live schema/data changed, no PR opened, and no Vercel deployment triggered.
 - Review caveat: before execution, verify frontend call sites for ministry/module reads and confirm server/service-role workflows retain required access. The attempted GitHub code search did not reveal direct Supabase query strings; this is not proof that no such call sites exist.
-- Next step: confirm the role catalog output and complete a final line-by-line review of 0021 plus migration dependencies. PostgreSQL parser/behavior validation against a disposable clone remains outstanding. Do not execute SQL or open a PR unless explicitly approved.
+- The updated 0020 function-collision query returned no rows. The role catalog query confirmed the six canonical IDs, all system roles.
+- Constraint/index output confirms the expected permission action/scope checks, permission uniqueness, foreign keys, role-permission primary key, and existing `user_roles_unique_assignment` expression index using the all-zero UUID sentinel. No duplicate unique index is needed.
+- The live RLS inventory confirms RLS enabled (not forced) on all six existing authorization tables; only the two profile policies were returned. No policies currently exist on ministries/modules/permissions/role_permissions/roles/user_roles.
+- The complete constraints output confirms `user_roles.ministry_id` references `ministries(id) ON DELETE CASCADE`; ministry deactivation, rather than deletion, remains the intended lifecycle approach.
+- The direct-grant query confirms `anon` and `authenticated` both currently have INSERT, SELECT, UPDATE, DELETE, REFERENCES, and TRIGGER on `ministries`; `modules` has those privileges plus TRUNCATE. This is a live critical exposure, not merely a theoretical concern. Script 0021 is intended to revoke all these direct client privileges and restore authenticated SELECT subject to RLS.
+- The updated 0020 function-collision query returned no rows, including no collision for `current_user_has_ministry_membership(uuid)`. The role catalog query confirmed the six canonical IDs, all system roles.
+- Remaining next steps: complete a line-by-line security review of 0021 and its dependency order; inspect all frontend ministry/module reads and server/service-role workflows; then obtain PostgreSQL syntax/behavior validation against a disposable clone. Do not execute SQL or open a PR unless explicitly approved.
+
+
+## Complete live preflight confirmation (2026-11-23)
+
+The owner supplied the remaining role-catalog, constraint/index, and updated function-collision results from the read-only 0020 preflight.
+
+- Canonical role catalog confirmed:
+  - `church_admin` / Church Admin / system
+  - `church_council` / Church Council / system
+  - `member` / Church Member / system
+  - `ministry_leader` / Ministry Leader / system
+  - `ministry_volunteer` / Ministry Volunteer / system
+  - `superadmin` / Superadmin / system
+- Updated function collision inventory returned no rows.
+- Existing constraints and indexes match the SQL review assumptions:
+  - permission actions: view/create/update/delete/manage/approve/assign
+  - permission scopes: global/assigned_ministry/self
+  - unique permission key: (module_id, action, scope)
+  - user_roles scope check: global requires NULL ministry_id; ministry requires non-NULL ministry_id
+  - user_roles ministry FK uses ON DELETE CASCADE
+  - unique user_roles expression index includes COALESCE(ministry_id, all-zero UUID)
+- All five new authorization tables remain absent.
+- The direct-grant inventory confirms broad anon and authenticated privileges on ministries and modules. Both have INSERT/SELECT/UPDATE/DELETE/REFERENCES/TRIGGER; modules also has TRUNCATE. This remains unresolved until an approved execution of the reviewed remediation. RLS is enabled but not forced, and no policies were returned for these catalog tables.
+- RLS is enabled on the six existing authorization tables. Existing policy inventory returned only profiles_select_own and profiles_update_own_name.
+- All four Superadmin/canonical-role protection triggers are enabled.
+- The full live schema preflight now has the role catalog and constraints/indexes outputs; these are no longer outstanding information requests.
+
+## Outstanding review gates after complete preflight
+
+1. Line-by-line review of 0021, including helper ownership, function execution grants, RLS policy semantics, and dependency on 0016's active-approved helper.
+2. Comprehensive inspection of frontend ministry/module reads and any server/service-role workflows. The earlier inspection of AdminDashboardPage.tsx and UserAccountsPage.tsx alone is not sufficient.
+3. PostgreSQL parser and behavior validation against a disposable clone/test database. No such validation has yet occurred.
+4. Confirm migration order and dependencies for scripts 0014–0019 followed by 0021, and verify any required grants for trusted server workflows.
+5. Resource-level RLS and frontend permission enforcement remain separate future work; do not imply these scripts secure every application resource.
+
+No SQL has been executed. No live schema/data changed. No PR has been opened for the hardening branch, and no Vercel deployment has been triggered. Explicit owner approval is still required for any of those actions.
