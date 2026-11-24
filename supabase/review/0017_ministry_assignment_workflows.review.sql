@@ -214,6 +214,8 @@ AS $function$
 DECLARE
     v_actor UUID := auth.uid();
     v_assignment public.user_roles%ROWTYPE;
+    v_initial_target_user_id UUID;
+    v_initial_ministry_id UUID;
     v_is_global_admin BOOLEAN := FALSE;
     v_is_own_ministry_leader BOOLEAN := FALSE;
 BEGIN
@@ -248,16 +250,19 @@ BEGIN
         RAISE EXCEPTION 'Self-removal is not permitted through this workflow';
     END IF;
 
+    v_initial_target_user_id := v_assignment.user_id;
+    v_initial_ministry_id := v_assignment.ministry_id;
+
     -- Deterministic account lock order serializes status changes.
     PERFORM au.id
     FROM auth.users AS au
-    WHERE au.id IN (v_actor, v_assignment.user_id)
+    WHERE au.id IN (v_actor, v_initial_target_user_id)
     ORDER BY au.id
     FOR UPDATE;
 
     PERFORM pr.id
     FROM public.profiles AS pr
-    WHERE pr.id IN (v_actor, v_assignment.user_id)
+    WHERE pr.id IN (v_actor, v_initial_target_user_id)
     ORDER BY pr.id
     FOR UPDATE;
 
@@ -278,7 +283,7 @@ BEGIN
     -- the ministry is inactive, but the ministry row must still exist.
     PERFORM mn.id
     FROM public.ministries AS mn
-    WHERE mn.id = v_assignment.ministry_id
+    WHERE mn.id = v_initial_ministry_id
     FOR SHARE;
 
     IF NOT FOUND THEN
@@ -299,8 +304,10 @@ BEGIN
     END IF;
 
     IF v_assignment.role_id NOT IN ('ministry_leader', 'ministry_volunteer')
-       OR v_assignment.user_id = v_actor THEN
-        RAISE EXCEPTION 'Assignment is no longer eligible for removal';
+       OR v_assignment.user_id = v_actor
+       OR v_assignment.user_id IS DISTINCT FROM v_initial_target_user_id
+       OR v_assignment.ministry_id IS DISTINCT FROM v_initial_ministry_id THEN
+        RAISE EXCEPTION 'Assignment changed while removal was being authorized';
     END IF;
 
     PERFORM ur.id
