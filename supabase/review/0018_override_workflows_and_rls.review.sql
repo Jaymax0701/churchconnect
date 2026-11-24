@@ -531,8 +531,9 @@ COMMIT;
 -- 7. Review SECURITY DEFINER owner and EXECUTE privileges.
 -- 8. Test concurrent actor account suspension/approval revocation
 --    and global-role removal against set/remove override operations.
--- 9. Test concurrent target Superadmin-role removal and override
---    mutation preserve the Church Admin restriction.
+-- 9. Verify every global Superadmin assignment/bootstrap path takes
+--    the same target Auth-user lock; test concurrent promotion/removal
+--    against override mutation to preserve the Church Admin restriction.
 -- 10. Test lock ordering/deadlocks for simultaneous override changes
 --     where actor and target accounts are reversed.
 -- ============================================================
