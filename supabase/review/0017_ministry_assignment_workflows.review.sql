@@ -396,13 +396,8 @@ DECLARE
     v_actor UUID := auth.uid();
     v_old_active BOOLEAN;
 BEGIN
-    IF v_actor IS NULL
-       OR NOT public.current_user_is_active_approved()
-       OR NOT (
-            public.current_user_has_role('superadmin')
-            OR public.current_user_has_role('church_admin')
-       ) THEN
-        RAISE EXCEPTION 'Not authorized';
+    IF v_actor IS NULL THEN
+        RAISE EXCEPTION 'Authentication required';
     END IF;
 
     IF p_ministry_id IS NULL
@@ -411,6 +406,37 @@ BEGIN
        OR p_reason IS NULL
        OR length(btrim(p_reason)) = 0 THEN
         RAISE EXCEPTION 'Ministry, module, status and reason are required';
+    END IF;
+
+    -- Lock the actor account/profile and revalidate status before
+    -- relying on the global administrator assignment.
+    PERFORM au.id
+    FROM auth.users AS au
+    WHERE au.id = v_actor
+    FOR UPDATE;
+
+    PERFORM pr.id
+    FROM public.profiles AS pr
+    WHERE pr.id = v_actor
+    FOR UPDATE;
+
+    IF NOT public.current_user_is_active_approved() THEN
+        RAISE EXCEPTION 'Active approved account required';
+    END IF;
+
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = v_actor
+      AND ur.scope_type = 'global'
+      AND ur.role_id IN ('superadmin', 'church_admin')
+    ORDER BY ur.role_id
+    FOR SHARE;
+
+    IF NOT (
+        public.current_user_has_role('superadmin')
+        OR public.current_user_has_role('church_admin')
+    ) THEN
+        RAISE EXCEPTION 'Not authorized';
     END IF;
 
     IF NOT EXISTS (
@@ -427,34 +453,52 @@ BEGIN
         RAISE EXCEPTION 'Module not found';
     END IF;
 
-    SELECT is_active
-    INTO v_old_active
-    FROM public.ministry_modules
-    WHERE ministry_id = p_ministry_id
-      AND module_id = p_module_id
-    FOR UPDATE;
+    -- Handle concurrent first-time activation safely. The unique
+    -- primary key arbitrates competing inserts; only the transaction
+    -- that creates the mapping writes the initial audit event.
+    IF p_is_active IS FALSE THEN
+        SELECT is_active
+        INTO v_old_active
+        FROM public.ministry_modules
+        WHERE ministry_id = p_ministry_id
+          AND module_id = p_module_id
+        FOR UPDATE;
 
-    IF NOT FOUND THEN
-        IF p_is_active IS FALSE THEN
+        IF NOT FOUND THEN
             RAISE EXCEPTION 'Cannot deactivate a mapping that does not exist';
         END IF;
-
+    ELSE
         INSERT INTO public.ministry_modules (
             ministry_id, module_id, is_active,
             created_by, updated_by
         )
         VALUES (
             p_ministry_id, p_module_id, TRUE, v_actor, v_actor
-        );
-
-        INSERT INTO public.ministry_module_audit (
-            ministry_id, module_id, operation, actor_user_id, reason
         )
-        VALUES (
-            p_ministry_id, p_module_id, 'activated', v_actor, btrim(p_reason)
-        );
+        ON CONFLICT (ministry_id, module_id) DO NOTHING
+        RETURNING is_active INTO v_old_active;
 
-        RETURN TRUE;
+        IF FOUND THEN
+            INSERT INTO public.ministry_module_audit (
+                ministry_id, module_id, operation, actor_user_id, reason
+            )
+            VALUES (
+                p_ministry_id, p_module_id, 'activated', v_actor, btrim(p_reason)
+            );
+
+            RETURN TRUE;
+        END IF;
+
+        SELECT is_active
+        INTO v_old_active
+        FROM public.ministry_modules
+        WHERE ministry_id = p_ministry_id
+          AND module_id = p_module_id
+        FOR UPDATE;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Unable to create or retrieve ministry-module mapping';
+        END IF;
     END IF;
 
     IF v_old_active IS DISTINCT FROM p_is_active THEN
