@@ -383,9 +383,10 @@ TO authenticated;
 
 -- ------------------------------------------------------------
 -- 3. Ministry-module read policy.
--- Users with an assignment in a ministry can read its mappings.
--- Approved global Superadmin and Church Admin can read all
--- mappings, including inactive mappings needed for administration.
+-- Ministry Leaders can read mappings for their own assigned
+-- ministry. Ministry Volunteers do not receive mapping visibility.
+-- Approved global Superadmin and Church Admin can read all mappings,
+-- including inactive mappings needed for administration.
 -- No direct INSERT/UPDATE/DELETE is granted.
 -- ------------------------------------------------------------
 
