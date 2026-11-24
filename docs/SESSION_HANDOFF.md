@@ -1,11 +1,11 @@
 # ChurchConnect Session Handoff
 
-Last updated: 2026-11-22
+Last updated: 2026-11-24
 Current workstream: Ministry Management, Roles, and Permissions
 Repository: `Jaymax0701/churchconnect`
 Base branch: `main`
-Base commit: `bca4394d69afb3ba9e988d751fdc096b577ba490` (PR #51 merge)
-Current documentation branch: `docs/ministry-roles-permissions-handoff` (follow-up commits after PR #51 merge)
+Current working branch: `feature/authorization-sql-hardening`
+Current focus: static SQL security review and disposable PostgreSQL validation; all SQL remains review-only
 
 ## Working agreement
 
@@ -320,3 +320,51 @@ No SQL has been executed. No live schema/data changed. No PR has been opened for
 | PR/deployment | None |
 
 Keep all scripts review-only until disposable PostgreSQL validation and the complete security/RLS test matrix pass, and until the owner separately approves any execution or deployment.
+
+
+## 2026-11-24 — follow-up concurrency hardening for 0017–0018
+
+- Continued static review of the complete review-script set (0014–0021) on feature/authorization-sql-hardening. No SQL was executed.
+- Found an additional time-of-check/time-of-use gap in the permission override workflows: the actor's account/profile state and global administrator role were checked without holding locks that serialize concurrent account suspension/approval revocation or global-role removal.
+- Updated supabase/review/0018_override_workflows_and_rls.review.sql:
+  - set_user_permission_override now locks actor and target Auth-user rows in deterministic UUID order, then corresponding profile rows; rechecks actor active/approved status; locks qualifying global Superadmin/Church Admin role rows before rechecking authority; and locks an existing target Superadmin assignment before applying the Church Admin restriction.
+  - remove_user_permission_override now uses the same deterministic actor/target account and profile lock order, rechecks actor active/approved status, locks qualifying actor global-role rows before rechecking authority, and locks an existing target Superadmin assignment before applying the restriction.
+  - Added behavioral review gates for concurrent actor suspension/approval revocation, global-role removal, target Superadmin-role removal, and reversed actor/target override operations.
+- Continued review of set_ministry_module_active in supabase/review/0017_ministry_assignment_workflows.review.sql and found the same missing actor-authority serialization. It now locks the actor Auth-user and profile rows, rechecks active/approved status, locks qualifying global administrator role rows, and rechecks Superadmin/Church Admin authority before changing mappings.
+- Hardened concurrent first-time ministry-module activation: uses the mapping primary key with ON CONFLICT DO NOTHING, then re-reads/locks the existing mapping; only the transaction that creates the row writes the initial activation audit event.
+- Expanded 0017 behavioral review gates for concurrent first-time mapping activation and administrator-role revocation during mapping changes.
+- GitHub updates and read-back verification:
+  - 0017 latest commit: a341312691dbcaada751429d82bdb70202c0c20b; latest content SHA: 6d3986c1aefadf3d2cc7cdd1fa0832cb24a9a70c.
+  - 0018 latest commit: 0926496e6961f410dfce5ecda3a85422f0fccbf1; latest content SHA: f4772f10d60ccb4be178180cf363d1177cadf0d7.
+  - 0017 mapping hardening was committed in 6e37ad8382246f434e2520005247fbe3c55af6b3 before its review-gate follow-up.
+  - 0018 actor/target lock hardening was committed in 0b042aa47d4463bdbc72ba301aafed39c3e11f8b before its review-gate follow-up.
+- Remaining concurrency caveat: locking an existing target Superadmin assignment stabilizes its removal, but a concurrent insertion/promotion of the target into the Superadmin role must also be serialized by the global-role assignment/bootstrap path (for example, by taking the same target Auth-user lock). That path has not yet been verified. Add it to the review before treating the Church Admin-versus-Superadmin restriction as concurrency-complete.
+- These are proposed SQL design changes only. The environment still has no psql, PostgreSQL server, Docker, Podman, pglast, sqlglot, or PostgreSQL driver. PostgreSQL syntax/semantic validation, lock behavior, transaction tests, and deadlock tests remain outstanding.
+- No SQL was executed; no active Supabase schema/data changed; no PR was opened; no Vercel deployment was triggered.
+
+## Current next steps
+
+1. Complete line-by-line static review of all eight scripts (0014–0021), including transaction boundaries, function ownership/EXECUTE grants, lock ordering, role lifecycle and RLS semantics.
+2. Inspect the actual global-role assignment/bootstrap and role-revocation paths to verify whether they share the target Auth-user lock required to serialize Superadmin promotion against override administration.
+3. Find or provision a disposable PostgreSQL validation environment. Do not use the active Supabase project for parser or behavior tests.
+4. Validate scripts 0014–0019 and 0021 in dependency order; test SQL syntax, grants, SECURITY DEFINER ownership, RLS behavior, concurrency, deadlocks, audit atomicity, and existing last-Superadmin safeguards.
+5. Keep the live ministries/modules grant exposure documented as unresolved until a separately approved and validated remediation is executed. The proposed 0021 script is not applied.
+6. Do not open a PR, execute SQL, merge, or deploy without explicit approval.
+
+## Updated review status (2026-11-24)
+
+| Area | Status |
+|---|---|
+| Live schema, canonical roles, constraints/indexes | Confirmed from owner-supplied preflight |
+| Frontend and tracked Edge Function ministry/module catalog call sites | No conflicting reads found |
+| Existing service_role grants and catalog table owners | Confirmed |
+| 0017 actor/target/ministry/delegated-role lock design | Revised; static review only |
+| 0017 mapping activation concurrency handling | Revised; static review only |
+| 0018 actor/target account and global-role lock design | Revised; static review only |
+| 0018 target Superadmin promotion/removal serialization | Promotion path still to inspect |
+| PostgreSQL syntax/semantic validation | Outstanding |
+| RLS behavior matrix and effective privilege tests | Outstanding |
+| Active Supabase changes | None |
+| PR / merge / deployment | None |
+
+**Current conclusion:** The latest changes improve the proposed concurrency controls, but none of the concurrency findings is proven closed until PostgreSQL validation and transaction-level tests pass. All scripts remain manual-review artifacts. The active Supabase catalog grants have not been remediated.
