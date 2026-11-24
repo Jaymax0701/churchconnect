@@ -553,6 +553,9 @@ COMMIT;
 -- 8. Test concurrent account suspension, approval revocation,
 --    ministry deactivation, leader removal, assignment/removal,
 --    and audit atomicity in a disposable PostgreSQL database.
+-- 8A. Test concurrent first-time mapping activation produces one
+--     mapping row and one initial activation audit event.
+-- 8B. Test administrator-role revocation against mapping changes.
 -- 9. Verify duplicate assignment raises a safe unique violation.
 -- 10. Verify the mapping audit is append-only after grants/policies
 --     are configured in the next review script.
