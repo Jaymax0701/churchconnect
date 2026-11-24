@@ -240,3 +240,31 @@ No SQL has been executed. No live schema/data changed. No PR has been opened for
 - 0021 review observations: its new membership helper is SECURITY DEFINER with an empty search_path, accepts only a ministry ID (caller identity comes from `auth.uid()`), checks active/approved status, and limits membership to ministry_leader/ministry_volunteer assignments. Its execution grants are revoked from PUBLIC/anon and restored to authenticated. Its effective owner will be the role executing the script; confirm that this is the trusted database owner (normally postgres in Supabase SQL Editor) before any future execution.
 - Remaining check before calling 0021 execution-ready: inspect effective/direct `service_role` privileges and table owners for `ministries` and `modules`, and verify whether any external server/service integration reads these tables. Existing preflight output only listed anon/authenticated grants and did not establish service_role's effective privileges.
 - SQL parser/semantic validation against a disposable PostgreSQL database remains outstanding. No SQL was executed, no database changes were made, no PR was opened, and no deployment was triggered.
+
+
+## 2026-11-24 — service-role privilege review completed
+
+- Owner supplied the effective direct privilege results for `service_role` on the existing catalog tables:
+  - `public.ministries`: owner `postgres`; SELECT, INSERT, UPDATE, DELETE granted; TRUNCATE not granted.
+  - `public.modules`: owner `postgres`; SELECT, INSERT, UPDATE, DELETE, TRUNCATE granted.
+- This confirms the reviewed 0021 revocations, which target `PUBLIC`, `anon`, and `authenticated`, do not revoke the separately granted `service_role` privileges shown in the preflight results.
+- Both catalog tables are owned by `postgres`. The new SECURITY DEFINER membership helper's owner will be the role that executes 0021; if execution is ever approved, the intended execution role is `postgres` so ownership aligns with the existing table-owner pattern.
+- Frontend and currently tracked Edge Function inspection found no existing ministry/module catalog reads. The `admin-manage-user` Edge Function does read `user_roles` using service role, but does not read either catalog table. External and future integrations remain outside the inspected repository evidence.
+- Service-role/table-owner review is now confirmed; it is no longer an outstanding preflight request.
+- **0021 is still not execution-ready.** PostgreSQL syntax and semantic validation against a disposable database has not been performed. RLS behavior also still requires test coverage for Superadmin, Church Admin, ministry leaders, volunteers, ordinary members, and anon, including verification of helper ownership/grants and effective table privileges.
+- No SQL was executed, no live schema/data changed, no PR was opened, and no Vercel deployment was triggered. The broad live `anon`/`authenticated` grants on ministries/modules therefore remain in place until a separately approved remediation is validated and executed.
+
+## Current review gate status (2026-11-24)
+
+| Review area | Status |
+|---|---|
+| Live schema, canonical roles, constraints and indexes | Confirmed |
+| Function collision check | Passed; no unexpected collisions returned |
+| Frontend ministry/module catalog call sites | No conflicting reads found in tracked frontend |
+| Existing Edge Function catalog dependencies | No ministry/module reads found |
+| `service_role` direct privileges and catalog table owners | Confirmed |
+| 0021 helper design and privilege intent | Initial manual review passed; owner depends on execution role |
+| PostgreSQL syntax/semantic validation on disposable database | Outstanding |
+| RLS behavior matrix and effective privilege verification | Outstanding |
+
+**Current conclusion:** Keep 0021 and scripts 0014–0019 as review-only artifacts. Do not execute against the active Supabase project. Do not open a PR or deploy unless the owner explicitly approves those separate actions. The current work has not fixed the live catalog grants; it has only prepared and reviewed a proposed remediation.
