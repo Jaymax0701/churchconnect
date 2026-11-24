@@ -285,3 +285,38 @@ No SQL has been executed. No live schema/data changed. No PR has been opened for
   - 0019 contains a literal backslash-n sequence in one checklist comment; cosmetic only, not executable SQL.
 - This was an initial static review, not a complete line-by-line certification of every script. 0014, 0015, 0020, and 0021 still require complete syntax/semantic validation and the full RLS behavior matrix.
 - No repository SQL file was changed in this review step. No SQL was executed, no live database changed, no PR was opened, and no deployment was triggered.
+
+
+## 2026-11-24 — 0017 concurrency hardening revision
+
+- Updated `supabase/review/0017_ministry_assignment_workflows.review.sql` on the hardening branch to address the previously identified authorization time-of-check/time-of-use race.
+- `assign_ministry_role` now:
+  - Locks actor and target `auth.users` rows in deterministic UUID order.
+  - Locks corresponding `profiles` rows in deterministic UUID order.
+  - Rechecks actor and target active/approved status while those locks are held.
+  - Locks the ministry row `FOR SHARE` while checking active status, preventing concurrent ministry deactivation from racing the authorization decision.
+  - Locks the actor's qualifying global role rows and, for delegated Ministry Leader authority, the qualifying ministry-leader assignment row `FOR SHARE`.
+- `remove_ministry_role` now:
+  - Reads assignment identifiers without locking, then acquires account/profile locks in deterministic UUID order, followed by the ministry row lock and assignment row lock.
+  - Rechecks actor active/approved status after acquiring account/profile locks.
+  - Re-reads and locks the assignment after earlier locks are acquired, and rejects if the assignment's target user or ministry identity changed while waiting.
+  - Locks the actor's qualifying global role row(s), or the qualifying Ministry Leader assignment row, before relying on that authority.
+  - Allows global administrators to remove assignments from inactive ministries, while delegated Ministry Leaders may remove volunteers only in an active ministry.
+- Expanded the 0017 review gates to require concurrency tests covering account suspension/approval revocation, ministry deactivation, leader removal, concurrent assignment/removal, lock-order/deadlock behavior, duplicate assignment handling, and audit atomicity.
+- GitHub verification confirmed the updated file contains the intended deterministic account/profile locks, ministry and leader-assignment share locks, assignment identity recheck, expanded gates, and unchanged manual-review-only warning.
+- **Important limitation:** this is a static design correction only. No PostgreSQL parser or disposable PostgreSQL execution has validated syntax, lock semantics, transaction behavior, or deadlock behavior. The concurrency finding is addressed in the proposed SQL design but is not yet proven closed.
+- The change does not alter the approved governance matrix or ministry assignment authority. No SQL was executed, no active Supabase schema/data changed, no PR was opened, and no deployment was triggered.
+
+## Updated authorization hardening status (2026-11-24)
+
+| Area | Status |
+|---|---|
+| 0017 proposed concurrency controls | Revised; static review only |
+| 0017 syntax and semantic validation | Outstanding |
+| 0017 concurrent transaction/deadlock tests | Outstanding |
+| Full 0014–0021 PostgreSQL validation | Outstanding |
+| Full RLS behavior matrix | Outstanding |
+| Active Supabase project changes | None |
+| PR/deployment | None |
+
+Keep all scripts review-only until disposable PostgreSQL validation and the complete security/RLS test matrix pass, and until the owner separately approves any execution or deployment.
