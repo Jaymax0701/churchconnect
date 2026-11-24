@@ -268,3 +268,20 @@ No SQL has been executed. No live schema/data changed. No PR has been opened for
 | RLS behavior matrix and effective privilege verification | Outstanding |
 
 **Current conclusion:** Keep 0021 and scripts 0014–0019 as review-only artifacts. Do not execute against the active Supabase project. Do not open a PR or deploy unless the owner explicitly approves those separate actions. The current work has not fixed the live catalog grants; it has only prepared and reviewed a proposed remediation.
+
+
+## 2026-11-24 — first static concurrency review
+
+- Re-fetched the current 0014–0021 review scripts from `feature/authorization-sql-hardening` before review. The files remain review-only and were not executed.
+- Confirmed the current assistant/container environment has no `psql`, PostgreSQL server, Docker, Podman, `pglast`, `sqlglot`, or PostgreSQL driver installed. Therefore no PostgreSQL parser run or disposable-database execution has been performed. Do not report syntax validation as passed.
+- Initial static review of 0016–0018 found a concurrency/authorization race requiring correction before the scripts can be considered ready:
+  - `assign_ministry_role` checks actor and target active/approved status, ministry activity, and Ministry Leader authority using ordinary reads, then inserts the assignment. It does not lock the actor/target Auth and profile rows, the ministry row, or the leader's qualifying `user_roles` row while the decision is in progress.
+  - `remove_ministry_role` locks the target assignment row, but does not lock the acting Ministry Leader's qualifying assignment or active ministry row while checking delegated authority.
+  - A concurrent account-status change, ministry deactivation, or removal of the acting leader's assignment could therefore race with the authorization check. The existing unique assignment index prevents duplicate assignment rows, but does not solve this time-of-check/time-of-use authorization race.
+- Required correction: define and implement a consistent lock order for actor/target account status, ministry state, and delegated leader assignment; then test concurrent revocation/deactivation versus assignment/removal in a disposable PostgreSQL environment. Review potential deadlocks against the existing global-role and Superadmin guard paths before choosing the lock order.
+- Other initial observations:
+  - 0018 override set/remove paths use the target Auth user row as a serialization lock and then lock the override row, which is a useful consistent pattern to preserve.
+  - 0017 mapping activation/deactivation locks an existing mapping row; simultaneous first-time creation is protected from duplicate rows by the mapping primary key, though one concurrent caller may receive a unique-violation error and should be tested.
+  - 0019 contains a literal backslash-n sequence in one checklist comment; cosmetic only, not executable SQL.
+- This was an initial static review, not a complete line-by-line certification of every script. 0014, 0015, 0020, and 0021 still require complete syntax/semantic validation and the full RLS behavior matrix.
+- No repository SQL file was changed in this review step. No SQL was executed, no live database changed, no PR was opened, and no deployment was triggered.
