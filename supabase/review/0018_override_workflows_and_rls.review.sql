@@ -12,8 +12,9 @@ BEGIN;
 -- 1. Set or replace a user's permission override.
 -- Only active, approved global Superadmin and Church Admin.
 -- Church Admin cannot modify overrides for a Superadmin.
--- Target account row locking serializes override changes for
--- that user, making old/new audit state accurate under concurrency.
+-- Actor/target account and authority-row locks serialize concurrent
+-- account status and administrator-role revocation against each operation.
+-- Target account locking also serializes override changes for that user.
 -- Permission scope must match the override context.
 -- ------------------------------------------------------------
 
@@ -37,13 +38,8 @@ DECLARE
     v_old_is_allowed BOOLEAN;
     v_existing_override BOOLEAN := FALSE;
 BEGIN
-    IF v_actor IS NULL
-       OR NOT public.current_user_is_active_approved()
-       OR NOT (
-            public.current_user_has_role('superadmin')
-            OR public.current_user_has_role('church_admin')
-       ) THEN
-        RAISE EXCEPTION 'Not authorized';
+    IF v_actor IS NULL THEN
+        RAISE EXCEPTION 'Authentication required';
     END IF;
 
     IF p_target_user_id IS NULL
@@ -58,14 +54,49 @@ BEGIN
         RAISE EXCEPTION 'Administrators cannot modify their own permission overrides';
     END IF;
 
-    -- Serialize all override mutations for this target account.
-    PERFORM 1
+    -- Lock actor and target accounts in deterministic UUID order.
+    -- This matches the ministry-assignment workflow lock order and
+    -- serializes account/profile status changes against this operation.
+    PERFORM au.id
     FROM auth.users AS au
-    WHERE au.id = p_target_user_id
+    WHERE au.id IN (v_actor, p_target_user_id)
+    ORDER BY au.id
     FOR UPDATE;
 
-    IF NOT FOUND THEN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM auth.users AS au
+        WHERE au.id = p_target_user_id
+    ) THEN
         RAISE EXCEPTION 'Target account not found';
+    END IF;
+
+    PERFORM pr.id
+    FROM public.profiles AS pr
+    WHERE pr.id IN (v_actor, p_target_user_id)
+    ORDER BY pr.id
+    FOR UPDATE;
+
+    -- Revalidate the actor only after the account/profile locks are held.
+    IF NOT public.current_user_is_active_approved() THEN
+        RAISE EXCEPTION 'Active approved account required';
+    END IF;
+
+    -- Lock the actor's qualifying global authority rows before relying
+    -- on them, so concurrent role removal waits until this transaction ends.
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = v_actor
+      AND ur.scope_type = 'global'
+      AND ur.role_id IN ('superadmin', 'church_admin')
+    ORDER BY ur.role_id
+    FOR SHARE;
+
+    IF NOT (
+        public.current_user_has_role('superadmin')
+        OR public.current_user_has_role('church_admin')
+    ) THEN
+        RAISE EXCEPTION 'Not authorized';
     END IF;
 
     IF NOT EXISTS (
@@ -79,6 +110,14 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'Target account must be active and approved';
     END IF;
+
+    -- Protect the target Superadmin check from concurrent removal.
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = p_target_user_id
+      AND ur.role_id = 'superadmin'
+      AND ur.scope_type = 'global'
+    FOR SHARE;
 
     SELECT EXISTS (
         SELECT 1
@@ -224,13 +263,8 @@ DECLARE
     v_target_user_id UUID;
     v_override public.user_permission_overrides%ROWTYPE;
 BEGIN
-    IF v_actor IS NULL
-       OR NOT public.current_user_is_active_approved()
-       OR NOT (
-            public.current_user_has_role('superadmin')
-            OR public.current_user_has_role('church_admin')
-       ) THEN
-        RAISE EXCEPTION 'Not authorized';
+    IF v_actor IS NULL THEN
+        RAISE EXCEPTION 'Authentication required';
     END IF;
 
     IF p_override_id IS NULL
@@ -250,10 +284,39 @@ BEGIN
         RAISE EXCEPTION 'Permission override not found';
     END IF;
 
-    PERFORM 1
+    -- Match the set workflow: lock actor and target accounts in
+    -- deterministic UUID order, then their profile rows.
+    PERFORM au.id
     FROM auth.users AS au
-    WHERE au.id = v_target_user_id
+    WHERE au.id IN (v_actor, v_target_user_id)
+    ORDER BY au.id
     FOR UPDATE;
+
+    PERFORM pr.id
+    FROM public.profiles AS pr
+    WHERE pr.id IN (v_actor, v_target_user_id)
+    ORDER BY pr.id
+    FOR UPDATE;
+
+    IF NOT public.current_user_is_active_approved() THEN
+        RAISE EXCEPTION 'Active approved account required';
+    END IF;
+
+    -- Hold qualifying global authority rows while the override is removed.
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = v_actor
+      AND ur.scope_type = 'global'
+      AND ur.role_id IN ('superadmin', 'church_admin')
+    ORDER BY ur.role_id
+    FOR SHARE;
+
+    IF NOT (
+        public.current_user_has_role('superadmin')
+        OR public.current_user_has_role('church_admin')
+    ) THEN
+        RAISE EXCEPTION 'Not authorized';
+    END IF;
 
     SELECT *
     INTO v_override
@@ -269,6 +332,15 @@ BEGIN
     IF v_override.user_id = v_actor THEN
         RAISE EXCEPTION 'Administrators cannot modify their own permission overrides';
     END IF;
+
+    -- Stabilize the target's Superadmin assignment while applying
+    -- the Church Admin restriction.
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = v_override.user_id
+      AND ur.role_id = 'superadmin'
+      AND ur.scope_type = 'global'
+    FOR SHARE;
 
     IF EXISTS (
         SELECT 1
