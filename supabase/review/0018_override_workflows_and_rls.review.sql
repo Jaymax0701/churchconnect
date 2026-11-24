@@ -318,6 +318,16 @@ BEGIN
         RAISE EXCEPTION 'Not authorized';
     END IF;
 
+    -- Match set_user_permission_override lock order: target
+    -- Superadmin assignment first, then the override row. This avoids
+    -- a role-row/override-row lock inversion between concurrent calls.
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = v_target_user_id
+      AND ur.role_id = 'superadmin'
+      AND ur.scope_type = 'global'
+    FOR SHARE;
+
     SELECT *
     INTO v_override
     FROM public.user_permission_overrides
@@ -333,19 +343,10 @@ BEGIN
         RAISE EXCEPTION 'Administrators cannot modify their own permission overrides';
     END IF;
 
-    -- Stabilize the target's Superadmin assignment while applying
-    -- the Church Admin restriction.
-    PERFORM ur.id
-    FROM public.user_roles AS ur
-    WHERE ur.user_id = v_override.user_id
-      AND ur.role_id = 'superadmin'
-      AND ur.scope_type = 'global'
-    FOR SHARE;
-
     IF EXISTS (
         SELECT 1
         FROM public.user_roles AS ur
-        WHERE ur.user_id = v_override.user_id
+        WHERE ur.user_id = v_target_user_id
           AND ur.role_id = 'superadmin'
           AND ur.scope_type = 'global'
     )
@@ -536,4 +537,6 @@ COMMIT;
 --    against override mutation to preserve the Church Admin restriction.
 -- 10. Test lock ordering/deadlocks for simultaneous override changes
 --     where actor and target accounts are reversed.
+-- 11. Test concurrent set/remove of the same override to confirm both
+--     workflows lock target Superadmin assignment before override row.
 -- ============================================================
