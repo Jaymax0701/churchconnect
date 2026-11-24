@@ -343,6 +343,19 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
 - These are proposed SQL design changes only. The environment still has no psql, PostgreSQL server, Docker, Podman, pglast, sqlglot, or PostgreSQL driver. PostgreSQL syntax/semantic validation, lock behavior, transaction tests, and deadlock tests remain outstanding.
 - No SQL was executed; no active Supabase schema/data changed; no PR was opened; no Vercel deployment was triggered.
 
+## 2026-11-24 — continued static review and local validation attempt
+
+- Attempted to establish a disposable local PostgreSQL environment in the isolated Debian 13 container. No PostgreSQL binaries, Docker/Podman, psql, or parser packages were initially available.
+- Attempted system package installation through apt and Python installation of pglast. Both were blocked by unavailable DNS/network access. No packages were installed and no database was started.
+- Therefore executable PostgreSQL parsing, schema application, RLS testing, and transaction/concurrency testing remain unavailable in this environment. Do not substitute the active Supabase project.
+- Continued static review of 0014–0019 and 0021:
+  - Confirmed ministry_module_audit is created at the beginning of 0017, before 0018 adds its SELECT policy and append-only trigger; the dependency order is correct.
+  - Confirmed 0018's mapping visibility helper is leader-only (per 0016 current_user_has_ministry_assignment), consistent with the approved governance that volunteers cannot view ministry-module mappings. Corrected the 0018 explanatory comment to say Ministry Leaders only.
+  - 0015 seeds only canonical role grants and does not remove existing grants; owner-supplied preflight previously showed role_permissions empty, but this must be rechecked in a disposable clone before execution.
+  - 0021 helper/policies remain dependent on 0016 and existing roles/user_roles; the live broad grants on ministries/modules remain unresolved.
+- Latest 0018 comment clarification commit: 4ed080e5245a6866fb639ed66129f2f55b477b5f; content SHA: 2b3576c1d1509a8f516576d891e93814fbb5f005.
+- Static review is not equivalent to SQL syntax or runtime validation. No SQL was executed; no Supabase changes, PR, merge, or deployment occurred.
+
 ## Current next steps
 
 1. Complete line-by-line static review of all eight scripts (0014–0021), including transaction boundaries, function ownership/EXECUTE grants, lock ordering, role lifecycle and RLS semantics.
