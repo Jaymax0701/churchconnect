@@ -65,6 +65,29 @@ BEGIN
         RAISE EXCEPTION 'Authentication required';
     END IF;
 
+    IF p_target_user_id IS NULL OR p_ministry_id IS NULL THEN
+        RAISE EXCEPTION 'Target user and ministry are required';
+    END IF;
+
+    IF p_target_user_id = v_actor THEN
+        RAISE EXCEPTION 'Self-assignment is not permitted';
+    END IF;
+
+    -- Lock actor and target account rows in deterministic UUID order.
+    -- This serializes account suspension/deletion/ban and profile
+    -- approval changes against the authorization decision.
+    PERFORM au.id
+    FROM auth.users AS au
+    WHERE au.id IN (v_actor, p_target_user_id)
+    ORDER BY au.id
+    FOR UPDATE;
+
+    PERFORM pr.id
+    FROM public.profiles AS pr
+    WHERE pr.id IN (v_actor, p_target_user_id)
+    ORDER BY pr.id
+    FOR UPDATE;
+
     IF NOT EXISTS (
         SELECT 1
         FROM auth.users AS au
@@ -75,14 +98,6 @@ BEGIN
           AND pr.is_approved IS TRUE
     ) THEN
         RAISE EXCEPTION 'Active approved account required';
-    END IF;
-
-    IF p_target_user_id IS NULL OR p_ministry_id IS NULL THEN
-        RAISE EXCEPTION 'Target user and ministry are required';
-    END IF;
-
-    IF p_target_user_id = v_actor THEN
-        RAISE EXCEPTION 'Self-assignment is not permitted';
     END IF;
 
     IF p_role_id NOT IN ('ministry_leader', 'ministry_volunteer') THEN
@@ -105,14 +120,25 @@ BEGIN
         RAISE EXCEPTION 'Target account must be active and approved';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-        FROM public.ministries AS mn
-        WHERE mn.id = p_ministry_id
-          AND mn.is_active IS TRUE
-    ) THEN
+    -- Hold the ministry row stable while its active state authorizes
+    -- this assignment. A concurrent deactivation must wait.
+    PERFORM mn.id
+    FROM public.ministries AS mn
+    WHERE mn.id = p_ministry_id
+      AND mn.is_active IS TRUE
+    FOR SHARE;
+
+    IF NOT FOUND THEN
         RAISE EXCEPTION 'Ministry does not exist or is inactive';
     END IF;
+
+    -- Lock the actor's global authority rows before evaluating them.
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = v_actor
+      AND ur.scope_type = 'global'
+      AND ur.role_id IN ('superadmin', 'church_admin')
+    FOR SHARE;
 
     v_is_global_admin :=
         public.current_user_has_role('superadmin')
@@ -123,17 +149,17 @@ BEGIN
             RAISE EXCEPTION 'Ministry leaders may assign volunteers only';
         END IF;
 
-        SELECT EXISTS (
-            SELECT 1
-            FROM public.user_roles AS ur
-            JOIN public.profiles AS pr ON pr.id = ur.user_id
-            WHERE ur.user_id = v_actor
-              AND ur.role_id = 'ministry_leader'
-              AND ur.scope_type = 'ministry'
-              AND ur.ministry_id = p_ministry_id
-              AND pr.is_approved IS TRUE
-        )
-        INTO v_is_own_ministry_leader;
+        -- Lock the qualifying leader assignment so a concurrent
+        -- removal cannot revoke delegation mid-operation.
+        PERFORM ur.id
+        FROM public.user_roles AS ur
+        WHERE ur.user_id = v_actor
+          AND ur.role_id = 'ministry_leader'
+          AND ur.scope_type = 'ministry'
+          AND ur.ministry_id = p_ministry_id
+        FOR SHARE;
+
+        v_is_own_ministry_leader := FOUND;
 
         IF NOT v_is_own_ministry_leader THEN
             RAISE EXCEPTION 'Not authorized to manage assignments in this ministry';
@@ -195,22 +221,20 @@ BEGIN
         RAISE EXCEPTION 'Authentication required';
     END IF;
 
-    IF NOT public.current_user_is_active_approved() THEN
-        RAISE EXCEPTION 'Active approved account required';
-    END IF;
-
     IF p_assignment_id IS NULL
        OR p_reason IS NULL
        OR length(btrim(p_reason)) = 0 THEN
         RAISE EXCEPTION 'Assignment and reason are required';
     END IF;
 
+    -- Read the assignment identifiers first without taking a row lock.
+    -- Account and ministry locks are acquired before the assignment
+    -- lock to keep a consistent lock order with assign_ministry_role.
     SELECT *
     INTO v_assignment
     FROM public.user_roles
     WHERE id = p_assignment_id
-      AND scope_type = 'ministry'
-    FOR UPDATE;
+      AND scope_type = 'ministry';
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Ministry assignment not found';
@@ -224,6 +248,68 @@ BEGIN
         RAISE EXCEPTION 'Self-removal is not permitted through this workflow';
     END IF;
 
+    -- Deterministic account lock order serializes status changes.
+    PERFORM au.id
+    FROM auth.users AS au
+    WHERE au.id IN (v_actor, v_assignment.user_id)
+    ORDER BY au.id
+    FOR UPDATE;
+
+    PERFORM pr.id
+    FROM public.profiles AS pr
+    WHERE pr.id IN (v_actor, v_assignment.user_id)
+    ORDER BY pr.id
+    FOR UPDATE;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM auth.users AS au
+        JOIN public.profiles AS pr ON pr.id = au.id
+        WHERE au.id = v_actor
+          AND au.deleted_at IS NULL
+          AND (au.banned_until IS NULL OR au.banned_until <= NOW())
+          AND pr.is_approved IS TRUE
+    ) THEN
+        RAISE EXCEPTION 'Active approved account required';
+    END IF;
+
+    -- Serialize ministry deactivation with the delegated authority
+    -- check. Global administrators may remove assignments even when
+    -- the ministry is inactive, but the ministry row must still exist.
+    PERFORM mn.id
+    FROM public.ministries AS mn
+    WHERE mn.id = v_assignment.ministry_id
+    FOR SHARE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Ministry not found';
+    END IF;
+
+    -- Re-read and lock the assignment after acquiring earlier locks;
+    -- it may have been removed or changed while locks were awaited.
+    SELECT *
+    INTO v_assignment
+    FROM public.user_roles
+    WHERE id = p_assignment_id
+      AND scope_type = 'ministry'
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Ministry assignment no longer exists';
+    END IF;
+
+    IF v_assignment.role_id NOT IN ('ministry_leader', 'ministry_volunteer')
+       OR v_assignment.user_id = v_actor THEN
+        RAISE EXCEPTION 'Assignment is no longer eligible for removal';
+    END IF;
+
+    PERFORM ur.id
+    FROM public.user_roles AS ur
+    WHERE ur.user_id = v_actor
+      AND ur.scope_type = 'global'
+      AND ur.role_id IN ('superadmin', 'church_admin')
+    FOR SHARE;
+
     v_is_global_admin :=
         public.current_user_has_role('superadmin')
         OR public.current_user_has_role('church_admin');
@@ -233,19 +319,23 @@ BEGIN
             RAISE EXCEPTION 'Ministry leaders may remove volunteers only';
         END IF;
 
-        SELECT EXISTS (
-            SELECT 1
-            FROM public.user_roles AS ur
-            JOIN public.profiles AS pr ON pr.id = ur.user_id
-            JOIN public.ministries AS mn ON mn.id = ur.ministry_id
-            WHERE ur.user_id = v_actor
-              AND ur.role_id = 'ministry_leader'
-              AND ur.scope_type = 'ministry'
-              AND ur.ministry_id = v_assignment.ministry_id
-              AND pr.is_approved IS TRUE
-              AND mn.is_active IS TRUE
-        )
-        INTO v_is_own_ministry_leader;
+        -- The ministry row is already locked FOR SHARE above.
+        -- Lock the leader assignment to prevent concurrent revocation.
+        PERFORM ur.id
+        FROM public.user_roles AS ur
+        WHERE ur.user_id = v_actor
+          AND ur.role_id = 'ministry_leader'
+          AND ur.scope_type = 'ministry'
+          AND ur.ministry_id = v_assignment.ministry_id
+        FOR SHARE;
+
+        v_is_own_ministry_leader := FOUND
+            AND EXISTS (
+                SELECT 1
+                FROM public.ministries AS mn
+                WHERE mn.id = v_assignment.ministry_id
+                  AND mn.is_active IS TRUE
+            );
 
         IF NOT v_is_own_ministry_leader THEN
             RAISE EXCEPTION 'Not authorized to manage assignments in this ministry';
