@@ -500,11 +500,17 @@ COMMIT;
 -- 3. Confirm user_roles columns and existing integrity triggers.
 -- 4. Confirm duplicate assignment raises a safe unique violation.
 --    The existing unique assignment index is relied upon.
--- 5. Confirm leader authority is checked against active ministry
---    membership and that leaders cannot assign/remove leaders.
--- 6. Test simultaneous assignment/removal requests and audit
---    atomicity.
--- 7. Verify the mapping audit is append-only after grants/policies
---    are configured in the next review script.
--- 8. Global administrators can still reactivate mappings.
+-- 5. Confirm actor/target Auth and profile rows are locked in
+--    deterministic UUID order and revalidated before mutation.
+-- 6. Confirm ministry rows and delegated leader assignments are
+--    locked so concurrent deactivation/revocation cannot race.
+-- 7. Confirm removal rechecks the assignment identity after waiting
+--    for locks, and that no lock-order deadlock is introduced.
+-- 8. Test concurrent account suspension, approval revocation,
+--    ministry deactivation, leader removal, assignment/removal,
+--    and audit atomicity in a disposable PostgreSQL database.
+-- 9. Verify duplicate assignment raises a safe unique violation.
+-- 10. Verify the mapping audit is append-only after grants/policies
+--     are configured in the next review script.
+-- 11. Global administrators can still reactivate mappings.
 -- ============================================================
