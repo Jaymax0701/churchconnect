@@ -250,7 +250,11 @@ BEGIN
 END;
 $promotion$;
 
--- Verification result sets. These run in the same transaction.
+-- The role assignment and audit insert are committed together.
+-- Any exception before this point aborts the transaction.
+COMMIT;
+
+-- Verification result sets. These run after the committed transaction.
 SELECT
     ur.id AS assignment_id,
     ur.user_id,
@@ -288,7 +292,8 @@ ORDER BY occurred_at DESC
 LIMIT 20;
 
 -- IMPORTANT:
--- This script deliberately does not COMMIT automatically.
--- After reviewing both result sets, issue COMMIT only if the new
--- assignment and matching audit row are correct; otherwise ROLLBACK.
+-- This script is manual-review only and must not be executed until
+-- separately approved. Once approved, the assignment and audit row
+-- commit atomically. If any validation or insert fails, the transaction
+-- aborts and neither change is committed.
 -- ============================================================
