@@ -109,12 +109,9 @@ WHERE n.nspname = 'public'
   AND NOT a.attisdropped
 ORDER BY a.attnum;
 
-SELECT *
-FROM public.user_role_assignment_audit
-WHERE role_id = 'superadmin'
-  AND scope_type = 'global'
-ORDER BY occurred_at DESC
-LIMIT 50;
+-- Audit rows are intentionally not queried here because this table may
+-- not yet exist in the active schema. If it exists, inspect its columns
+-- above first, then query only columns confirmed by that result set.
 
 -- 7. Reconfirm live Superadmin protection triggers and definitions.
 SELECT
@@ -148,6 +145,7 @@ SELECT
 FROM pg_proc AS p
 JOIN pg_namespace AS n ON n.oid = p.pronamespace
 WHERE n.nspname = 'public'
+  AND p.prokind = 'f'
   AND (
       pg_get_functiondef(p.oid) ILIKE '%user_roles%'
       OR pg_get_functiondef(p.oid) ILIKE '%superadmin%'
