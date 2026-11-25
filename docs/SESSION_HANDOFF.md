@@ -530,3 +530,16 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
   - The existing first-admin bootstrap remains a distinct break-glass path. The historical staging template must not be reused.
 - GitHub commits for 0023: initial f27cac8e0302ac4076b87b86e56a08d4460f8129; explicit transaction-boundary correction e6ed6c9b9d656b8e343840424b88d616a5cfa7f0.
 - No SQL was executed; no active Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
+
+
+## 2026-11-25 — promotion audit pre-commit validation tightened
+
+- Re-fetched and compared `supabase/review/0023_global_superadmin_promotion.review.sql` with the actual audit-table definition in `supabase/review/0014_authorization_foundation.review.sql`.
+- Confirmed the audit insert fields match 0014: `target_user_id`, `role_id`, `scope_type`, `ministry_id`, `operation`, `actor_user_id`, and `reason`. The schema permits `operation = 'assigned'`, requires a non-empty reason, and defines `occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`.
+- Found a preflight gap: 0023's post-commit verification query reads `occurred_at`, but its pre-mutation column check did not verify that column. If a noncanonical/incomplete audit table had the seven insert columns but lacked `occurred_at`, the role and audit inserts could commit before the verification query failed.
+- Corrected 0023 to require all eight columns used by the insert and post-commit verification before taking mutation steps. The explanatory comment now makes the transaction-boundary reason explicit.
+- Re-fetched and verified the updated SQL file after the GitHub commit.
+- The 0018 append-only trigger applies only to UPDATE/DELETE, so an INSERT event is compatible with the intended audit design. The reviewed 0018 script also revokes direct client writes and grants authenticated SELECT; the promotion template is intended for trusted SQL Editor execution under the table owner/privileged database role, not through a client session.
+- This remains static source review only. No PostgreSQL parser/runtime or independent-session tests have been run. No SQL was executed; no live Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
+- Updated 0023 commit: `603fb3f7f866ee12a923fb785cd5db18eacf8f3f`; content SHA: `4983c021ec0fc62a27b2ce883b150c8311dbf62b`.
+
