@@ -519,7 +519,7 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
   - Requires actor and target to be active, email-confirmed, and approved.
   - Rejects any pre-existing Superadmin assignment for the target rather than repairing or replacing it; preserves other legitimate roles.
   - Inserts one global Superadmin assignment (ministry_id=NULL, assigned_by=actor) and one assigned audit row atomically.
-  - Includes in-transaction verification queries and deliberately leaves the transaction open for explicit human review followed by COMMIT or ROLLBACK.
+  - Commits the assignment and audit insert together, then runs verification queries after commit; any validation/insert exception aborts the transaction.
   - Checks the audit table exists and has the expected required columns before mutation.
 - Static lock-order reasoning only: this design avoids taking a row lock on a target's existing user_roles assignment during promotion. It aligns actor/target Auth/profile locks with 0018 and coordinates with the canonical role-row lock used by the last-Superadmin trigger. It is not proven deadlock-free until independent-session PostgreSQL tests are run.
 - Outstanding limitations:
@@ -528,5 +528,5 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
   - No PostgreSQL parser/runtime validation is available in this environment. The template still needs syntax/semantic validation in a disposable PostgreSQL environment.
   - Test promotion concurrently with override set/remove, Superadmin role removal, Auth ban/deletion, profile unapproval/deletion, and other Superadmin demotions; include the previously identified Auth-delete vs direct user_roles mutation deadlock reproduction.
   - The existing first-admin bootstrap remains a distinct break-glass path. The historical staging template must not be reused.
-- GitHub commit for 0023: f27cac8e0302ac4076b87b86e56a08d4460f8129.
+- GitHub commits for 0023: initial f27cac8e0302ac4076b87b86e56a08d4460f8129; explicit transaction-boundary correction e6ed6c9b9d656b8e343840424b88d616a5cfa7f0.
 - No SQL was executed; no active Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
