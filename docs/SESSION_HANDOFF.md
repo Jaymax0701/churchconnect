@@ -382,3 +382,51 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
 | PR / merge / deployment | None |
 
 **Current conclusion:** The latest changes improve the proposed concurrency controls, but none of the concurrency findings is proven closed until PostgreSQL validation and transaction-level tests pass. All scripts remain manual-review artifacts. The active Supabase catalog grants have not been remediated.
+
+
+## 2026-11-25 — global Superadmin assignment path inspection
+
+- Continued the remaining static review of the Superadmin promotion/removal path, specifically the target Auth-user lock required by the Church Admin restriction in 0018.
+- Re-fetched and inspected the current hardening-branch files:
+  - `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`
+  - `docs/AUTHORIZATION_APPLICATION_INVENTORY.md`
+  - `docs/TRUSTED_ADMIN_WORKFLOW_INVENTORY.md`
+  - `docs/DECISIONS.md`
+  - `supabase/review/0004_admin_account_approval.review.sql`
+  - `supabase/review/0009_pdpa_dob_consent_and_minor_review.review.sql`
+  - `supabase/review/0016_authorization_evaluator.review.sql`
+  - `supabase/review/0017_ministry_assignment_workflows.review.sql`
+  - `supabase/review/0018_override_workflows_and_rls.review.sql`
+  - `supabase/review/0019_verification_and_review_gates.review.sql`
+- Findings from tracked repository content:
+  - 0017 writes only ministry-scoped `ministry_leader` / `ministry_volunteer` assignments. It does not assign global roles.
+  - 0018 changes permission overrides only; it does not assign global roles.
+  - 0004 and 0009 inspect Superadmin authority for approval/minor-review workflows but do not create or promote global role assignments.
+  - The frontend inventory reports no role-assignment UI. The trusted workflow inventory still classifies role assignment/revocation as not implemented in the inspected UI and marks deployed/admin-script paths as requiring further evidence.
+  - `docs/FIRST_SUPERADMIN_BOOTSTRAP.md` describes a trusted one-time bootstrap concept, but the referenced separate manual bootstrap SQL template is absent from the inspected branch. The document itself is design-only and explicitly says no database changes were performed.
+  - The owner-supplied live trigger inventory identifies protection triggers on `roles` and `user_roles` for UPDATE/DELETE, plus Auth-user/profile safeguards. This does not establish that every trusted global-role promotion path takes the same target `auth.users` row lock used by 0018.
+- Conclusion: the target Superadmin promotion/bootstrap path remains **unverified**. There is no tracked global-role assignment RPC or frontend workflow to inspect, and the documented bootstrap template is missing. Do not treat the 0018 target-Superadmin concurrency caveat as closed.
+- Required evidence before closing this gate:
+  1. Locate the exact trusted SQL/bootstrap operation or other server-side path that inserts a global `superadmin` assignment.
+  2. Inspect all global role INSERT/UPDATE/DELETE paths, including trusted dashboard/manual operations and any deployed functions not represented in tracked source.
+  3. Confirm the promotion path locks the target `auth.users` row using the same lock order as 0018 before creating the Superadmin assignment; test promotion/removal against concurrent override set/remove operations.
+  4. Confirm the existing last-active-Superadmin synchronization mechanism covers all promotion, demotion, profile, Auth deletion/cascade, and role mutation paths.
+- No SQL or application code was changed in this review step. No SQL was executed, no live Supabase schema/data changed, no PR was opened, and no deployment was triggered.
+
+## Updated review status (2026-11-25)
+
+| Area | Status |
+|---|---|
+| Live schema, canonical roles, constraints/indexes | Confirmed from owner-supplied preflight |
+| Frontend and tracked Edge Function ministry/module catalog call sites | No conflicting reads found |
+| Existing service_role grants and catalog table owners | Confirmed |
+| 0017 assignment/mapping lock design | Revised; static review only |
+| 0018 override actor/target lock order | Revised; static review only |
+| 0018 target Superadmin promotion serialization | **Unverified; trusted bootstrap SQL template/path not found** |
+| Full global-role assignment/revocation path inventory | Outstanding |
+| PostgreSQL syntax/semantic validation | Outstanding; local environment could not obtain PostgreSQL tooling |
+| RLS behavior matrix, transaction/concurrency/deadlock tests | Outstanding |
+| Active Supabase changes | None |
+| PR / merge / deployment | None |
+
+**Current conclusion:** The proposed scripts remain review-only. The global Superadmin promotion path is not sufficiently evidenced to certify the 0018 concurrency restriction, and PostgreSQL runtime validation remains unavailable. Do not execute SQL, open a PR, merge, or deploy until the outstanding evidence and validation gates pass and the owner separately approves the relevant action.
