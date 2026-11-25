@@ -72,7 +72,9 @@ BEGIN
             USING ERRCODE = '42P01';
     END IF;
 
-    -- Confirm the expected audit columns are present.
+    -- Confirm every audit column used by the INSERT and post-commit
+    -- verification query is present, including occurred_at. This check
+    -- must happen before mutation because verification runs after COMMIT.
     IF (
         SELECT count(*)
         FROM information_schema.columns
@@ -85,9 +87,10 @@ BEGIN
               'ministry_id',
               'operation',
               'actor_user_id',
-              'reason'
+              'reason',
+              'occurred_at'
           )
-    ) <> 7 THEN
+    ) <> 8 THEN
         RAISE EXCEPTION
             'Role assignment audit table does not match the reviewed schema.'
             USING ERRCODE = '55000';
