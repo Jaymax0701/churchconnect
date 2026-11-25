@@ -463,3 +463,20 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
 | PR / merge / deployment | None |
 
 **Current conclusion:** The live safeguards have meaningful coverage, but runtime safety is not certified. Do not describe the lock-order concern as a confirmed deadlock until reproduced; do not describe the global promotion path as covered until its exact trusted operation is inspected. All proposed scripts remain review-only.
+
+
+## 2026-11-25 — original first-Superadmin bootstrap recovered from Git history
+
+- Revisited the question of how the first global Superadmin was created. The current branch tree does not contain `supabase/operations/0001_bootstrap_first_superadmin.staging.template.sql`, which led the previous review to mark the trusted path as unlocated.
+- GitHub commit history recovered the original deleted/removed template at commit `101d40d5ba389c62b0382ae4168420a8e1b82b96`. Its historical patch contains the full 96-line manual SQL template. The companion design document is still present at `docs/FIRST_SUPERADMIN_BOOTSTRAP.md`.
+- The recovered template's intended operation was a trusted, one-time SQL Editor bootstrap, not an application RPC or frontend workflow. It:
+  1. accepted a verified existing `auth.users.id` UUID and operator/ticket reference;
+  2. required the bootstrap audit table and canonical `superadmin` role;
+  3. aborted if the Auth user did not exist, any Superadmin assignment already existed, or the one-time audit event already existed;
+  4. transactionally approved/upserted the profile, inserted a global `superadmin` row into `public.user_roles` with `ministry_id = NULL` and `assigned_by = NULL`, and wrote a `first_superadmin_bootstrap` audit event;
+  5. committed and then selected the resulting role/profile and audit records for verification.
+- This is consistent with the current owner-supplied live assignment shape (global Superadmin, null ministry, null `assigned_by`) and the documented manual first-admin bootstrap process. It is strong evidence of the intended/original method, but it does not prove that this exact historical SQL text was executed against the current active project.
+- Important historical limitation: the recovered template was explicitly staging-only and depended on the then-proposed `public.security_bootstrap_audit` table and schema migration. The current branch no longer contains the template, and the current live schema/function inventory supplied in this review did not establish that the old audit table or its dependencies exist. **Do not rerun or adapt the historical template against the active project.**
+- The original template did not take an explicit `auth.users` target-row lock before inserting the global role assignment. Therefore it does not, as written, demonstrate the target Auth-user locking required by the current 0018 override concurrency gate. A safe future bootstrap/promotion path must be reviewed against the current schema and use a consistent lock order, then be tested in a disposable PostgreSQL environment.
+- No repository source file other than this handoff was changed. No SQL was executed; no live Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
+- Review status correction: the historical bootstrap method is now located. The exact execution against the active project remains unverified, and the historical SQL is not approved for reuse.
