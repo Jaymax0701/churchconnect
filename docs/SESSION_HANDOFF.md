@@ -497,3 +497,36 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
   - 0022 initial: `88eb278467e7e81fc874b99b5affb0f6dbc167c7`
   - 0022 correction: `d62b903de9fe9876682a0445683438fbf25bf9c6`
 - No SQL was executed; no active Supabase schema/data changed; no PR, merge, or deployment occurred.
+
+
+## 2026-11-25 — current-schema global Superadmin promotion template drafted
+
+- Owner supplied all result sets from 0022_global_superadmin_promotion_preflight_read_only.review.sql.
+- Confirmed live schema:
+  - auth.users: UUID id, nullable banned_until, nullable deleted_at; existing functions also reference email_confirmed_at.
+  - profiles: UUID id, is_approved BOOLEAN NOT NULL DEFAULT false, plus approval metadata.
+  - roles: canonical superadmin role exists.
+  - user_roles: user_id, role_id, scope_type, nullable ministry_id, nullable assigned_by; scope/ministry consistency checks and Auth/role/ministry foreign keys exist.
+  - Unique expression index enforces one assignment per (user_id, role_id, scope_type, COALESCE(ministry_id, zero UUID)).
+  - One current active, approved global Superadmin assignment was reported.
+- public.user_role_assignment_audit is absent from the current live schema, as expected before authorization foundation script 0014 is applied. Script 0014 defines the intended audit columns and accepts operation='assigned' with global scope and null ministry. Script 0017 consumes the same table for ministry assignments.
+- Re-fetched and reviewed 0014, 0017, and 0018. The existing override workflow locks actor/target Auth users in sorted UUID order, then profiles, then actor authority rows. The new manual promotion template follows this order.
+- Created supabase/review/0023_global_superadmin_promotion.review.sql and fetched it back from GitHub to verify its contents.
+  - Manual-only, subsequent-promotion procedure; not a first-admin bootstrap.
+  - Requires two different Auth UUIDs (existing Superadmin actor and target) and a meaningful reason.
+  - Locks actor/target Auth rows and profiles in deterministic UUID order.
+  - Locks the actor's global Superadmin assignment FOR SHARE, then locks canonical roles.id=superadmin FOR SHARE. The latter coordinates with the existing last-Superadmin guard, which takes that canonical row FOR UPDATE.
+  - Requires actor and target to be active, email-confirmed, and approved.
+  - Rejects any pre-existing Superadmin assignment for the target rather than repairing or replacing it; preserves other legitimate roles.
+  - Inserts one global Superadmin assignment (ministry_id=NULL, assigned_by=actor) and one assigned audit row atomically.
+  - Includes in-transaction verification queries and deliberately leaves the transaction open for explicit human review followed by COMMIT or ROLLBACK.
+  - Checks the audit table exists and has the expected required columns before mutation.
+- Static lock-order reasoning only: this design avoids taking a row lock on a target's existing user_roles assignment during promotion. It aligns actor/target Auth/profile locks with 0018 and coordinates with the canonical role-row lock used by the last-Superadmin trigger. It is not proven deadlock-free until independent-session PostgreSQL tests are run.
+- Outstanding limitations:
+  - 0023 is a review template, not approved for execution. Do not run it against active Supabase.
+  - The audit table must first be created by the separately reviewed/approved 0014 foundation; verify its owner, RLS, grants, and append-only trigger after application.
+  - No PostgreSQL parser/runtime validation is available in this environment. The template still needs syntax/semantic validation in a disposable PostgreSQL environment.
+  - Test promotion concurrently with override set/remove, Superadmin role removal, Auth ban/deletion, profile unapproval/deletion, and other Superadmin demotions; include the previously identified Auth-delete vs direct user_roles mutation deadlock reproduction.
+  - The existing first-admin bootstrap remains a distinct break-glass path. The historical staging template must not be reused.
+- GitHub commit for 0023: f27cac8e0302ac4076b87b86e56a08d4460f8129.
+- No SQL was executed; no active Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
