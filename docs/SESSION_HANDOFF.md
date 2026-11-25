@@ -480,3 +480,20 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
 - The original template did not take an explicit `auth.users` target-row lock before inserting the global role assignment. Therefore it does not, as written, demonstrate the target Auth-user locking required by the current 0018 override concurrency gate. A safe future bootstrap/promotion path must be reviewed against the current schema and use a consistent lock order, then be tested in a disposable PostgreSQL environment.
 - No repository source file other than this handoff was changed. No SQL was executed; no live Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
 - Review status correction: the historical bootstrap method is now located. The exact execution against the active project remains unverified, and the historical SQL is not approved for reuse.
+
+
+## 2026-11-25 — current-schema Superadmin promotion review started
+
+- Following recovery of the historical first-Superadmin SQL, prepared a new SELECT-only inspection script: `supabase/review/0022_global_superadmin_promotion_preflight_read_only.review.sql`.
+- The script inspects the exact live columns, constraints and indexes for `user_roles`, `profiles`, `roles`, and the planned `user_role_assignment_audit`; checks whether the audit table exists and its RLS/owner state; reports existing global Superadmin assignment rows with account activity/approval status; re-reads the existing Superadmin trigger/function definitions; and searches public functions for references to `user_roles` or `superadmin`.
+- The script is SELECT-only. It does not assign roles, approve profiles, create audit records, change grants, or alter any schema. It was read back from GitHub after creation and corrected so it does not directly query the possibly absent audit table and filters the function scan to ordinary functions.
+- Initial procedure design constraints:
+  - A future trusted promotion operation must lock the target `auth.users` row before inserting the global assignment, then validate the target's Auth status and approved profile while the lock is held.
+  - It must use the same target Auth-user lock relied on by 0018 override administration, reject unexpected pre-existing assignments rather than silently replacing them, and record an atomic audit event using a confirmed live audit schema.
+  - It must preserve the existing last-active-Superadmin safeguards and be tested for lock order/deadlocks. The historical bootstrap SQL is not reusable as-is because it predates the target Auth-user lock and depends on staging-only audit schema.
+  - The one-time break-glass first-admin bootstrap and routine subsequent Superadmin promotion should remain distinct governance paths; application-facing self-promotion must be prohibited.
+- Next step: owner runs the new read-only 0022 script in the active Supabase SQL Editor and supplies all result sets. Only after confirming the live table/index/audit definitions can a concrete manual promotion template be drafted. Do not execute any SQL or change live data.
+- GitHub commits:
+  - 0022 initial: `88eb278467e7e81fc874b99b5affb0f6dbc167c7`
+  - 0022 correction: `d62b903de9fe9876682a0445683438fbf25bf9c6`
+- No SQL was executed; no active Supabase schema/data changed; no PR, merge, or deployment occurred.
