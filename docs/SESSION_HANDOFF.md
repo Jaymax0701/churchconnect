@@ -430,3 +430,36 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
 | PR / merge / deployment | None |
 
 **Current conclusion:** The proposed scripts remain review-only. The global Superadmin promotion path is not sufficiently evidenced to certify the 0018 concurrency restriction, and PostgreSQL runtime validation remains unavailable. Do not execute SQL, open a PR, merge, or deploy until the outstanding evidence and validation gates pass and the owner separately approves the relevant action.
+
+
+## 2026-11-25 — live Superadmin protection definitions reviewed
+
+- Owner supplied the current live trigger definitions and all function definitions matching the read-only inventory query.
+- Confirmed live protection objects:
+  - `auth.users`: BEFORE DELETE OR UPDATE OF `deleted_at, banned_until` trigger `guard_last_global_superadmin_auth_user`.
+  - `public.profiles`: BEFORE DELETE OR UPDATE OF `is_approved` trigger `guard_last_global_superadmin_profile`.
+  - `public.user_roles`: BEFORE UPDATE OR DELETE trigger `guard_last_global_superadmin_role`.
+  - `public.roles`: BEFORE UPDATE OR DELETE trigger `guard_canonical_superadmin_role`.
+  - All four trigger functions are SECURITY DEFINER with empty search_path and owned by postgres (per supplied function inventory).
+- `assert_another_active_global_superadmin(uuid)` is SECURITY DEFINER, postgres-owned, and obtains `FOR UPDATE` on the canonical `public.roles` row where `id = 'superadmin'`, then requires another approved, active, non-deleted, non-banned global Superadmin excluding the target user.
+- The protection triggers cover the listed destructive/invalidation events for existing global Superadmin assignments. The canonical role guard prevents deletion and key identity mutation of the canonical Superadmin role.
+- These definitions do not provide a global-role assignment workflow. The supplied function inventory contains no tracked function that inserts a global Superadmin assignment; ministry assignment workflows are separate and scoped to ministry roles. The exact trusted bootstrap/manual insertion operation remains unlocated.
+- Static lock-order concern for further PostgreSQL concurrency testing: the `user_roles` BEFORE DELETE/UPDATE guard obtains the canonical role-row lock while the target assignment row is already being modified. An `auth.users` DELETE obtains the Auth-user row lock and invokes its own guard (which obtains the canonical role-row lock) before the FK cascade reaches `user_roles`. A concurrent direct assignment deletion and Auth-user deletion for the same user may therefore acquire the assignment/role locks in opposite orders, depending on interleaving. This is a **potential deadlock to reproduce or rule out**, not a confirmed runtime defect. Include independent-session tests for Auth-user deletion versus direct role deletion/update, alongside profile approval revocation and multiple concurrent Superadmin removals.
+- Additional route-gate observation: live `current_user_has_role(text)` checks the caller's approved profile and global role assignment but does not join `auth.users` to check `deleted_at` or `banned_until`. The existing frontend inventory identifies it as a route-level UX gate, not the database security boundary. The proposed 0016 helper `current_user_is_active_approved()` adds those Auth-account checks for the new evaluator, but 0016 does not currently replace the existing `current_user_has_role(text)` function. Review whether to align the route-gate RPC with the active-account helper while preserving its existing signature and grants; do not reapply historical 0002.
+- Approval workflow functions in the supplied output (`approve_account`, `review_minor_registration`, login-lockout admin functions) check approved Superadmin role membership but do not assign global roles. The Auth/profile guard functions protect the last-admin invariant on the specified invalidation events.
+- No live database object was changed. This was review of owner-supplied definitions only; no SQL was executed.
+
+## Updated review status (2026-11-25, after live trigger/function review)
+
+| Area | Status |
+|---|---|
+| Existing last-Superadmin trigger coverage for Auth/profile/user_roles/roles events | Definitions reviewed; static review only |
+| Canonical role-row synchronization mechanism | Confirmed in supplied function definition |
+| Global Superadmin promotion/bootstrap operation | Still unlocated; trusted/manual path needs evidence |
+| Cross-trigger lock-order/deadlock behavior | Potential Auth-delete vs direct user_roles mutation inversion; requires two-session reproduction |
+| Existing current_user_has_role active Auth-account check | Does not check Auth deleted/banned state; review proposed alignment with 0016 helper |
+| PostgreSQL syntax/transaction/concurrency validation | Outstanding |
+| Active Supabase changes / SQL execution | None |
+| PR / merge / deployment | None |
+
+**Current conclusion:** The live safeguards have meaningful coverage, but runtime safety is not certified. Do not describe the lock-order concern as a confirmed deadlock until reproduced; do not describe the global promotion path as covered until its exact trusted operation is inspected. All proposed scripts remain review-only.
