@@ -543,3 +543,31 @@ Keep all scripts review-only until disposable PostgreSQL validation and the comp
 - This remains static source review only. No PostgreSQL parser/runtime or independent-session tests have been run. No SQL was executed; no live Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
 - Updated 0023 commit: `603fb3f7f866ee12a923fb785cd5db18eacf8f3f`; content SHA: `4983c021ec0fc62a27b2ce883b150c8311dbf62b`.
 
+
+
+## 2026-11-25 — PostgreSQL validation environment check
+
+- Continued the 0023 validation gate after the audit-column preflight correction.
+- Re-fetched the current 0023 SQL from the hardening branch and reviewed its transaction structure, audit insert against 0014, and lock sequence against the previously inspected 0018 workflow.
+- Source-level checks:
+  - The audit insert uses the seven fields defined by 0014; 0014 also defines `occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`.
+  - The audit operation constraint permits `assigned`; global scope with `ministry_id = NULL` satisfies the 0014 scope check; reason is non-empty.
+  - 0023 now prechecks all eight column names used by its insert and post-commit verification query before locking/mutation.
+  - The assignment and audit insert are inside the same explicit transaction; verification queries are after COMMIT.
+  - The promotion lock sequence is actor/target Auth rows in UUID order, actor/target profiles in UUID order, actor's global Superadmin assignment, then canonical Superadmin role row. This is consistent with the reviewed 0018 actor/target and actor-authority ordering at source level.
+- Environment capability check found no `psql`, `postgres`, `initdb`, `pg_ctl`, Docker, Podman, `pglast`, `psycopg`, `psycopg2`, or `sqlglot` available. No SQL execution service or PostgreSQL sandbox connector is available in the current tool set. Network/package installation was not attempted as a substitute for a controlled disposable database.
+- Therefore PostgreSQL parser/runtime validation and transaction-level concurrency testing remain **blocked**, not passed. A lightweight text inspection is not a PostgreSQL parser and is not represented as one.
+- Required disposable PostgreSQL test cases before 0023 can be considered execution-ready:
+  1. Successful promotion: exactly one global Superadmin assignment and exactly one matching `assigned` audit row.
+  2. Actor equals target; missing actor/target Auth row; missing actor/target profile.
+  3. Actor or target unconfirmed, banned, deleted, or unapproved.
+  4. Actor lacks global Superadmin; canonical Superadmin role missing or inconsistent.
+  5. Target already has a Superadmin assignment in either global or ministry scope.
+  6. Missing audit table; each required audit column missing; incompatible audit constraint/type/nullability; audit insert failure rolls back the role insert.
+  7. Concurrent promotion versus override set/remove for the same target.
+  8. Concurrent promotion versus global Superadmin role removal, profile unapproval/deletion, and Auth ban/deletion for actor and target.
+  9. Concurrent multiple Superadmin removals and promotion; verify last-Superadmin invariant and capture SQLSTATE/deadlock outcomes.
+  10. Reproduce the separate potential deadlock between Auth-user deletion and direct `user_roles` deletion/update, where the FK cascade and role guard may acquire canonical-role and assignment locks in opposite order.
+  11. Repeat relevant cases with actor/target UUID order reversed; verify lock waits and absence of unexpected deadlocks.
+- Static review does not prove deadlock freedom or establish that the live active project has the 0014 audit table. The owner-supplied preflight previously showed that table absent. 0014 must be separately approved/applied and its resulting owner, RLS, grants, constraints, and append-only trigger verified before a future trusted promotion run.
+- No SQL was executed; no active Supabase schema/data changed; no PR was opened; no merge or deployment occurred.
